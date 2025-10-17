@@ -14,6 +14,11 @@ export default function Sidebar({ currentView, onNavigate, permissions }) {
     setOpenSubmenu(openSubmenu === menuKey ? null : menuKey);
   };
 
+  const handleRefresh = () => {
+    // Trigger a page reload to refresh current view
+    window.location.reload();
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -289,13 +294,45 @@ export default function Sidebar({ currentView, onNavigate, permissions }) {
             </li>
           </ul>
           
+          {/* Universal Refresh Button - Unassuming, refreshes current view */}
+          <div 
+            style={{ 
+              textAlign: 'center', 
+              paddingTop: '12px', 
+              marginTop: '12px', 
+              borderTop: '1px solid var(--border)' 
+            }}
+          >
+            <button
+              onClick={handleRefresh}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--muted)',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                transition: 'color 0.2s, background-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = 'var(--ink)';
+                e.target.style.backgroundColor = 'var(--bg)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = 'var(--muted)';
+                e.target.style.backgroundColor = 'transparent';
+              }}
+            >
+              Refresh
+            </button>
+          </div>
+          
           <div style={{ 
             textAlign: 'center', 
             fontSize: '0.75rem', 
             color: 'var(--muted)', 
-            paddingTop: '12px', 
-            marginTop: '12px', 
-            borderTop: '1px solid var(--border)' 
+            paddingTop: '8px'
           }}>
             Version <span>2.0.0.17</span>
           </div>

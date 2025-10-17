@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { PescadoresProvider } from './context/PescadoresContext';
 import LoginPage from './components/auth/LoginPage';
 import Sidebar from './components/layout/Sidebar';
 import Directory from './modules/TeamViewer/Directory';
@@ -17,6 +18,7 @@ import EmailReports from './modules/CRA/EmailReports';
 import CheckIn from './modules/TeamMeetings/CheckIn';
 import MCIReports from './modules/TeamMeetings/Reports';
 import Budget from './modules/TeamMeetings/Budget';
+import ConfirmModal from './components/common/ConfirmModal';
 import { MainStatusBar } from './components/common/StatusBar';
 import './styles/globals.css';
 
@@ -111,26 +113,31 @@ function Dashboard() {
   };
 
   return (
-    <div className="app-container" style={{ display: 'flex' }}>
-      <Sidebar 
-        currentView={currentView} 
-        onNavigate={setCurrentView}
-        permissions={permissions}
-      />
-      
-      <main className="main-content">
-        {/* Status Bar - slides down from top */}
-        <MainStatusBar />
-       
-        <div className="main-header">
-          <h1 id="app-title">{getViewTitle()}</h1>
-        </div>
+    <PescadoresProvider> 
+      <div className="app-container" style={{ display: 'flex' }}>
+        <Sidebar 
+          currentView={currentView} 
+          onNavigate={setCurrentView}
+          permissions={permissions}
+        />
+        
+        <main className="main-content">
+          {/* Status Bar - slides down from top */}
+          <MainStatusBar />
+          
+          {/* Confirmation Modal - global, beautiful confirm dialogs */}
+          <ConfirmModal />
+         
+          <div className="main-header">
+            <h1 id="app-title">{getViewTitle()}</h1>
+          </div>
 
-        <div className="app-panel-container">
-          {renderView()}
-        </div>
-      </main>
-    </div>
+          <div className="app-panel-container">
+            {renderView()}
+          </div>
+        </main>
+      </div>
+    </PescadoresProvider>
   );
 }
 

@@ -3669,3 +3669,30 @@ body.light-theme .mci-app .detail-panel {
 /* ====================================================== */
 /* ============== END: MCI CSS ========================== */
 /* ====================================================== */
+
+/* ====================================================== */
+/* ========== TEAM LIST REMOVE ANIMATION =============== */
+/* ====================================================== */
+
+.unified-member-item.removing,
+.rector-badge.removing {
+  animation: slideOutRight 0.5s ease-in-out forwards;
+}
+
+@keyframes slideOutRight {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+}
+
+/* Disable button during animation */
+.unified-member-item.removing .remove-teammate-btn,
+.rector-badge.removing {
+  pointer-events: none;
+  opacity: 0.5;
+}

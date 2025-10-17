@@ -1,18 +1,19 @@
 // src/modules/TeamViewer/TeamList.jsx
+// COMPLETE FILE - Abort signals removed, cleanup simplified
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { usePescadores } from '../../context/PescadoresContext';
 
 export default function TeamList() {
   const { user, orgId } = useAuth();
+  const { allPescadores, loading: pescadoresLoading } = usePescadores();
   const [currentGender, setCurrentGender] = useState('men');
   const [weekendIdentifier, setWeekendIdentifier] = useState('');
   const [teamRoster, setTeamRoster] = useState([]);
-  const [loading, setLoading] = useState(true); // Initial load only
-  const [allPescadores, setAllPescadores] = useState({ men: [], women: [] });
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const [loadingTeam, setLoadingTeam] = useState(false);
+  const [removingId, setRemovingId] = useState(null);
 
-  // Role configuration matching original exactly
   const ROLE_CONFIG = {
     team: [
       { name: 'Rector', key: 'Rector' },
@@ -74,60 +75,23 @@ export default function TeamList() {
     { title: 'Media Team', head: 'Head Media', team: 'Media' }
   ];
 
-  // Load all pescadores data on mount (like fetchDataFromSupabase in original)
+  // ✅ FIXED: Removed AbortController and isMounted - just load data when ready
   useEffect(() => {
-    if (orgId) {
-      console.log('TeamList: Fetching pescadores data for orgId:', orgId);
-      fetchAllPescadores();
-    }
-  }, [orgId]);
-
-  // Load latest team when data is ready AND on gender changes
-  useEffect(() => {
-    console.log('TeamList: dataLoaded =', dataLoaded, 'orgId =', orgId, 'men count =', allPescadores.men.length);
-    if (dataLoaded && orgId && allPescadores[currentGender].length > 0) {
+    if (!pescadoresLoading && orgId && allPescadores[currentGender]?.length > 0) {
       console.log('TeamList: Loading latest team for', currentGender);
       loadLatestTeam();
     }
-  }, [currentGender, dataLoaded, orgId, allPescadores]);
+  }, [currentGender, pescadoresLoading, orgId, allPescadores]);
 
-  const fetchAllPescadores = async () => {
-    setLoading(true); // Show loading on initial data fetch
-    try {
-      console.log('TeamList: Fetching men_raw and women_raw from Supabase...');
-      const { data: menData, error: menError } = await supabase
-        .from('men_raw')
-        .select('*')
-        .eq('org_id', orgId);
-      
-      if (menError) throw menError;
-
-      const { data: womenData, error: womenError } = await supabase
-        .from('women_raw')
-        .select('*')
-        .eq('org_id', orgId);
-      
-      if (womenError) throw womenError;
-
-      console.log('TeamList: Fetched', menData?.length || 0, 'men and', womenData?.length || 0, 'women');
-      setAllPescadores({ men: menData || [], women: womenData || [] });
-      setDataLoaded(true); // Mark data as loaded
-    } catch (error) {
-      console.error('TeamList: Error fetching pescadores:', error);
-      setDataLoaded(true); // Still mark as loaded to show empty state
-    } finally {
-      setLoading(false); // Hide initial loading state
-    }
-  };
-
+  // ✅ FIXED: No abort signals, no isMounted checks
   const loadLatestTeam = async () => {
-    // REMOVED: setLoading(true) - Keep structure visible during gender toggle
     const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
     
     console.log('TeamList: loadLatestTeam for', currentGender, 'from table', rosterTable);
     
+    setLoadingTeam(true);
+    
     try {
-      // Find the latest team identifier
       const { data: teams, error } = await supabase
         .from(rosterTable)
         .select('weekend_identifier')
@@ -159,14 +123,16 @@ export default function TeamList() {
         console.log('TeamList: No team found for', currentGender);
         setWeekendIdentifier('');
         setTeamRoster([]);
+        setLoadingTeam(false);
       }
     } catch (error) {
       console.error('TeamList: Error loading latest team:', error);
       setTeamRoster([]);
+      setLoadingTeam(false);
     }
-    // REMOVED: finally { setLoading(false) }
   };
 
+  // ✅ FIXED: No abort signals, no isMounted checks
   const loadTeamRoster = async (identifier) => {
     const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
     const rawTableData = allPescadores[currentGender];
@@ -198,6 +164,8 @@ export default function TeamList() {
     } catch (error) {
       console.error('Error loading team roster:', error);
       setTeamRoster([]);
+    } finally {
+      setLoadingTeam(false);
     }
   };
 
@@ -206,27 +174,68 @@ export default function TeamList() {
   };
 
   const handleRemoveTeammate = async (personId, role) => {
-    if (!window.confirm(`Remove this member from ${role}?`)) return;
+    window.showConfirm({
+      title: 'Remove Team Member',
+      message: `Are you sure you want to remove this member from ${role}? This action will update the team roster.`,
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      isDangerous: true,
+      onConfirm: async () => {
+        setRemovingId(personId);
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
 
-    const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
+        try {
+          const { error } = await supabase
+            .from(rosterTable)
+            .delete()
+            .eq('weekend_identifier', weekendIdentifier)
+            .eq('pescadore_key', personId)
+            .eq('role', role)
+            .eq('org_id', orgId);
 
-    try {
-      const { error } = await supabase
-        .from(rosterTable)
-        .delete()
-        .eq('weekend_identifier', weekendIdentifier)
-        .eq('pescadore_key', personId)
-        .eq('role', role)
-        .eq('org_id', orgId);
+          if (error) throw error;
 
-      if (error) throw error;
+          window.showMainStatus?.(`Removed from ${role}`, false);
 
-      // Reload roster
-      await loadTeamRoster(weekendIdentifier);
-    } catch (error) {
-      console.error('Error removing teammate:', error);
-      alert(`Failed to remove teammate: ${error.message}`);
-    }
+          if (weekendIdentifier) {
+            const rawTableData = allPescadores[currentGender];
+            const { data, error: fetchError } = await supabase
+              .from(rosterTable)
+              .select('pescadore_key, role')
+              .eq('weekend_identifier', weekendIdentifier)
+              .eq('org_id', orgId);
+
+            if (fetchError) throw fetchError;
+
+            const newRoster = [];
+            if (data) {
+              data.forEach(entry => {
+                const profile = rawTableData.find(p => p.PescadoreKey === entry.pescadore_key);
+                if (profile) {
+                  newRoster.push({
+                    id: profile.PescadoreKey,
+                    name: `${profile.Preferred || profile.First || ''} ${profile.Last || ''}`.trim(),
+                    role: entry.role
+                  });
+                }
+              });
+            }
+            setTeamRoster(newRoster);
+          } else {
+            console.error('No weekendIdentifier available for reload');
+            window.showMainStatus?.('Error: Could not reload roster', true);
+          }
+        } catch (error) {
+          console.error('Error removing teammate:', error);
+          window.showMainStatus?.(`Failed to remove teammate: ${error.message}`, true);
+        } finally {
+          setRemovingId(null);
+        }
+      }
+    });
   };
 
   const renderRectorSection = () => {
@@ -238,8 +247,9 @@ export default function TeamList() {
         <div id="rectorContainer">
           {rector ? (
             <div 
-              className="rector-badge"
-              onClick={() => handleRemoveTeammate(rector.id, 'Rector')}
+              className={`rector-badge ${removingId === rector.id ? 'removing' : ''}`}
+              onClick={() => !removingId && handleRemoveTeammate(rector.id, 'Rector')}
+              style={{ cursor: removingId === rector.id ? 'not-allowed' : 'pointer' }}
             >
               <span className="rector-name">{rector.name}</span>
               <span className="remove-rector-btn">Remove ×</span>
@@ -269,12 +279,11 @@ export default function TeamList() {
           {totalMembers > 0 && <span className="team-header-count-badge">{totalMembers}</span>}
         </div>
         <div className="unified-team-members" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
-          {/* Column 1: Secular Leadership */}
           <div style={{ borderRight: '1px solid #f0f0f0' }}>
             {['Head', 'Asst Head', 'BUR'].map(roleKey => {
               const person = teamRoster.find(m => m.role === roleKey);
               return (
-                <div key={roleKey} className="unified-member-item">
+                <div key={roleKey} className={`unified-member-item ${removingId === person?.id ? 'removing' : ''}`}>
                   <div className="single-role-name">{roleKey}:</div>
                   <div className="single-role-assigned">
                     {person ? (
@@ -283,6 +292,7 @@ export default function TeamList() {
                         <button 
                           className="remove-teammate-btn"
                           onClick={() => handleRemoveTeammate(person.id, roleKey)}
+                          disabled={removingId === person.id}
                         >
                           ×
                         </button>
@@ -296,10 +306,8 @@ export default function TeamList() {
             })}
           </div>
 
-          {/* Column 2: Spiritual Leadership */}
           <div>
-            {/* Head Spiritual Director */}
-            <div className="unified-member-item">
+            <div className={`unified-member-item ${removingId === headSpiritualDirector?.id ? 'removing' : ''}`}>
               <div className="single-role-name">Spiritual Director:</div>
               <div className="single-role-assigned">
                 {headSpiritualDirector ? (
@@ -310,6 +318,7 @@ export default function TeamList() {
                     <button 
                       className="remove-teammate-btn"
                       onClick={() => handleRemoveTeammate(headSpiritualDirector.id, 'Head Spiritual Director')}
+                      disabled={removingId === headSpiritualDirector.id}
                     >
                       ×
                     </button>
@@ -320,11 +329,10 @@ export default function TeamList() {
               </div>
             </div>
 
-            {/* Regular Spiritual Directors (up to 2) */}
             {[0, 1].map(i => {
               const person = regularSDs[i];
               return (
-                <div key={i} className="unified-member-item">
+                <div key={i} className={`unified-member-item ${removingId === person?.id ? 'removing' : ''}`}>
                   <div className="single-role-name">Spiritual Director:</div>
                   <div className="single-role-assigned">
                     {person ? (
@@ -333,6 +341,7 @@ export default function TeamList() {
                         <button 
                           className="remove-teammate-btn"
                           onClick={() => handleRemoveTeammate(person.id, 'Spiritual Director')}
+                          disabled={removingId === person.id}
                         >
                           ×
                         </button>
@@ -367,7 +376,7 @@ export default function TeamList() {
             const displayName = role.name.replace('Professor - ', '');
             
             return (
-              <div key={role.key} className="unified-member-item">
+              <div key={role.key} className={`unified-member-item ${removingId === person?.id ? 'removing' : ''}`}>
                 <div className="single-role-name">{displayName}:</div>
                 <div className="single-role-assigned">
                   {person ? (
@@ -376,6 +385,7 @@ export default function TeamList() {
                       <button 
                         className="remove-teammate-btn"
                         onClick={() => handleRemoveTeammate(person.id, role.key)}
+                        disabled={removingId === person.id}
                       >
                         ×
                       </button>
@@ -404,16 +414,19 @@ export default function TeamList() {
           <span>{group.title}</span>
           {totalMembers > 0 && <span className="team-header-count-badge">{totalMembers}</span>}
         </div>
-        <div className="unified-team-members">
-          {/* Head */}
+        <div className="unified-team-members two-column">
           {headMembers.map(person => (
-            <div key={person.id} className="unified-member-item">
+            <div 
+              key={person.id} 
+              className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
+            >
               <div className="single-role-assigned">
-                <span className="member-role-label head">HEAD</span>
                 <span className="unified-member-name">{person.name}</span>
+                <span className="member-role-label head">HEAD</span>
                 <button 
                   className="remove-teammate-btn"
                   onClick={() => handleRemoveTeammate(person.id, group.head)}
+                  disabled={removingId === person.id}
                 >
                   ×
                 </button>
@@ -421,15 +434,18 @@ export default function TeamList() {
             </div>
           ))}
 
-          {/* Assistant Head */}
           {group.assistantHead && assistantMembers.map(person => (
-            <div key={person.id} className="unified-member-item">
+            <div 
+              key={person.id} 
+              className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
+            >
               <div className="single-role-assigned">
-                <span className="member-role-label asst-head">ASST HEAD</span>
                 <span className="unified-member-name">{person.name}</span>
+                <span className="member-role-label asst-head">ASST HEAD</span>
                 <button 
                   className="remove-teammate-btn"
                   onClick={() => handleRemoveTeammate(person.id, group.assistantHead)}
+                  disabled={removingId === person.id}
                 >
                   ×
                 </button>
@@ -437,14 +453,17 @@ export default function TeamList() {
             </div>
           ))}
 
-          {/* Team Members */}
           {teamMembers.map(person => (
-            <div key={person.id} className="unified-member-item">
+            <div 
+              key={person.id} 
+              className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
+            >
               <div className="single-role-assigned">
                 <span className="unified-member-name">{person.name}</span>
                 <button 
                   className="remove-teammate-btn"
                   onClick={() => handleRemoveTeammate(person.id, group.team)}
+                  disabled={removingId === person.id}
                 >
                   ×
                 </button>
@@ -503,9 +522,9 @@ export default function TeamList() {
 
         <div className="team-content" style={{ flexGrow: 1, padding: '20px 24px', overflowY: 'auto', position: 'relative' }}>
           <div id="teamListGrid">
-            {loading ? (
+            {pescadoresLoading ? (
               <div className="progress-bar-container">
-                <div className="progress-bar-label">Loading Roster...</div>
+                <div className="progress-bar-label">Loading Data...</div>
                 <div className="progress-bar-track">
                   <div className="progress-bar-fill"></div>
                 </div>

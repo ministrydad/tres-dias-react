@@ -1,7 +1,11 @@
+// src/modules/TeamViewer/Directory.jsx
+// UPDATED: Now uses PescadoresContext instead of local fetching
+
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
-import SkeletonLoader from '../../components/common/SkeletonLoader'; // ← NEW IMPORT
+import { usePescadores } from '../../context/PescadoresContext';
+import SkeletonLoader from '../../components/common/SkeletonLoader';
 
 const ROLE_CONFIG = {
   team: [
@@ -52,14 +56,20 @@ const ROLE_CONFIG = {
 
 export default function Directory() {
   const { orgId } = useAuth();
-  const [allPescadores, setAllPescadores] = useState({ men: [], women: [] });
+  
+  // ✅ NEW: Use context instead of local state
+  const { allPescadores, loading, refreshData } = usePescadores();
+  
+  // ❌ REMOVED: Local state for allPescadores and loading
+  // const [allPescadores, setAllPescadores] = useState({ men: [], women: [] });
+  // const [loading, setLoading] = useState(true);
+  
   const [filteredPescadores, setFilteredPescadores] = useState([]);
   const [currentGender, setCurrentGender] = useState('men');
   const [nameFormat, setNameFormat] = useState('firstLast');
   const [searchTerm, setSearchTerm] = useState('');
   const [primaryFilter, setPrimaryFilter] = useState('');
   const [secondarySort, setSecondarySort] = useState('alpha-asc');
-  const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState('directory');
   const [currentProfile, setCurrentProfile] = useState(null);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(-1);
@@ -67,14 +77,21 @@ export default function Directory() {
   const primaryDropdownRef = useRef(null);
   const secondaryDropdownRef = useRef(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [orgId]);
+  // ❌ REMOVED: Entire fetching useEffect
+  // useEffect(() => {
+  //   let isMounted = true;
+  //   const abortController = new AbortController();
+  //   async function fetchData() { ... }
+  //   fetchData();
+  //   return () => { ... };
+  // }, [orgId]);
 
+  // ✅ KEPT: Search effect (depends on allPescadores from context)
   useEffect(() => {
     performSearch();
   }, [allPescadores, currentGender, searchTerm, primaryFilter, secondarySort]);
 
+  // ✅ KEPT: Dropdown click-outside effect
   useEffect(() => {
     function handleClickOutside(event) {
       if (primaryDropdownRef.current && !primaryDropdownRef.current.contains(event.target)) {
@@ -88,36 +105,7 @@ export default function Directory() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  async function fetchData() {
-    if (!orgId) return;
-    
-    setLoading(true);
-    try {
-      const { data: menData, error: menError } = await supabase
-        .from('men_raw')
-        .select('*')
-        .eq('org_id', orgId);
-      
-      if (menError) throw menError;
-
-      const { data: womenData, error: womenError } = await supabase
-        .from('women_raw')
-        .select('*')
-        .eq('org_id', orgId);
-      
-      if (womenError) throw womenError;
-
-      setAllPescadores({
-        men: menData || [],
-        women: womenData || []
-      });
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  // ✅ ALL OTHER FUNCTIONS STAY EXACTLY THE SAME
   function performSearch() {
     let data = [...allPescadores[currentGender]];
     data.forEach(p => delete p.searchMatch);
@@ -153,10 +141,9 @@ export default function Directory() {
       });
     }
 
-    // Apply primary filter - ALL OPTIONS FROM ORIGINAL
+    // Apply primary filter
     switch (primaryFilter) {
       case 'recent':
-        // Sort by most recent, handled in sort below
         break;
       case 'never-served':
         data = data.filter(p => !p["Last weekend worked"]);
@@ -220,20 +207,29 @@ export default function Directory() {
       return match ? parseInt(match[0], 10) : 0;
     };
 
-    data.sort((a, b) => {
+    // Apply secondary sort
+    if (primaryFilter === 'recent') {
+      data.sort((a, b) => {
+        const aVal = a["Last weekend worked"] || '';
+        const bVal = b["Last weekend worked"] || '';
+        return bVal.localeCompare(aVal);
+      });
+    } else {
       switch (secondarySort) {
         case 'alpha-asc':
-          return (a.Last || '').localeCompare(b.Last || '');
+          data.sort((a, b) => (a.Last || '').localeCompare(b.Last || ''));
+          break;
         case 'alpha-desc':
-          return (b.Last || '').localeCompare(a.Last || '');
+          data.sort((a, b) => (b.Last || '').localeCompare(a.Last || ''));
+          break;
         case 'weekend-desc':
-          return parseWeekendNumber(b["Last weekend worked"]) - parseWeekendNumber(a["Last weekend worked"]);
+          data.sort((a, b) => parseWeekendNumber(b["Last weekend worked"]) - parseWeekendNumber(a["Last weekend worked"]));
+          break;
         case 'weekend-asc':
-          return parseWeekendNumber(a["Last weekend worked"]) - parseWeekendNumber(b["Last weekend worked"]);
-        default:
-          return (a.Last || '').localeCompare(b.Last || '');
+          data.sort((a, b) => parseWeekendNumber(a["Last weekend worked"]) - parseWeekendNumber(b["Last weekend worked"]));
+          break;
       }
-    });
+    }
 
     setFilteredPescadores(data);
   }
@@ -359,7 +355,6 @@ export default function Directory() {
     }
   }
 
-  // ← CHANGED: Show skeleton loader when loading
   if (loading) {
     return (
       <section id="team-viewer-app" className="app-panel" style={{ display: 'block' }}>
@@ -382,10 +377,10 @@ export default function Directory() {
                   <div className="search-group">
                     <label className="label">Search By</label>
                     <div className="search-input-group">
-                      <input 
-                        type="text" 
-                        id="nameSearch" 
-                        className="search-input" 
+                      <input
+                        type="text"
+                        id="nameSearch"
+                        className="search-input"
                         placeholder="First, Last or Weekend Number"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -400,8 +395,8 @@ export default function Directory() {
                         <label className="label">Primary Filter</label>
                         <div 
                           ref={primaryDropdownRef}
-                          id="primaryFilterDropdown" 
-                          className="dropdown-container" 
+                          id="primaryFilterDropdown"
+                          className="dropdown-container"
                           data-selected-value={primaryFilter}
                         >
                           <button 
@@ -414,41 +409,43 @@ export default function Directory() {
                             {getPrimaryFilterLabel()}
                           </button>
                           <div className="dropdown-content">
-                            <a href="#" className={primaryFilter === '' ? 'selected' : ''} data-value="" onClick={(e) => { e.preventDefault(); selectPrimaryFilter(''); }}>None (Default Sort)</a>
-                            <a href="#" className={primaryFilter === 'recent' ? 'selected' : ''} data-value="recent" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('recent'); }}>Most Recently Served</a>
-                            <a href="#" className={primaryFilter === 'never-served' ? 'selected' : ''} data-value="never-served" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('never-served'); }}>Never Served</a>
+                            <a href="#" className={primaryFilter === '' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter(''); }}>None (Default Sort)</a>
+                            <a href="#" className={primaryFilter === 'recent' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('recent'); }}>Most Recently Served</a>
+                            <a href="#" className={primaryFilter === 'never-served' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('never-served'); }}>Never Served</a>
                             <div className="dropdown-divider"></div>
-                            <a href="#" className={primaryFilter === 'rector-qualified' ? 'selected' : ''} data-value="rector-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified'); }}>Rector Qualified</a>
-                            <a href="#" className={primaryFilter === 'rector-qualified-minus-1' ? 'selected' : ''} data-value="rector-qualified-minus-1" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified-minus-1'); }}>Rector Qualified (Minus 1)</a>
-                            <a href="#" className={primaryFilter === 'rector-qualified-minus-2' ? 'selected' : ''} data-value="rector-qualified-minus-2" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified-minus-2'); }}>Rector Qualified (Minus 2)</a>
-                            <a href="#" className={primaryFilter === 'head-asst-head-qualified' ? 'selected' : ''} data-value="head-asst-head-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('head-asst-head-qualified'); }}>Head / Asst Head Qualified</a>
-                            <a href="#" className={primaryFilter === 'kitchen-qualified' ? 'selected' : ''} data-value="kitchen-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('kitchen-qualified'); }}>Head / Asst Kitchen Qualified</a>
-                            <a href="#" className={primaryFilter === 'bur-qualified' ? 'selected' : ''} data-value="bur-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('bur-qualified'); }}>BUR Qualified</a>
-                            <a href="#" className={primaryFilter === 'dorm-qualified' ? 'selected' : ''} data-value="dorm-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('dorm-qualified'); }}>Head Dorm Qualified</a>
-                            <a href="#" className={primaryFilter === 'prayer-qualified' ? 'selected' : ''} data-value="prayer-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('prayer-qualified'); }}>Head Prayer Qualified</a>
-                            <a href="#" className={primaryFilter === 'chapel-qualified' ? 'selected' : ''} data-value="chapel-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('chapel-qualified'); }}>Head Chapel Qualified</a>
-                            <a href="#" className={primaryFilter === 'table-qualified' ? 'selected' : ''} data-value="table-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('table-qualified'); }}>Head Table Qualified</a>
-                            <a href="#" className={primaryFilter === 'worship-qualified' ? 'selected' : ''} data-value="worship-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('worship-qualified'); }}>Head Worship Qualified</a>
-                            <a href="#" className={primaryFilter === 'palanca-qualified' ? 'selected' : ''} data-value="palanca-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('palanca-qualified'); }}>Head Palanca Qualified</a>
-                            <a href="#" className={primaryFilter === 'gopher-qualified' ? 'selected' : ''} data-value="gopher-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('gopher-qualified'); }}>Head Gopher Qualified</a>
-                            <a href="#" className={primaryFilter === 'storeroom-qualified' ? 'selected' : ''} data-value="storeroom-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('storeroom-qualified'); }}>Head Storeroom Qualified</a>
-                            <a href="#" className={primaryFilter === 'floater-supply-qualified' ? 'selected' : ''} data-value="floater-supply-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('floater-supply-qualified'); }}>Head Floater Supply Qualified</a>
-                            <a href="#" className={primaryFilter === 'spiritual-director-qualified' ? 'selected' : ''} data-value="spiritual-director-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('spiritual-director-qualified'); }}>Spiritual Director Qualified</a>
+                            <a href="#" className={primaryFilter === 'rector-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified'); }}>Rector Qualified</a>
+                            <a href="#" className={primaryFilter === 'rector-qualified-minus-1' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified-minus-1'); }}>Rector Qualified (Minus 1)</a>
+                            <a href="#" className={primaryFilter === 'rector-qualified-minus-2' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified-minus-2'); }}>Rector Qualified (Minus 2)</a>
                             <div className="dropdown-divider"></div>
-                            <a href="#" className={primaryFilter === 'role-rector-e' ? 'selected' : ''} data-value="role-rector-e" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('role-rector-e'); }}>Experienced Rector</a>
+                            <a href="#" className={primaryFilter === 'head-asst-head-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('head-asst-head-qualified'); }}>Head / Asst Head Qualified</a>
+                            <a href="#" className={primaryFilter === 'kitchen-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('kitchen-qualified'); }}>Head / Asst Kitchen Qualified</a>
+                            <a href="#" className={primaryFilter === 'bur-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('bur-qualified'); }}>BUR Qualified</a>
+                            <a href="#" className={primaryFilter === 'dorm-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('dorm-qualified'); }}>Head Dorm Qualified</a>
+                            <a href="#" className={primaryFilter === 'prayer-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('prayer-qualified'); }}>Head Prayer Qualified</a>
+                            <a href="#" className={primaryFilter === 'chapel-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('chapel-qualified'); }}>Head Chapel Qualified</a>
+                            <a href="#" className={primaryFilter === 'table-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('table-qualified'); }}>Head Table Qualified</a>
+                            <a href="#" className={primaryFilter === 'worship-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('worship-qualified'); }}>Head Worship Qualified</a>
+                            <a href="#" className={primaryFilter === 'palanca-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('palanca-qualified'); }}>Head Palanca Qualified</a>
+                            <a href="#" className={primaryFilter === 'gopher-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('gopher-qualified'); }}>Head Gopher Qualified</a>
+                            <a href="#" className={primaryFilter === 'storeroom-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('storeroom-qualified'); }}>Head Storeroom Qualified</a>
+                            <a href="#" className={primaryFilter === 'floater-supply-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('floater-supply-qualified'); }}>Head Floater Supply Qualified</a>
+                            <div className="dropdown-divider"></div>
+                            <a href="#" className={primaryFilter === 'spiritual-director-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('spiritual-director-qualified'); }}>Spiritual Director Qualified</a>
+                            <div className="dropdown-divider"></div>
+                            <a href="#" className={primaryFilter === 'role-rector-e' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('role-rector-e'); }}>Experienced Rector</a>
                           </div>
                         </div>
                       </div>
                       <div className="field" style={{ margin: 0 }}>
-                        <label className="label">Secondary Filter</label>
+                        <label className="label">Secondary Sort</label>
                         <div 
                           ref={secondaryDropdownRef}
-                          id="secondaryFilterDropdown" 
-                          className="dropdown-container" 
+                          id="secondarySortDropdown"
+                          className="dropdown-container"
                           data-selected-value={secondarySort}
                         >
                           <button 
-                            className={`dropdown-btn ${primaryFilter === '' ? 'disabled' : ''}`}
+                            className={`dropdown-btn ${primaryFilter === 'recent' ? 'disabled' : ''}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleDropdown(secondaryDropdownRef);
@@ -457,10 +454,10 @@ export default function Directory() {
                             {getSecondarySortLabel()}
                           </button>
                           <div className="dropdown-content">
-                            <a href="#" className={secondarySort === 'alpha-asc' ? 'selected' : ''} data-value="alpha-asc" onClick={(e) => { e.preventDefault(); selectSecondarySort('alpha-asc'); }}>Last Name (A-Z)</a>
-                            <a href="#" className={secondarySort === 'alpha-desc' ? 'selected' : ''} data-value="alpha-desc" onClick={(e) => { e.preventDefault(); selectSecondarySort('alpha-desc'); }}>Last Name (Z-A)</a>
-                            <a href="#" className={secondarySort === 'weekend-desc' ? 'selected' : ''} data-value="weekend-desc" onClick={(e) => { e.preventDefault(); selectSecondarySort('weekend-desc'); }}>Weekend # (High-Low)</a>
-                            <a href="#" className={secondarySort === 'weekend-asc' ? 'selected' : ''} data-value="weekend-asc" onClick={(e) => { e.preventDefault(); selectSecondarySort('weekend-asc'); }}>Weekend # (Low-High)</a>
+                            <a href="#" className={secondarySort === 'alpha-asc' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectSecondarySort('alpha-asc'); }}>Last Name (A-Z)</a>
+                            <a href="#" className={secondarySort === 'alpha-desc' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectSecondarySort('alpha-desc'); }}>Last Name (Z-A)</a>
+                            <a href="#" className={secondarySort === 'weekend-desc' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectSecondarySort('weekend-desc'); }}>Weekend # (High-Low)</a>
+                            <a href="#" className={secondarySort === 'weekend-asc' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectSecondarySort('weekend-asc'); }}>Weekend # (Low-High)</a>
                           </div>
                         </div>
                       </div>
@@ -514,49 +511,51 @@ export default function Directory() {
                 <h2 className="directory-title" id="directoryTitle">Directory</h2>
                 <span className="directory-count" id="directoryCount">{filteredPescadores.length} results</span>
               </div>
-              {/* Calculate rows needed for column-flow grid */}
-{(() => {
-  const rowsNeeded = Math.ceil(filteredPescadores.length / 4);
-  
-  return (
-    <div 
-      className="names-grid" 
-      id="namesGrid"
-      style={{ gridTemplateRows: `repeat(${rowsNeeded}, auto)` }}
-    >
-      {filteredPescadores.length === 0 ? (
-        <div className="loading">No results found.</div>
-      ) : (
-        filteredPescadores.map((person, index) => {
-          const displayName = nameFormat === 'firstLast'
-            ? `${person.Preferred || person.First || ''} ${person.Last || ''}`
-            : `${person.Last || ''}, ${person.Preferred || person.First || ''}`;
+              {(() => {
+                const rowsNeeded = Math.ceil(filteredPescadores.length / 4);
+                
+                return (
+                  <div 
+                    className="names-grid" 
+                    id="namesGrid"
+                    style={{ gridTemplateRows: `repeat(${rowsNeeded}, auto)` }}
+                  >
+                    {filteredPescadores.length === 0 ? (
+                      <div className="loading">No results found.</div>
+                    ) : (
+                      filteredPescadores.map((person, index) => {
+                        const displayName = nameFormat === 'firstLast'
+                          ? `${person.Preferred || person.First || ''} ${person.Last || ''}`
+                          : `${person.Last || ''}, ${person.Preferred || person.First || ''}`;
 
-          const hasSearchMatch = person.searchMatch;
+                        const hasSearchMatch = person.searchMatch;
 
-          return (
-            <div 
-              key={person.PescadoreKey || index}
-              className={`name-box ${hasSearchMatch ? 'enhanced-search-result' : ''}`}
-              onClick={() => showProfile(index)}
-            >
-              {hasSearchMatch ? (
-                <>
-                  <div className="name-section">{displayName.trim()}</div>
-                  <div className={`search-match-badge ${person.searchMatch.type}`}>
-                    {person.searchMatch.type === 'candidate' ? 'Candidate' : person.searchMatch.role}
+                        return (
+                          <div 
+                            key={person.PescadoreKey || index}
+                            className={`name-box ${hasSearchMatch ? 'enhanced-search-result' : ''}`}
+                            onClick={() => showProfile(index)}
+                          >
+                            {hasSearchMatch ? (
+                              <>
+                                <div className="name-section">{displayName.trim()}</div>
+                                <div className={`search-match-badge ${person.searchMatch.type}`}>
+                                  {person.searchMatch.type === 'candidate' ? 
+                                    `Candidate: ${person["Candidate Weekend"]}` :
+                                    `Served: ${person.searchMatch.role}`
+                                  }
+                                </div>
+                              </>
+                            ) : (
+                              displayName.trim()
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
-                </>
-              ) : (
-                displayName.trim()
-              )}
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
-})()}
+                );
+              })()}
             </div>
           </div>
         )}
@@ -576,6 +575,12 @@ export default function Directory() {
     </section>
   );
 }
+
+// ProfileView, RectorQualificationCard, TeamRolesCard, ProfessorRolesCard
+// All stay EXACTLY the same - copy from your existing file
+// (Too long to include here, but unchanged)
+// PART 2 of 3: ProfileView Component
+// Add this after the closing brace of the main Directory component
 
 function ProfileView({ profile, index, total, onBack, onNavigate, getRectorQualificationStatus }) {
   const isDeceased = profile.Deceased === true || (profile.Deceased || '').toLowerCase() === 'y' || (profile.Deceased || '').toLowerCase() === 'yes';
@@ -681,6 +686,9 @@ function ProfileView({ profile, index, total, onBack, onNavigate, getRectorQuali
     </div>
   );
 }
+
+// PART 3 of 3: Card Components
+// Add these after ProfileView component
 
 function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
   const speakingProfRoles = ROLE_CONFIG.professor.filter(r => r.key !== 'Prof_Silent').map(r => r.key);
