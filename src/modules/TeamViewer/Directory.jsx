@@ -1,0 +1,843 @@
+import { useState, useEffect, useRef } from 'react';
+import { supabase } from '../../services/supabase';
+import { useAuth } from '../../context/AuthContext';
+import SkeletonLoader from '../../components/common/SkeletonLoader'; // ← NEW IMPORT
+
+const ROLE_CONFIG = {
+  team: [
+    { name: 'Rector', key: 'Rector' },
+    { name: 'BUR', key: 'BUR' },
+    { name: 'Rover', key: 'Rover' },
+    { name: 'Head', key: 'Head' },
+    { name: 'Asst Head', key: 'Asst Head' },
+    { name: 'Head Spiritual Director', key: 'Head Spiritual Director' },
+    { name: 'Spiritual Director', key: 'Spiritual Director' },
+    { name: 'Head Prayer', key: 'Head Prayer' },
+    { name: 'Prayer', key: 'Prayer' },
+    { name: 'Head Kitchen', key: 'Head Kitchen' },
+    { name: 'Asst Head Kitchen', key: 'Asst Head Kitchen' },
+    { name: 'Kitchen', key: 'Kitchen' },
+    { name: 'Head Table', key: 'Head Table' },
+    { name: 'Table', key: 'Table' },
+    { name: 'Head Chapel', key: 'Head Chapel' },
+    { name: 'Chapel', key: 'Chapel' },
+    { name: 'Head Dorm', key: 'Head Dorm' },
+    { name: 'Dorm', key: 'Dorm' },
+    { name: 'Head Palanca', key: 'Head Palanca' },
+    { name: 'Palanca', key: 'Palanca' },
+    { name: 'Head Gopher', key: 'Head Gopher' },
+    { name: 'Gopher', key: 'Gopher' },
+    { name: 'Head Storeroom', key: 'Head Storeroom' },
+    { name: 'Storeroom', key: 'Storeroom' },
+    { name: 'Head Floater Supply', key: 'Head Floater Supply' },
+    { name: 'Floater Supply', key: 'Floater Supply' },
+    { name: 'Head Worship', key: 'Head Worship' },
+    { name: 'Worship', key: 'Worship' },
+    { name: 'Head Media', key: 'Head Media' },
+    { name: 'Media', key: 'Media' }
+  ],
+  professor: [
+    { name: 'Silent', key: 'Prof_Silent' },
+    { name: 'Ideals', key: 'Prof_Ideals' },
+    { name: 'Church', key: 'Prof_Church' },
+    { name: 'Piety', key: 'Prof_Piety' },
+    { name: 'Study', key: 'Prof_Study' },
+    { name: 'Action', key: 'Prof_Action' },
+    { name: 'Leaders', key: 'Prof_Leaders' },
+    { name: 'Environments', key: 'Prof_Environments' },
+    { name: 'CCIA', key: 'Prof_CCIA' },
+    { name: 'Reunion', key: 'Prof_Reunion' }
+  ]
+};
+
+export default function Directory() {
+  const { orgId } = useAuth();
+  const [allPescadores, setAllPescadores] = useState({ men: [], women: [] });
+  const [filteredPescadores, setFilteredPescadores] = useState([]);
+  const [currentGender, setCurrentGender] = useState('men');
+  const [nameFormat, setNameFormat] = useState('firstLast');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [primaryFilter, setPrimaryFilter] = useState('');
+  const [secondarySort, setSecondarySort] = useState('alpha-asc');
+  const [loading, setLoading] = useState(true);
+  const [currentView, setCurrentView] = useState('directory');
+  const [currentProfile, setCurrentProfile] = useState(null);
+  const [currentProfileIndex, setCurrentProfileIndex] = useState(-1);
+
+  const primaryDropdownRef = useRef(null);
+  const secondaryDropdownRef = useRef(null);
+
+  useEffect(() => {
+    fetchData();
+  }, [orgId]);
+
+  useEffect(() => {
+    performSearch();
+  }, [allPescadores, currentGender, searchTerm, primaryFilter, secondarySort]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (primaryDropdownRef.current && !primaryDropdownRef.current.contains(event.target)) {
+        primaryDropdownRef.current.classList.remove('open');
+      }
+      if (secondaryDropdownRef.current && !secondaryDropdownRef.current.contains(event.target)) {
+        secondaryDropdownRef.current.classList.remove('open');
+      }
+    }
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  async function fetchData() {
+    if (!orgId) return;
+    
+    setLoading(true);
+    try {
+      const { data: menData, error: menError } = await supabase
+        .from('men_raw')
+        .select('*')
+        .eq('org_id', orgId);
+      
+      if (menError) throw menError;
+
+      const { data: womenData, error: womenError } = await supabase
+        .from('women_raw')
+        .select('*')
+        .eq('org_id', orgId);
+      
+      if (womenError) throw womenError;
+
+      setAllPescadores({
+        men: menData || [],
+        women: womenData || []
+      });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function performSearch() {
+    let data = [...allPescadores[currentGender]];
+    data.forEach(p => delete p.searchMatch);
+
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const serviceKeys = [
+        ...ROLE_CONFIG.team.map(r => ({ dbKey: `${r.key} Service`, displayName: r.name })),
+        ...ROLE_CONFIG.professor.map(r => ({ dbKey: `${r.key} Service`, displayName: r.name }))
+      ];
+
+      data = data.filter(p => {
+        const searchableName = `${p.First || ''} ${p.Last || ''} ${p.Preferred || ''}`.toLowerCase();
+        if (searchableName.includes(searchLower)) {
+          return true;
+        }
+
+        const candidateWeekend = (p["Candidate Weekend"] || '').toString().toLowerCase();
+        if (candidateWeekend.includes(searchLower)) {
+          p.searchMatch = { type: 'candidate' };
+          return true;
+        }
+
+        for (const role of serviceKeys) {
+          const serviceValue = (p[role.dbKey] || '').toString().toLowerCase();
+          if (serviceValue.includes(searchLower)) {
+            p.searchMatch = { type: 'service', role: role.displayName };
+            return true;
+          }
+        }
+
+        return false;
+      });
+    }
+
+    // Apply primary filter - ALL OPTIONS FROM ORIGINAL
+    switch (primaryFilter) {
+      case 'recent':
+        // Sort by most recent, handled in sort below
+        break;
+      case 'never-served':
+        data = data.filter(p => !p["Last weekend worked"]);
+        break;
+      case 'rector-qualified':
+        data = data.filter(p => getRectorQualificationStatus(p) === 4);
+        break;
+      case 'rector-qualified-minus-1':
+        data = data.filter(p => getRectorQualificationStatus(p) === 3);
+        break;
+      case 'rector-qualified-minus-2':
+        data = data.filter(p => getRectorQualificationStatus(p) === 2);
+        break;
+      case 'head-asst-head-qualified':
+        data = data.filter(p => p['Head'] === 'E' || p['Asst Head'] === 'E');
+        break;
+      case 'kitchen-qualified':
+        data = data.filter(p => p['Head Kitchen'] === 'E' || p['Asst Head Kitchen'] === 'E');
+        break;
+      case 'bur-qualified':
+        data = data.filter(p => p['BUR'] === 'E');
+        break;
+      case 'dorm-qualified':
+        data = data.filter(p => p['Head Dorm'] === 'E');
+        break;
+      case 'prayer-qualified':
+        data = data.filter(p => p['Head Prayer'] === 'E');
+        break;
+      case 'chapel-qualified':
+        data = data.filter(p => p['Head Chapel'] === 'E');
+        break;
+      case 'table-qualified':
+        data = data.filter(p => p['Head Table'] === 'E');
+        break;
+      case 'worship-qualified':
+        data = data.filter(p => p['Head Worship'] === 'E');
+        break;
+      case 'palanca-qualified':
+        data = data.filter(p => p['Head Palanca'] === 'E');
+        break;
+      case 'gopher-qualified':
+        data = data.filter(p => p['Head Gopher'] === 'E');
+        break;
+      case 'storeroom-qualified':
+        data = data.filter(p => p['Head Storeroom'] === 'E');
+        break;
+      case 'floater-supply-qualified':
+        data = data.filter(p => p['Head Floater Supply'] === 'E');
+        break;
+      case 'spiritual-director-qualified':
+        data = data.filter(p => p['Spiritual Director'] === 'E');
+        break;
+      case 'role-rector-e':
+        data = data.filter(p => p['Rector'] === 'E');
+        break;
+    }
+
+    const parseWeekendNumber = (str) => {
+      if (!str) return 0;
+      const match = str.match(/\d+$/);
+      return match ? parseInt(match[0], 10) : 0;
+    };
+
+    data.sort((a, b) => {
+      switch (secondarySort) {
+        case 'alpha-asc':
+          return (a.Last || '').localeCompare(b.Last || '');
+        case 'alpha-desc':
+          return (b.Last || '').localeCompare(a.Last || '');
+        case 'weekend-desc':
+          return parseWeekendNumber(b["Last weekend worked"]) - parseWeekendNumber(a["Last weekend worked"]);
+        case 'weekend-asc':
+          return parseWeekendNumber(a["Last weekend worked"]) - parseWeekendNumber(b["Last weekend worked"]);
+        default:
+          return (a.Last || '').localeCompare(b.Last || '');
+      }
+    });
+
+    setFilteredPescadores(data);
+  }
+
+  function getRectorQualificationStatus(person) {
+    const speakingProfRoles = ROLE_CONFIG.professor.filter(r => r.key !== 'Prof_Silent').map(r => r.key);
+    const allTeamRoles = ROLE_CONFIG.team.map(r => r.key);
+    
+    const hasHeadRole = (person['Head'] === 'E' || person['Asst Head'] === 'E');
+    const hasKitchenHeadRole = (person['Head Kitchen'] === 'E' || person['Asst Head Kitchen'] === 'E');
+    
+    const experiencedProfRoles = ROLE_CONFIG.professor.map(r => r.key).filter(role => person[role] === 'E');
+    const hasTwoProfRoles = experiencedProfRoles.length >= 2;
+    const hasOneSpeakingRole = experiencedProfRoles.some(role => speakingProfRoles.includes(role));
+    const hasProfRequirement = hasTwoProfRoles && hasOneSpeakingRole;
+    
+    const experiencedChaRoles = allTeamRoles.filter(role => person[role] === 'E');
+    const hasTwoChaRoles = experiencedChaRoles.length >= 2;
+    const hasCoreChaRole = experiencedChaRoles.some(role => ['Palanca', 'Chapel', 'Gopher'].includes(role));
+    const hasChaRequirement = hasTwoChaRoles && hasCoreChaRole;
+
+    let count = 0;
+    if (hasHeadRole) count++;
+    if (hasKitchenHeadRole) count++;
+    if (hasProfRequirement) count++;
+    if (hasChaRequirement) count++;
+    return count;
+  }
+
+  function handleSearch() {
+    performSearch();
+  }
+
+  function handleClear() {
+    setSearchTerm('');
+    setPrimaryFilter('');
+    setSecondarySort('alpha-asc');
+  }
+
+  function showProfile(index) {
+    setCurrentProfileIndex(index);
+    setCurrentProfile(filteredPescadores[index]);
+    setCurrentView('profile');
+  }
+
+  function showDirectory() {
+    setCurrentView('directory');
+    setCurrentProfile(null);
+    setCurrentProfileIndex(-1);
+  }
+
+  function navigateProfile(direction) {
+    const newIndex = currentProfileIndex + direction;
+    if (newIndex >= 0 && newIndex < filteredPescadores.length) {
+      setCurrentProfileIndex(newIndex);
+      setCurrentProfile(filteredPescadores[newIndex]);
+    }
+  }
+
+  function toggleDropdown(ref) {
+    const dropdown = ref.current;
+    if (!dropdown) return;
+    
+    const btn = dropdown.querySelector('.dropdown-btn');
+    if (btn && btn.classList.contains('disabled')) return;
+
+    if (ref === primaryDropdownRef && secondaryDropdownRef.current) {
+      secondaryDropdownRef.current.classList.remove('open');
+    } else if (ref === secondaryDropdownRef && primaryDropdownRef.current) {
+      primaryDropdownRef.current.classList.remove('open');
+    }
+
+    dropdown.classList.toggle('open');
+  }
+
+  function selectPrimaryFilter(value) {
+    setPrimaryFilter(value);
+    if (primaryDropdownRef.current) {
+      primaryDropdownRef.current.classList.remove('open');
+    }
+  }
+
+  function selectSecondarySort(value) {
+    setSecondarySort(value);
+    if (secondaryDropdownRef.current) {
+      secondaryDropdownRef.current.classList.remove('open');
+    }
+  }
+
+  function getPrimaryFilterLabel() {
+    const labels = {
+      '': 'None (Default Sort)',
+      'recent': 'Most Recently Served',
+      'never-served': 'Never Served',
+      'rector-qualified': 'Rector Qualified',
+      'rector-qualified-minus-1': 'Rector Qualified (Minus 1)',
+      'rector-qualified-minus-2': 'Rector Qualified (Minus 2)',
+      'head-asst-head-qualified': 'Head / Asst Head Qualified',
+      'kitchen-qualified': 'Head / Asst Kitchen Qualified',
+      'bur-qualified': 'BUR Qualified',
+      'dorm-qualified': 'Head Dorm Qualified',
+      'prayer-qualified': 'Head Prayer Qualified',
+      'chapel-qualified': 'Head Chapel Qualified',
+      'table-qualified': 'Head Table Qualified',
+      'worship-qualified': 'Head Worship Qualified',
+      'palanca-qualified': 'Head Palanca Qualified',
+      'gopher-qualified': 'Head Gopher Qualified',
+      'storeroom-qualified': 'Head Storeroom Qualified',
+      'floater-supply-qualified': 'Head Floater Supply Qualified',
+      'spiritual-director-qualified': 'Spiritual Director Qualified',
+      'role-rector-e': 'Experienced Rector'
+    };
+    return labels[primaryFilter] || 'Select Primary Filter...';
+  }
+
+  function getSecondarySortLabel() {
+    switch (secondarySort) {
+      case 'alpha-asc': return 'Last Name (A-Z)';
+      case 'alpha-desc': return 'Last Name (Z-A)';
+      case 'weekend-desc': return 'Weekend # (High-Low)';
+      case 'weekend-asc': return 'Weekend # (Low-High)';
+      default: return 'Select Sort Order...';
+    }
+  }
+
+  // ← CHANGED: Show skeleton loader when loading
+  if (loading) {
+    return (
+      <section id="team-viewer-app" className="app-panel" style={{ display: 'block' }}>
+        <div className="container">
+          <SkeletonLoader />
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section id="team-viewer-app" className="app-panel" style={{ display: 'block' }}>
+      <div className="container">
+        
+        {currentView === 'directory' && (
+          <div id="directoryView" className="directory-container">
+            <div className="card pad">
+              <div className="controls-main-grid">
+                <div className="controls-left-panel">
+                  <div className="search-group">
+                    <label className="label">Search By</label>
+                    <div className="search-input-group">
+                      <input 
+                        type="text" 
+                        id="nameSearch" 
+                        className="search-input" 
+                        placeholder="First, Last or Weekend Number"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                      />
+                      <button className="search-button" onClick={handleSearch}>Search</button>
+                    </div>
+                  </div>
+                  <div className="search-group">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div className="field" style={{ margin: 0 }}>
+                        <label className="label">Primary Filter</label>
+                        <div 
+                          ref={primaryDropdownRef}
+                          id="primaryFilterDropdown" 
+                          className="dropdown-container" 
+                          data-selected-value={primaryFilter}
+                        >
+                          <button 
+                            className="dropdown-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleDropdown(primaryDropdownRef);
+                            }}
+                          >
+                            {getPrimaryFilterLabel()}
+                          </button>
+                          <div className="dropdown-content">
+                            <a href="#" className={primaryFilter === '' ? 'selected' : ''} data-value="" onClick={(e) => { e.preventDefault(); selectPrimaryFilter(''); }}>None (Default Sort)</a>
+                            <a href="#" className={primaryFilter === 'recent' ? 'selected' : ''} data-value="recent" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('recent'); }}>Most Recently Served</a>
+                            <a href="#" className={primaryFilter === 'never-served' ? 'selected' : ''} data-value="never-served" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('never-served'); }}>Never Served</a>
+                            <div className="dropdown-divider"></div>
+                            <a href="#" className={primaryFilter === 'rector-qualified' ? 'selected' : ''} data-value="rector-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified'); }}>Rector Qualified</a>
+                            <a href="#" className={primaryFilter === 'rector-qualified-minus-1' ? 'selected' : ''} data-value="rector-qualified-minus-1" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified-minus-1'); }}>Rector Qualified (Minus 1)</a>
+                            <a href="#" className={primaryFilter === 'rector-qualified-minus-2' ? 'selected' : ''} data-value="rector-qualified-minus-2" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified-minus-2'); }}>Rector Qualified (Minus 2)</a>
+                            <a href="#" className={primaryFilter === 'head-asst-head-qualified' ? 'selected' : ''} data-value="head-asst-head-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('head-asst-head-qualified'); }}>Head / Asst Head Qualified</a>
+                            <a href="#" className={primaryFilter === 'kitchen-qualified' ? 'selected' : ''} data-value="kitchen-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('kitchen-qualified'); }}>Head / Asst Kitchen Qualified</a>
+                            <a href="#" className={primaryFilter === 'bur-qualified' ? 'selected' : ''} data-value="bur-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('bur-qualified'); }}>BUR Qualified</a>
+                            <a href="#" className={primaryFilter === 'dorm-qualified' ? 'selected' : ''} data-value="dorm-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('dorm-qualified'); }}>Head Dorm Qualified</a>
+                            <a href="#" className={primaryFilter === 'prayer-qualified' ? 'selected' : ''} data-value="prayer-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('prayer-qualified'); }}>Head Prayer Qualified</a>
+                            <a href="#" className={primaryFilter === 'chapel-qualified' ? 'selected' : ''} data-value="chapel-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('chapel-qualified'); }}>Head Chapel Qualified</a>
+                            <a href="#" className={primaryFilter === 'table-qualified' ? 'selected' : ''} data-value="table-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('table-qualified'); }}>Head Table Qualified</a>
+                            <a href="#" className={primaryFilter === 'worship-qualified' ? 'selected' : ''} data-value="worship-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('worship-qualified'); }}>Head Worship Qualified</a>
+                            <a href="#" className={primaryFilter === 'palanca-qualified' ? 'selected' : ''} data-value="palanca-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('palanca-qualified'); }}>Head Palanca Qualified</a>
+                            <a href="#" className={primaryFilter === 'gopher-qualified' ? 'selected' : ''} data-value="gopher-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('gopher-qualified'); }}>Head Gopher Qualified</a>
+                            <a href="#" className={primaryFilter === 'storeroom-qualified' ? 'selected' : ''} data-value="storeroom-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('storeroom-qualified'); }}>Head Storeroom Qualified</a>
+                            <a href="#" className={primaryFilter === 'floater-supply-qualified' ? 'selected' : ''} data-value="floater-supply-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('floater-supply-qualified'); }}>Head Floater Supply Qualified</a>
+                            <a href="#" className={primaryFilter === 'spiritual-director-qualified' ? 'selected' : ''} data-value="spiritual-director-qualified" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('spiritual-director-qualified'); }}>Spiritual Director Qualified</a>
+                            <div className="dropdown-divider"></div>
+                            <a href="#" className={primaryFilter === 'role-rector-e' ? 'selected' : ''} data-value="role-rector-e" onClick={(e) => { e.preventDefault(); selectPrimaryFilter('role-rector-e'); }}>Experienced Rector</a>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="field" style={{ margin: 0 }}>
+                        <label className="label">Secondary Filter</label>
+                        <div 
+                          ref={secondaryDropdownRef}
+                          id="secondaryFilterDropdown" 
+                          className="dropdown-container" 
+                          data-selected-value={secondarySort}
+                        >
+                          <button 
+                            className={`dropdown-btn ${primaryFilter === '' ? 'disabled' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleDropdown(secondaryDropdownRef);
+                            }}
+                          >
+                            {getSecondarySortLabel()}
+                          </button>
+                          <div className="dropdown-content">
+                            <a href="#" className={secondarySort === 'alpha-asc' ? 'selected' : ''} data-value="alpha-asc" onClick={(e) => { e.preventDefault(); selectSecondarySort('alpha-asc'); }}>Last Name (A-Z)</a>
+                            <a href="#" className={secondarySort === 'alpha-desc' ? 'selected' : ''} data-value="alpha-desc" onClick={(e) => { e.preventDefault(); selectSecondarySort('alpha-desc'); }}>Last Name (Z-A)</a>
+                            <a href="#" className={secondarySort === 'weekend-desc' ? 'selected' : ''} data-value="weekend-desc" onClick={(e) => { e.preventDefault(); selectSecondarySort('weekend-desc'); }}>Weekend # (High-Low)</a>
+                            <a href="#" className={secondarySort === 'weekend-asc' ? 'selected' : ''} data-value="weekend-asc" onClick={(e) => { e.preventDefault(); selectSecondarySort('weekend-asc'); }}>Weekend # (Low-High)</a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="controls-right-panel">
+                  <label className="label">Select Team</label>
+                  <div className="toggle-inset-container" id="genderToggleContainer">
+                    <div 
+                      className={`toggle-inset-option ${currentGender === 'men' ? 'active' : ''}`}
+                      onClick={() => setCurrentGender('men')}
+                    >
+                      Men
+                    </div>
+                    <div 
+                      className={`toggle-inset-option ${currentGender === 'women' ? 'active' : ''}`}
+                      onClick={() => setCurrentGender('women')}
+                    >
+                      Women
+                    </div>
+                  </div>
+                  <label className="label">Display Options</label>
+                  <div className="toggle-inset-container" id="nameFormatToggle">
+                    <div 
+                      className={`toggle-inset-option ${nameFormat === 'firstLast' ? 'active' : ''}`}
+                      onClick={() => setNameFormat('firstLast')}
+                    >
+                      First / Last
+                    </div>
+                    <div 
+                      className={`toggle-inset-option ${nameFormat === 'lastFirst' ? 'active' : ''}`}
+                      onClick={() => setNameFormat('lastFirst')}
+                    >
+                      Last / First
+                    </div>
+                  </div>
+                  <div className="utility-buttons">
+                    <button className="clear-button" onClick={handleClear}>Clear</button>
+                    <button className="print-button">Print Report</button>
+                    <button className="view-team-button" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      Manage Latest Weekend
+                      <span className="team-count-badge" id="teamCountBadgeProfile" style={{ display: 'none' }}>0</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="card pad">
+              <div className="directory-header">
+                <h2 className="directory-title" id="directoryTitle">Directory</h2>
+                <span className="directory-count" id="directoryCount">{filteredPescadores.length} results</span>
+              </div>
+              {/* Calculate rows needed for column-flow grid */}
+{(() => {
+  const rowsNeeded = Math.ceil(filteredPescadores.length / 4);
+  
+  return (
+    <div 
+      className="names-grid" 
+      id="namesGrid"
+      style={{ gridTemplateRows: `repeat(${rowsNeeded}, auto)` }}
+    >
+      {filteredPescadores.length === 0 ? (
+        <div className="loading">No results found.</div>
+      ) : (
+        filteredPescadores.map((person, index) => {
+          const displayName = nameFormat === 'firstLast'
+            ? `${person.Preferred || person.First || ''} ${person.Last || ''}`
+            : `${person.Last || ''}, ${person.Preferred || person.First || ''}`;
+
+          const hasSearchMatch = person.searchMatch;
+
+          return (
+            <div 
+              key={person.PescadoreKey || index}
+              className={`name-box ${hasSearchMatch ? 'enhanced-search-result' : ''}`}
+              onClick={() => showProfile(index)}
+            >
+              {hasSearchMatch ? (
+                <>
+                  <div className="name-section">{displayName.trim()}</div>
+                  <div className={`search-match-badge ${person.searchMatch.type}`}>
+                    {person.searchMatch.type === 'candidate' ? 'Candidate' : person.searchMatch.role}
+                  </div>
+                </>
+              ) : (
+                displayName.trim()
+              )}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+})()}
+            </div>
+          </div>
+        )}
+
+        {currentView === 'profile' && currentProfile && (
+          <ProfileView 
+            profile={currentProfile}
+            index={currentProfileIndex}
+            total={filteredPescadores.length}
+            onBack={showDirectory}
+            onNavigate={navigateProfile}
+            getRectorQualificationStatus={getRectorQualificationStatus}
+          />
+        )}
+
+      </div>
+    </section>
+  );
+}
+
+function ProfileView({ profile, index, total, onBack, onNavigate, getRectorQualificationStatus }) {
+  const isDeceased = profile.Deceased === true || (profile.Deceased || '').toLowerCase() === 'y' || (profile.Deceased || '').toLowerCase() === 'yes';
+  const isDoNotCall = profile.Do_Not_Call === true || (profile.Do_Not_Call || '').toLowerCase() === 'y' || (profile.Do_Not_Call || '').toLowerCase() === 'yes';
+  const isSpiritualDirector = (profile['Spiritual Director'] || 'N').toUpperCase() === 'E';
+
+  let statusClasses = '';
+  if (isSpiritualDirector) statusClasses += ' is-spiritual-director';
+  if (isDeceased) statusClasses += ' deceased';
+  else if (isDoNotCall) statusClasses += ' do-not-call';
+
+  const fullName = `${profile.Preferred || profile.First || ''} ${profile.Last || ''}`.trim();
+  const legalName = profile.First !== profile.Preferred && profile.Preferred ? profile.First : null;
+
+  return (
+    <div id="profileView" className="profile-view">
+      <div className="navigation">
+        <button className="back-button" onClick={onBack}>← Back to Directory</button>
+        <div className="nav-controls">
+          <button 
+            id="prevButton" 
+            className="nav-button" 
+            onClick={() => onNavigate(-1)}
+            disabled={index === 0}
+          >
+            Previous
+          </button>
+          <span id="profileCounter" className="profile-counter">
+            {index + 1} of {total}
+          </span>
+          <button 
+            id="nextButton" 
+            className="nav-button" 
+            onClick={() => onNavigate(1)}
+            disabled={index === total - 1}
+          >
+            Next
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="print-button">Print Profile</button>
+          <button className="view-team-button">Add to Team</button>
+        </div>
+      </div>
+
+      <div id="profileContainer" className="profile-container">
+        <div className={`card pad profile-main-info${statusClasses}`}>
+          <div className="profile-header">
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+              <h2 className="profile-name">{fullName}</h2>
+              {legalName && (
+                <span className="legal-name-badge">Legal: {legalName}</span>
+              )}
+              {(profile["Candidate Weekend"] || profile["Last weekend worked"]) && (
+                <span className="name-separator"></span>
+              )}
+              {profile["Candidate Weekend"] && (
+                <span className="profile-weekend-info">
+                  Candidate: <span className="last-served-highlight">{profile["Candidate Weekend"]}</span>
+                </span>
+              )}
+              {profile["Last weekend worked"] && (
+                <span className="profile-weekend-info">
+                  Last Served: <span className="last-served-highlight">{profile["Last weekend worked"]}</span>
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="main-info-item">
+            <span className="main-info-label">Address:</span>
+            <span className="main-info-value">
+              {profile.Address || ''}, {profile.City || ''}, {profile.State || ''} {profile.Zip || ''}
+            </span>
+          </div>
+          <div className="main-info-item">
+            <span className="main-info-label">Church:</span>
+            <span className="main-info-value">{profile.Church || 'N/A'}</span>
+          </div>
+          <div className="main-info-item">
+            <span className="main-info-label">Email:</span>
+            <span className="main-info-value">{profile.Email || 'N/A'}</span>
+          </div>
+          <div className="main-info-item">
+            <span className="main-info-label">Phone:</span>
+            <span className="main-info-value">{profile.Phone1 || 'N/A'}</span>
+          </div>
+        </div>
+
+        <RectorQualificationCard profile={profile} getRectorQualificationStatus={getRectorQualificationStatus} />
+        <TeamRolesCard profile={profile} />
+        <ProfessorRolesCard profile={profile} />
+      </div>
+
+      <div className="refresh-section" style={{ marginTop: '16px' }}>
+        <div className="button-group">
+          <button id="refreshButton" className="refresh-button">Refresh Data</button>
+          <button id="editButton" className="edit-button">Edit Profile</button>
+        </div>
+        <div id="lastUpdated" className="last-updated" style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+          Data last refreshed: {new Date().toLocaleString()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
+  const speakingProfRoles = ROLE_CONFIG.professor.filter(r => r.key !== 'Prof_Silent').map(r => r.key);
+  const allTeamRoles = ROLE_CONFIG.team.map(r => r.key);
+  
+  const hasHeadRole = (profile['Head'] === 'E' || profile['Asst Head'] === 'E');
+  const hasKitchenHeadRole = (profile['Head Kitchen'] === 'E' || profile['Asst Head Kitchen'] === 'E');
+  
+  const experiencedProfRoles = ROLE_CONFIG.professor.map(r => r.key).filter(role => profile[role] === 'E');
+  const hasTwoProfRoles = experiencedProfRoles.length >= 2;
+  const hasOneSpeakingRole = experiencedProfRoles.some(role => speakingProfRoles.includes(role));
+  const hasProfRequirement = hasTwoProfRoles && hasOneSpeakingRole;
+  
+  const experiencedChaRoles = allTeamRoles.filter(role => profile[role] === 'E');
+  const hasTwoChaRoles = experiencedChaRoles.length >= 2;
+  const hasCoreChaRole = experiencedChaRoles.some(role => ['Palanca', 'Chapel', 'Gopher'].includes(role));
+  const hasChaRequirement = hasTwoChaRoles && hasCoreChaRole;
+
+  return (
+    <div className="card pad">
+      <div className="roles-section">
+        <div className="roles-title" style={{ marginBottom: '12px' }}>Rector Qualification</div>
+        <div className="rector-qualification-grid">
+          <div className="qualification-labels">
+            <div className="qualification-label">Head / Asst Head</div>
+            <div className="qualification-label">Head / Asst Kitchen</div>
+            <div className="qualification-label">2 Prof Roles (1 Speaking)</div>
+            <div className="qualification-label">2 Cha Roles (1 Timed)</div>
+          </div>
+          <div className="segmented-bar-container">
+            <div className={`bar-segment ${hasHeadRole ? 'pass' : 'fail'}`}></div>
+            <div className={`bar-segment ${hasKitchenHeadRole ? 'pass' : 'fail'}`}></div>
+            <div className={`bar-segment ${hasProfRequirement ? 'pass' : 'fail'}`}></div>
+            <div className={`bar-segment ${hasChaRequirement ? 'pass' : 'fail'}`}></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TeamRolesCard({ profile }) {
+  const createRoleItem = (role) => {
+    const status = (profile[role.key] || 'N').toUpperCase();
+    const serviceNumber = profile[`${role.key} Service`] || '';
+    const quantityNumber = profile[`${role.key.replace(/ /g, '_')}_Service_Qty`] || '';
+
+    return (
+      <div key={role.key} className="role-item">
+        <div className="role-name">{role.name}</div>
+        <div className="role-status-cell">
+          <span className={`role-status status-${status}`}>{status}</span>
+        </div>
+        <div className="role-last-cell">
+          <span className="service-number">{serviceNumber}</span>
+        </div>
+        <div className="role-qty-cell">
+          <span className="quantity-number">{quantityNumber}</span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="card pad">
+      <div className="roles-section">
+        <div className="roles-header-container">
+          <div className="roles-title">Team Roles</div>
+          <div className="legend">
+            <div className="legend-item">
+              <div className="legend-color status-N"></div>
+              <span>Never</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-color status-I"></div>
+              <span>Inexp.</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-color status-E"></div>
+              <span>Exp.</span>
+            </div>
+          </div>
+        </div>
+        <div className="role-header-legend team-headers">
+          {Array(3).fill(0).map((_, i) => (
+            <div key={i} className="role-header-set">
+              <div className="role-header-name">Role</div>
+              <div className="role-header-status">Status</div>
+              <div className="role-header-last">Last</div>
+              <div className="role-header-qty">Qty</div>
+            </div>
+          ))}
+        </div>
+        <div className="role-grid team-grid">
+          {ROLE_CONFIG.team.map(role => createRoleItem(role))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfessorRolesCard({ profile }) {
+  const createRoleItem = (role) => {
+    const status = (profile[role.key] || 'N').toUpperCase();
+    const serviceNumber = profile[`${role.key} Service`] || '';
+    const quantityNumber = profile[`${role.key}_Service_Qty`] || '';
+
+    return (
+      <div key={role.key} className="role-item">
+        <div className="role-name">{role.name}</div>
+        <div className="role-status-cell">
+          <span className={`role-status status-${status}`}>{status}</span>
+        </div>
+        <div className="role-last-cell">
+          <span className="service-number">{serviceNumber}</span>
+        </div>
+        <div className="role-qty-cell">
+          <span className="quantity-number">{quantityNumber}</span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="card pad">
+      <div className="roles-section">
+        <div className="roles-header-container">
+          <div className="roles-title">Professor Roles</div>
+          <div className="legend">
+            <div className="legend-item">
+              <div className="legend-color status-N"></div>
+              <span>Never</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-color status-I"></div>
+              <span>Inexp.</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-color status-E"></div>
+              <span>Exp.</span>
+            </div>
+          </div>
+        </div>
+        <div className="role-header-legend professor-headers">
+          {Array(2).fill(0).map((_, i) => (
+            <div key={i} className="role-header-set">
+              <div className="role-header-name">Role</div>
+              <div className="role-header-status">Status</div>
+              <div className="role-header-last">Last</div>
+              <div className="role-header-qty">Qty</div>
+            </div>
+          ))}
+        </div>
+        <div className="role-grid professor-grid">
+          {ROLE_CONFIG.professor.map(role => createRoleItem(role))}
+        </div>
+      </div>
+    </div>
+  );
+}
