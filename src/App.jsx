@@ -17,29 +17,12 @@ import EmailReports from './modules/CRA/EmailReports';
 import CheckIn from './modules/TeamMeetings/CheckIn';
 import MCIReports from './modules/TeamMeetings/Reports';
 import Budget from './modules/TeamMeetings/Budget';
+import { MainStatusBar } from './components/common/StatusBar';
 import './styles/globals.css';
 
 function Dashboard() {
   const { user, orgId, permissions } = useAuth();
   const [currentView, setCurrentView] = useState('directory');
-  const [statusMessage, setStatusMessage] = useState('');
-  const [statusError, setStatusError] = useState(false);
-  const [statusVisible, setStatusVisible] = useState(false);
-
-  // Set up global showMainStatus function
-  useEffect(() => {
-    window.showMainStatus = (message, isError = false) => {
-      setStatusMessage(message);
-      setStatusError(isError);
-      setStatusVisible(true);
-      setTimeout(() => setStatusVisible(false), 2500);
-    };
-
-    // Cleanup
-    return () => {
-      delete window.showMainStatus;
-    };
-  }, []);
 
   // Handle MCI Check-In initialization (matching original script.js behavior)
   useEffect(() => {
@@ -137,13 +120,8 @@ function Dashboard() {
       
       <main className="main-content">
         {/* Status Bar - slides down from top */}
-        <div 
-          id="mainStatusBar" 
-          className={`${statusVisible ? 'visible' : ''} ${statusError ? 'error' : ''}`}
-        >
-          {statusMessage}
-        </div>
-
+        <MainStatusBar />
+       
         <div className="main-header">
           <h1 id="app-title">{getViewTitle()}</h1>
         </div>
