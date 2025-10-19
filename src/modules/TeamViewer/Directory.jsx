@@ -1,5 +1,5 @@
 // src/modules/TeamViewer/Directory.jsx
-// UPDATED: Now uses PescadoresContext instead of local fetching
+// UPDATED: Rector Qualified filter now excludes those who have already served as Rector (E)
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
@@ -57,12 +57,7 @@ const ROLE_CONFIG = {
 export default function Directory() {
   const { orgId } = useAuth();
   
-  // ✅ NEW: Use context instead of local state
   const { allPescadores, loading, refreshData } = usePescadores();
-  
-  // ❌ REMOVED: Local state for allPescadores and loading
-  // const [allPescadores, setAllPescadores] = useState({ men: [], women: [] });
-  // const [loading, setLoading] = useState(true);
   
   const [filteredPescadores, setFilteredPescadores] = useState([]);
   const [currentGender, setCurrentGender] = useState('men');
@@ -77,21 +72,10 @@ export default function Directory() {
   const primaryDropdownRef = useRef(null);
   const secondaryDropdownRef = useRef(null);
 
-  // ❌ REMOVED: Entire fetching useEffect
-  // useEffect(() => {
-  //   let isMounted = true;
-  //   const abortController = new AbortController();
-  //   async function fetchData() { ... }
-  //   fetchData();
-  //   return () => { ... };
-  // }, [orgId]);
-
-  // ✅ KEPT: Search effect (depends on allPescadores from context)
   useEffect(() => {
     performSearch();
   }, [allPescadores, currentGender, searchTerm, primaryFilter, secondarySort]);
 
-  // ✅ KEPT: Dropdown click-outside effect
   useEffect(() => {
     function handleClickOutside(event) {
       if (primaryDropdownRef.current && !primaryDropdownRef.current.contains(event.target)) {
@@ -105,7 +89,6 @@ export default function Directory() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // ✅ ALL OTHER FUNCTIONS STAY EXACTLY THE SAME
   function performSearch() {
     let data = [...allPescadores[currentGender]];
     data.forEach(p => delete p.searchMatch);
@@ -149,7 +132,11 @@ export default function Directory() {
         data = data.filter(p => !p["Last weekend worked"]);
         break;
       case 'rector-qualified':
-        data = data.filter(p => getRectorQualificationStatus(p) === 4);
+        // ✅ UPDATED: Exclude anyone who has already served as Rector (E)
+        data = data.filter(p => 
+          getRectorQualificationStatus(p) === 4 && 
+          p['Rector'] !== 'E'
+        );
         break;
       case 'rector-qualified-minus-1':
         data = data.filter(p => getRectorQualificationStatus(p) === 3);
@@ -213,6 +200,44 @@ export default function Directory() {
         const aVal = a["Last weekend worked"] || '';
         const bVal = b["Last weekend worked"] || '';
         return bVal.localeCompare(aVal);
+      });
+    } else if (searchTerm) {
+      // Special sort when searching: Candidates first, then team roles, then professor roles
+      data.sort((a, b) => {
+        const aIsCandidate = a.searchMatch?.type === 'candidate';
+        const bIsCandidate = b.searchMatch?.type === 'candidate';
+        
+        // Candidates come first
+        if (aIsCandidate && !bIsCandidate) return -1;
+        if (!aIsCandidate && bIsCandidate) return 1;
+        
+        // Both are service matches - sort by role order
+        if (a.searchMatch?.type === 'service' && b.searchMatch?.type === 'service') {
+          const aRole = a.searchMatch.role;
+          const bRole = b.searchMatch.role;
+          
+          // Get role order from ROLE_CONFIG
+          const teamRoleOrder = ROLE_CONFIG.team.map(r => r.name);
+          const professorRoleOrder = ROLE_CONFIG.professor.map(r => r.name);
+          
+          const aTeamIndex = teamRoleOrder.indexOf(aRole);
+          const bTeamIndex = teamRoleOrder.indexOf(bRole);
+          const aProfIndex = professorRoleOrder.indexOf(aRole);
+          const bProfIndex = professorRoleOrder.indexOf(bRole);
+          
+          // Team roles come before professor roles
+          if (aTeamIndex !== -1 && bTeamIndex !== -1) {
+            return aTeamIndex - bTeamIndex;
+          }
+          if (aProfIndex !== -1 && bProfIndex !== -1) {
+            return aProfIndex - bProfIndex;
+          }
+          if (aTeamIndex !== -1 && bProfIndex !== -1) return -1;
+          if (aProfIndex !== -1 && bTeamIndex !== -1) return 1;
+        }
+        
+        // Default: alphabetical by last name
+        return (a.Last || '').localeCompare(b.Last || '');
       });
     } else {
       switch (secondarySort) {
@@ -530,10 +555,13 @@ export default function Directory() {
 
                         const hasSearchMatch = person.searchMatch;
 
+                        // Show badge if it's a filter match (not just search term match)
+                        const showFilterBadge = primaryFilter && !hasSearchMatch;
+                        
                         return (
                           <div 
                             key={person.PescadoreKey || index}
-                            className={`name-box ${hasSearchMatch ? 'enhanced-search-result' : ''}`}
+                            className={`name-box ${hasSearchMatch || showFilterBadge ? 'enhanced-search-result' : ''}`}
                             onClick={() => showProfile(index)}
                           >
                             {hasSearchMatch ? (
@@ -544,6 +572,13 @@ export default function Directory() {
                                     `Candidate: ${person["Candidate Weekend"]}` :
                                     `Served: ${person.searchMatch.role}`
                                   }
+                                </div>
+                              </>
+                            ) : showFilterBadge ? (
+                              <>
+                                <div className="name-section">{displayName.trim()}</div>
+                                <div className="search-match-badge filter">
+                                  {getPrimaryFilterLabel()}
                                 </div>
                               </>
                             ) : (
@@ -576,12 +611,6 @@ export default function Directory() {
   );
 }
 
-// ProfileView, RectorQualificationCard, TeamRolesCard, ProfessorRolesCard
-// All stay EXACTLY the same - copy from your existing file
-// (Too long to include here, but unchanged)
-// PART 2 of 3: ProfileView Component
-// Add this after the closing brace of the main Directory component
-
 function ProfileView({ profile, index, total, onBack, onNavigate, getRectorQualificationStatus }) {
   const isDeceased = profile.Deceased === true || (profile.Deceased || '').toLowerCase() === 'y' || (profile.Deceased || '').toLowerCase() === 'yes';
   const isDoNotCall = profile.Do_Not_Call === true || (profile.Do_Not_Call || '').toLowerCase() === 'y' || (profile.Do_Not_Call || '').toLowerCase() === 'yes';
@@ -597,7 +626,7 @@ function ProfileView({ profile, index, total, onBack, onNavigate, getRectorQuali
 
   return (
     <div id="profileView" className="profile-view">
-      <div className="navigation">
+      <div className="navigation" style={{ marginTop: 0, marginBottom: '16px' }}>
         <button className="back-button" onClick={onBack}>← Back to Directory</button>
         <div className="nav-controls">
           <button 
@@ -627,49 +656,52 @@ function ProfileView({ profile, index, total, onBack, onNavigate, getRectorQuali
       </div>
 
       <div id="profileContainer" className="profile-container">
-        <div className={`card pad profile-main-info${statusClasses}`}>
-          <div className="profile-header">
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-              <h2 className="profile-name">{fullName}</h2>
-              {legalName && (
-                <span className="legal-name-badge">Legal: {legalName}</span>
-              )}
-              {(profile["Candidate Weekend"] || profile["Last weekend worked"]) && (
-                <span className="name-separator"></span>
-              )}
-              {profile["Candidate Weekend"] && (
-                <span className="profile-weekend-info">
-                  Candidate: <span className="last-served-highlight">{profile["Candidate Weekend"]}</span>
-                </span>
-              )}
-              {profile["Last weekend worked"] && (
-                <span className="profile-weekend-info">
-                  Last Served: <span className="last-served-highlight">{profile["Last weekend worked"]}</span>
-                </span>
-              )}
+        {/* 40/60 Split: Profile Info + Rector Qualification - Equal Heights */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
+          <div className={`card pad profile-main-info${statusClasses}`}>
+            <div className="profile-header">
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                <h2 className="profile-name">{fullName}</h2>
+                {legalName && (
+                  <span className="legal-name-badge">Legal: {legalName}</span>
+                )}
+                {(profile["Candidate Weekend"] || profile["Last weekend worked"]) && (
+                  <span className="name-separator"></span>
+                )}
+                {profile["Candidate Weekend"] && (
+                  <span className="profile-weekend-info">
+                    Candidate: <span className="last-served-highlight">{profile["Candidate Weekend"]}</span>
+                  </span>
+                )}
+                {profile["Last weekend worked"] && (
+                  <span className="profile-weekend-info">
+                    Last Served: <span className="last-served-highlight">{profile["Last weekend worked"]}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="main-info-item">
+              <span className="main-info-label">Address:</span>
+              <span className="main-info-value">
+                {profile.Address || ''}, {profile.City || ''}, {profile.State || ''} {profile.Zip || ''}
+              </span>
+            </div>
+            <div className="main-info-item">
+              <span className="main-info-label">Church:</span>
+              <span className="main-info-value">{profile.Church || 'N/A'}</span>
+            </div>
+            <div className="main-info-item">
+              <span className="main-info-label">Email:</span>
+              <span className="main-info-value">{profile.Email || 'N/A'}</span>
+            </div>
+            <div className="main-info-item">
+              <span className="main-info-label">Phone:</span>
+              <span className="main-info-value">{profile.Phone1 || 'N/A'}</span>
             </div>
           </div>
-          <div className="main-info-item">
-            <span className="main-info-label">Address:</span>
-            <span className="main-info-value">
-              {profile.Address || ''}, {profile.City || ''}, {profile.State || ''} {profile.Zip || ''}
-            </span>
-          </div>
-          <div className="main-info-item">
-            <span className="main-info-label">Church:</span>
-            <span className="main-info-value">{profile.Church || 'N/A'}</span>
-          </div>
-          <div className="main-info-item">
-            <span className="main-info-label">Email:</span>
-            <span className="main-info-value">{profile.Email || 'N/A'}</span>
-          </div>
-          <div className="main-info-item">
-            <span className="main-info-label">Phone:</span>
-            <span className="main-info-value">{profile.Phone1 || 'N/A'}</span>
-          </div>
-        </div>
 
-        <RectorQualificationCard profile={profile} getRectorQualificationStatus={getRectorQualificationStatus} />
+          <RectorQualificationCard profile={profile} getRectorQualificationStatus={getRectorQualificationStatus} />
+        </div>
         <TeamRolesCard profile={profile} />
         <ProfessorRolesCard profile={profile} />
       </div>
@@ -686,9 +718,6 @@ function ProfileView({ profile, index, total, onBack, onNavigate, getRectorQuali
     </div>
   );
 }
-
-// PART 3 of 3: Card Components
-// Add these after ProfileView component
 
 function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
   const speakingProfRoles = ROLE_CONFIG.professor.filter(r => r.key !== 'Prof_Silent').map(r => r.key);
@@ -708,7 +737,7 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
   const hasChaRequirement = hasTwoChaRoles && hasCoreChaRole;
 
   return (
-    <div className="card pad">
+    <div className="card pad" style={{ margin: 0, height: '100%' }}>
       <div className="roles-section">
         <div className="roles-title" style={{ marginBottom: '12px' }}>Rector Qualification</div>
         <div className="rector-qualification-grid">

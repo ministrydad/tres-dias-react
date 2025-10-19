@@ -350,7 +350,7 @@ body.light-theme .main-header h1 {
 .card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 8px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
 }
 
@@ -1979,6 +1979,11 @@ body.light-theme .flip-card-front {
     color: white;
 }
 
+#team-viewer-app .search-match-badge.filter {
+    background-color: var(--accentA); /* Green for filter matches */
+    color: white;
+}
+
 /* Profile View */
 #team-viewer-app .profile-view {
     display: block;
@@ -1991,7 +1996,7 @@ body.light-theme .flip-card-front {
     margin: 20px 0;
     background: #ffffff;
     padding: 15px 20px;
-    border-radius: 16px;
+    border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border: 1px solid #dee2e6;
 }
@@ -2037,13 +2042,13 @@ body.light-theme .flip-card-front {
 /* Profile Main Info */
 #team-viewer-app .profile-main-info {
     background-color: #ffffff;
-    padding: 20px;
+    padding: 12px;
     border-radius: 8px;
     margin-bottom: 20px;
 }
 
 #team-viewer-app .profile-header {
-    margin-bottom: 15px;
+    margin-bottom: 8px;
 }
 
 #team-viewer-app .profile-name {
@@ -2090,14 +2095,14 @@ body.light-theme .flip-card-front {
     font-size: 0.7em;
     font-weight: 600;
     padding: 3px 8px;
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: #e9ecef;
     color: #495057;
     border: 1px solid #dee2e6;
 }
 
 #team-viewer-app .main-info-item {
-    margin: 6px 0;
+    margin: 2px 0;
     font-size: 14px;
     display: flex;
     align-items: flex-start;
@@ -2214,7 +2219,9 @@ body.light-theme .flip-card-front {
 /* Roles Section */
 #team-viewer-app .roles-section {
     margin-top: 0;
+     padding: 0; /* Remove any extra padding */
 }
+
 
 #team-viewer-app .roles-title {
     font-weight: 900;
@@ -3695,4 +3702,51 @@ body.light-theme .mci-app .detail-panel {
 .rector-badge.removing {
   pointer-events: none;
   opacity: 0.5;
+}
+
+/* Profile View Layout - Enable Scrolling */
+#team-viewer-app .profile-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+#team-viewer-app .navigation {
+  flex-shrink: 0; /* Navigation stays fixed at top */
+}
+
+#team-viewer-app .profile-container {
+  flex: 1;
+  overflow-y: auto; /* Enable scrolling for profile content */
+  min-height: 0;
+  padding-right: 8px; /* Space for scrollbar */
+}
+
+#team-viewer-app .refresh-section {
+  flex-shrink: 0; /* Buttons stay fixed at bottom */
+  margin-top: 16px;
+}
+
+/* Make profile info and rector cards equal height */
+#team-viewer-app .profile-container > div:first-child {
+    display: grid;
+    grid-template-columns: 40% 60%;
+    gap: 16px;
+}
+
+#team-viewer-app .profile-container > div:first-child > .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Reduce padding on profile cards for more compact layout */
+#team-viewer-app .profile-container > div:first-child .card.pad {
+    padding: 16px; /* Reduced from 24px */
+}
+
+/* Reduce padding on Rector qualification card */
+#team-viewer-app .profile-container > div:first-child .card.pad {
+    padding: 16px; /* Match the profile card padding */
 }
