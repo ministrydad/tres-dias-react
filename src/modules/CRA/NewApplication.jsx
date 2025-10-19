@@ -1,11 +1,11 @@
 // src/modules/CRA/NewApplication.jsx
-// COMPLETE FILE - Fixed: Removed status column, removed submittedAt, added default values, improved error handling
+// COMPLETE FILE - Updated with editing functionality
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 
-export default function NewApplication() {
+export default function NewApplication({ editingAppId, onNavigate }) {
   const { orgId } = useAuth();
   
   const [formData, setFormData] = useState({
@@ -28,6 +28,13 @@ export default function NewApplication() {
   const [communityName, setCommunityName] = useState('Loading...');
   const [isLoadingSponsors, setIsLoadingSponsors] = useState(true);
 
+  // NEW: Load application data when editingAppId is provided
+  useEffect(() => {
+    if (editingAppId && orgId) {
+      loadApplicationForEdit(editingAppId);
+    }
+  }, [editingAppId, orgId]);
+
   useEffect(() => {
     if (orgId) {
       console.log('Loading sponsors for org:', orgId);
@@ -35,6 +42,88 @@ export default function NewApplication() {
       loadCommunityName();
     }
   }, [orgId]);
+
+  // NEW: Load application data for editing
+  const loadApplicationForEdit = async (id) => {
+    try {
+      console.log('Loading application for edit:', id);
+      
+      const { data, error } = await supabase
+        .from('cra_applications')
+        .select('*')
+        .eq('id', id)
+        .eq('org_id', orgId)
+        .single();
+
+      if (error) throw error;
+      if (!data) {
+        window.showMainStatus('Application not found', true);
+        return;
+      }
+
+      console.log('Loaded application:', data);
+
+      // Populate form fields
+      setFormData({
+        c_lastname: data.c_lastname || '',
+        c_address: data.c_address || '',
+        c_city: data.c_city || '',
+        c_state: data.c_state || '',
+        c_zip: data.c_zip || '',
+        c_church: data.c_church || '',
+        c_ms: data.c_ms || false,
+        c_clergy: data.c_clergy || false,
+        c_spouseatt: data.c_spouseatt || false,
+        c_ischristian: data.c_ischristian || false,
+        m_first: data.m_first || '',
+        m_pref: data.m_pref || '',
+        m_age: data.m_age ? data.m_age.toString() : '',
+        m_cell: data.m_cell || '',
+        m_email: data.m_email || '',
+        m_emerg: data.m_emerg || '',
+        m_emergphone: data.m_emergphone || '',
+        f_first: data.f_first || '',
+        f_pref: data.f_pref || '',
+        f_age: data.f_age ? data.f_age.toString() : '',
+        f_cell: data.f_cell || '',
+        f_email: data.f_email || '',
+        f_emerg: data.f_emerg || '',
+        f_emergphone: data.f_emergphone || '',
+        s_first: data.s_first || '',
+        s_last: data.s_last || '',
+        s_address: data.s_address || '',
+        s_city: data.s_city || '',
+        s_state: data.s_state || '',
+        s_zip: data.s_zip || '',
+        s_phone: data.s_phone || '',
+        s_email: data.s_email || '',
+        s_church: data.s_church || '',
+        s_weekend: data.s_weekend || '',
+        s_weekendno: data.s_weekendno || '',
+        s_community: data.s_community || ''
+      });
+
+      // Populate payment fields
+      setPaymentFields({
+        wk: {
+          cash: data.payment_wk_cash || false,
+          check: data.payment_wk_check || false,
+          scholarship: data.payment_wk_scholarship || false,
+          scholarshipType: data.payment_wk_scholarshiptype || 'full',
+          partialAmount: parseFloat(data.payment_wk_partialamount) || 0
+        },
+        sp: {
+          cash: data.payment_sp_cash || false,
+          check: data.payment_sp_check || false
+        }
+      });
+
+      window.showMainStatus('Application loaded for editing', false);
+    } catch (error) {
+      console.error('Error loading application:', error);
+      window.showMainStatus(`Failed to load application: ${error.message}`, true);
+    }
+  };
 
   const loadSponsors = async () => {
     setIsLoadingSponsors(true);
@@ -74,7 +163,7 @@ export default function NewApplication() {
       setAllSponsors(filtered);
     } catch (error) {
       console.error('Error loading sponsors:', error);
-      window.showMainStatus('Error loading sponsor list: ' + error.message, true);
+      alert('Error loading sponsor list: ' + error.message);
     } finally {
       setIsLoadingSponsors(false);
     }
@@ -85,7 +174,7 @@ export default function NewApplication() {
       const { data, error } = await supabase
         .from('app_settings')
         .select('community_name')
-        .eq('org_id', orgId)  // ✅ FIXED: Changed from .eq('id', 1)
+        .eq('id', 1)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -202,6 +291,15 @@ export default function NewApplication() {
   };
 
   const handleClear = () => {
+    // NEW: If editing, cancel and return to roster
+    if (editingAppId) {
+      if (window.confirm('Cancel editing? Any unsaved changes will be lost.')) {
+        onNavigate('cra-view-roster');
+      }
+      return;
+    }
+
+    // Normal clear behavior for new applications
     if (window.confirm('Are you sure you want to clear all fields on the application? This cannot be undone.')) {
       setFormData({
         c_lastname: '', c_address: '', c_city: '', c_state: '', c_zip: '', c_church: '',
@@ -221,7 +319,7 @@ export default function NewApplication() {
 
   const handleSubmit = async () => {
     if (!formData.c_lastname || (!formData.m_first && !formData.f_first)) {
-      window.showMainStatus('Last name and at least one first name are required.', true);
+      alert('Last name and at least one first name are required.');
       return;
     }
 
@@ -245,37 +343,43 @@ export default function NewApplication() {
         m_age: formData.m_age === '' ? null : parseInt(formData.m_age) || null,
         f_age: formData.f_age === '' ? null : parseInt(formData.f_age) || null,
         gender: hasMan && !hasWoman ? 'men' : !hasMan && hasWoman ? 'women' : null,
-        
-        // ✅ FIXED: Removed status field (doesn't exist - calculated dynamically)
-        // ✅ FIXED: Removed submittedAt (use database default created_at)
-        
-        // ✅ ADDED: Default values for fields used by other modules
-        attendance: null,
-        m_smoke: false,
-        f_smoke: false,
-        m_diet: false,
-        f_diet: false,
-        m_diettext: '',
-        f_diettext: '',
-        letter_sent_sponsor: false,
-        letter_sent_candidate: false,
-        is_checked_in: false
+        status: 'Pending',
+        submittedAt: new Date().toISOString()
       };
 
-      const { error } = await supabase.from('cra_applications').insert([data]);
-      if (error) throw error;
+      // NEW: Update existing application if editing, otherwise insert new
+      if (editingAppId) {
+        const { error } = await supabase
+          .from('cra_applications')
+          .update(data)
+          .eq('id', editingAppId)
+          .eq('org_id', orgId);
 
-      setSaveStatus('✓ Saved');
-      window.showMainStatus('✓ Application saved successfully', false);
-      
-      setTimeout(() => {
-        setSaveStatus('');
-        handleClear();
-      }, 1500);
+        if (error) throw error;
+
+        window.showMainStatus('Application updated successfully', false);
+        setSaveStatus('✓ Updated');
+        
+        // Return to roster after short delay
+        setTimeout(() => {
+          onNavigate('cra-view-roster');
+        }, 1000);
+      } else {
+        const { error } = await supabase.from('cra_applications').insert([data]);
+        if (error) throw error;
+
+        window.showMainStatus('Application saved successfully', false);
+        setSaveStatus('✓ Saved');
+        
+        setTimeout(() => {
+          setSaveStatus('');
+          handleClear();
+        }, 1500);
+      }
 
     } catch (error) {
       console.error('Error saving application:', error);
-      window.showMainStatus(`Error: ${error.message}`, true);
+      window.showMainStatus(`Error saving application: ${error.message}`, true);
       setSaveStatus('');
     } finally {
       setIsSaving(false);
@@ -473,43 +577,16 @@ export default function NewApplication() {
               </button>
             </div>
           </div>
-          
           <div className="field" style={{ marginBottom: 0 }}>
-            <label className="label">Wknd #</label>
+            <label className="label">Weekend #</label>
             <input className="input" id="s_weekendno" value={formData.s_weekendno} onChange={handleChange} />
           </div>
-          
           <div className="field" style={{ marginBottom: 0 }}>
             <label className="label">Community</label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'stretch' }}>
-              <input 
-                className="input" 
-                id="s_community" 
-                value={formData.s_community} 
-                onChange={handleChange}
-                style={{ flex: 1 }}
-              />
-              <button 
-                className="btn btn-primary" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  setFormData(prev => ({ ...prev, s_community: communityName }));
-                }}
-                type="button"
-                style={{ 
-                  whiteSpace: 'nowrap', 
-                  flexShrink: 0,
-                  padding: '0 16px',
-                  minWidth: 'fit-content'
-                }}
-              >
-                {communityName}
-              </button>
-            </div>
+            <input className="input" id="s_community" value={formData.s_community} onChange={handleChange} />
           </div>
-          
-          <div className="field" style={{ marginBottom: '0' }}>
-            <label className="label">Christian?</label>
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label className="label">Born-Again Christian?</label>
             <div className="toggle">
               <div className={`opt ${!formData.c_ischristian ? 'active' : ''}`} onClick={() => handleToggleChange('c_ischristian', 'no')}>No</div>
               <div className={`opt ${formData.c_ischristian ? 'active' : ''}`} onClick={() => handleToggleChange('c_ischristian', 'yes')}>Yes</div>
@@ -517,12 +594,12 @@ export default function NewApplication() {
           </div>
         </div>
 
-        {/* Payment Cards */}
-        <div className="section-title">Payment</div>
-        <div className="grid grid-2" style={{ gap: '16px' }}>
-          <div className="card pad fee-card">
-            <div className="label" style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '10px' }}>Weekend Fee</div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+        {/* Payment Information */}
+        <div className="section-title" style={{ marginTop: '24px' }}>Payment Information</div>
+        <div className="grid grid-2">
+          <div>
+            <label className="label">Weekend Fee</label>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
               <button 
                 className={`btn ${paymentFields.wk.cash ? 'btn-primary' : ''}`} 
                 onClick={() => handlePaymentClick('wk', 'cash')} 
@@ -539,44 +616,49 @@ export default function NewApplication() {
               >
                 Check
               </button>
+              <button 
+                className={`btn ${paymentFields.wk.scholarship ? 'btn-primary' : ''}`} 
+                onClick={() => handlePaymentClick('wk', 'scholarship')} 
+                style={{ flex: '1' }}
+                type="button"
+              >
+                Scholarship
+              </button>
             </div>
-            <button 
-              className={`btn ${paymentFields.wk.scholarship ? 'btn-primary' : ''}`} 
-              onClick={() => handlePaymentClick('wk', 'scholarship')} 
-              style={{ width: '100%' }}
-              type="button"
-            >
-              Scholarship
-            </button>
             
             {paymentFields.wk.scholarship && (
-              <div id="scholarship-options" style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
-                <div className="label" style={{ marginBottom: '8px' }}>Scholarship Type</div>
-                <div className="toggle" style={{ marginBottom: '12px' }}>
-                  <div 
-                    className={`opt ${paymentFields.wk.scholarshipType === 'full' ? 'active' : ''}`} 
-                    onClick={() => handleScholarshipTypeChange('full')}
+              <div id="scholarship-options" style={{ marginTop: '12px', padding: '12px', backgroundColor: 'var(--panel-header)', borderRadius: '8px' }}>
+                <label className="label" style={{ marginBottom: '8px' }}>Scholarship Type</label>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                  <button 
+                    className={`btn ${paymentFields.wk.scholarshipType === 'full' ? 'btn-primary' : ''}`} 
+                    onClick={() => handleScholarshipTypeChange('full')} 
+                    style={{ flex: '1' }}
+                    type="button"
                   >
                     Full
-                  </div>
-                  <div 
-                    className={`opt ${paymentFields.wk.scholarshipType === 'partial' ? 'active' : ''}`} 
-                    onClick={() => handleScholarshipTypeChange('partial')}
+                  </button>
+                  <button 
+                    className={`btn ${paymentFields.wk.scholarshipType === 'partial' ? 'btn-primary' : ''}`} 
+                    onClick={() => handleScholarshipTypeChange('partial')} 
+                    style={{ flex: '1' }}
+                    type="button"
                   >
                     Partial
-                  </div>
+                  </button>
                 </div>
+                
                 {paymentFields.wk.scholarshipType === 'partial' && (
                   <div id="partial-amount-container">
-                    <label className="label">Partial Amount ($)</label>
+                    <label className="label">Partial Amount</label>
                     <input 
-                      className="input" 
                       type="number" 
-                      min="0" 
-                      step="0.01" 
-                      placeholder="0.00" 
+                      className="input" 
+                      id="partial_amount" 
                       value={paymentFields.wk.partialAmount} 
                       onChange={(e) => setPaymentFields(prev => ({ ...prev, wk: { ...prev.wk, partialAmount: parseFloat(e.target.value) || 0 } }))} 
+                      placeholder="0.00"
+                      step="0.01"
                     />
                   </div>
                 )}
@@ -586,9 +668,9 @@ export default function NewApplication() {
             <div className="inline-status" style={{ marginTop: '12px' }}>{getWeekendFeeSummary()}</div>
           </div>
 
-          <div className="card pad fee-card">
-            <div className="label" style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '10px' }}>Sponsor Fee</div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+          <div>
+            <label className="label">Sponsor Fee</label>
+            <div style={{ display: 'flex', gap: '10px' }}>
               <button 
                 className={`btn ${paymentFields.sp.cash ? 'btn-primary' : ''}`} 
                 onClick={() => handlePaymentClick('sp', 'cash')} 
@@ -612,13 +694,15 @@ export default function NewApplication() {
 
         {/* Action Buttons */}
         <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '24px', borderTop: '1px solid var(--border)', paddingTop: '24px' }}>
-          <button id="cra_clear" className="btn" onClick={handleClear} disabled={isSaving} type="button">Clear Form</button>
+          <button id="cra_clear" className="btn" onClick={handleClear} disabled={isSaving} type="button">
+            {editingAppId ? 'Cancel Edit' : 'Clear Form'}
+          </button>
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '16px' }}>
             <span id="craSaveStatus" style={{ fontWeight: '700', opacity: saveStatus ? '1' : '0', transition: 'opacity 0.5s ease-in-out' }}>
               {saveStatus}
             </span>
             <button id="cra_submit" className="btn btn-primary" onClick={handleSubmit} disabled={isSaving} type="button">
-              {isSaving ? 'Saving...' : 'Save Candidate'}
+              {isSaving ? 'Saving...' : editingAppId ? 'Update Candidate' : 'Save Candidate'}
             </button>
           </div>
         </div>
