@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 
-export default function ViewRoster() {
+export default function ViewRoster({ onNavigate }) {
   const { orgId } = useAuth();
   const [applications, setApplications] = useState([]);
   const [currentFilter, setCurrentFilter] = useState('men');
@@ -40,8 +40,8 @@ export default function ViewRoster() {
   };
 
   const handleEdit = (id) => {
-    // TODO: Navigate to edit view
-    console.log('Edit application:', id);
+    // Navigate to NewApplication view with editing ID
+    onNavigate('cra-new-application', { editingAppId: id });
   };
 
   const handleDelete = async (id) => {
@@ -58,11 +58,13 @@ export default function ViewRoster() {
 
       if (error) throw error;
 
+      window.showMainStatus('Application deleted successfully', false);
+      
       // Reload applications
       await loadApplications();
     } catch (error) {
       console.error('Error deleting application:', error);
-      alert(`Failed to delete application: ${error.message}`);
+      window.showMainStatus(`Failed to delete application: ${error.message}`, true);
     }
   };
 
