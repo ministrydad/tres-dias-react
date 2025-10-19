@@ -748,23 +748,20 @@ export default function Directory() {
         )}
 
         {currentView === 'profile' && currentProfile && (
-          <>
-            {console.log('Rendering ProfileView - roleSelectorOpen:', roleSelectorOpen, 'activeTeamIdentifier:', activeTeamIdentifier)}
-            <ProfileView 
-              profile={currentProfile}
-              index={currentProfileIndex}
-              total={filteredPescadores.length}
-              onBack={showDirectory}
-              onNavigate={navigateProfile}
-              getRectorQualificationStatus={getRectorQualificationStatus}
-              activeTeamIdentifier={activeTeamIdentifier}
-              roleSelectorOpen={roleSelectorOpen}
-              onOpenRoleSelector={openRoleSelector}
-              onCloseRoleSelector={closeRoleSelector}
-              onAssignRole={assignRole}
-              getRoleCount={getRoleCount}
-            />
-          </>
+          <ProfileView 
+            profile={currentProfile}
+            index={currentProfileIndex}
+            total={filteredPescadores.length}
+            onBack={showDirectory}
+            onNavigate={navigateProfile}
+            getRectorQualificationStatus={getRectorQualificationStatus}
+            activeTeamIdentifier={activeTeamIdentifier}
+            roleSelectorOpen={roleSelectorOpen}
+            onOpenRoleSelector={openRoleSelector}
+            onCloseRoleSelector={closeRoleSelector}
+            onAssignRole={assignRole}
+            getRoleCount={getRoleCount}
+          />
         )}
 
       </div>
@@ -786,9 +783,6 @@ function ProfileView({
   onAssignRole,
   getRoleCount
 }) {
-  console.log('ProfileView render - roleSelectorOpen:', roleSelectorOpen);
-  console.log('ProfileView render - onOpenRoleSelector type:', typeof onOpenRoleSelector);
-  
   const isDeceased = profile.Deceased === true || (profile.Deceased || '').toLowerCase() === 'y' || (profile.Deceased || '').toLowerCase() === 'yes';
   const isDoNotCall = profile.Do_Not_Call === true || (profile.Do_Not_Call || '').toLowerCase() === 'y' || (profile.Do_Not_Call || '').toLowerCase() === 'yes';
   const isSpiritualDirector = (profile['Spiritual Director'] || 'N').toUpperCase() === 'E';
@@ -797,7 +791,7 @@ function ProfileView({
   const legalName = profile.First !== profile.Preferred && profile.Preferred ? profile.First : null;
 
   return (
-    <div id="profileView" className="profile-view">
+    <div id="profileView" className="profile-view" style={{ display: 'block' }}>
       <div className="navigation" style={{ marginTop: 0, marginBottom: '16px' }}>
         <button className="back-button" onClick={onBack}>← Back to Directory</button>
         <div className="nav-controls">
@@ -825,10 +819,7 @@ function ProfileView({
           <button className="print-button">Print Profile</button>
           <button 
             className="view-team-button" 
-            onClick={() => {
-              console.log('Add to Team button clicked!');
-              onOpenRoleSelector();
-            }}
+            onClick={onOpenRoleSelector}
           >
             Add to Team
           </button>
@@ -949,7 +940,6 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
   return (
     <div style={{
       flex: '0 0 30%',
-      animation: 'slideInRight 0.3s ease',
       height: 'fit-content',
       position: 'sticky',
       top: '16px'
@@ -1048,7 +1038,7 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
                   </span>
                   {count > 0 && (
                     <span style={{
-                      background: 'var(--accentB)',
+                      background: '#2ea44f',
                       color: 'white',
                       borderRadius: '999px',
                       padding: '2px 6px',
@@ -1119,7 +1109,7 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
                   </span>
                   {count > 0 && (
                     <span style={{
-                      background: 'var(--accentB)',
+                      background: '#2ea44f',
                       color: 'white',
                       borderRadius: '999px',
                       padding: '2px 6px',
@@ -1137,19 +1127,6 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }
