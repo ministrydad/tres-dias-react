@@ -97,13 +97,10 @@ export default function Directory() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Load latest team when gender changes
   useEffect(() => {
     if (orgId && activeTeamIdentifier) {
-      // Reload roster if gender changes and we have an active team
       const genderFromIdentifier = activeTeamIdentifier.toLowerCase().includes('men') ? 'men' : 'women';
       if (genderFromIdentifier !== currentGender) {
-        // Gender changed, clear active team
         setActiveTeamIdentifier('');
         setActiveTeamRoster([]);
       }
@@ -145,7 +142,6 @@ export default function Directory() {
       });
     }
 
-    // Apply primary filter
     switch (primaryFilter) {
       case 'recent':
         break;
@@ -214,7 +210,6 @@ export default function Directory() {
       return match ? parseInt(match[0], 10) : 0;
     };
 
-    // Apply secondary sort
     if (primaryFilter === 'recent') {
       data.sort((a, b) => {
         const aVal = a["Last weekend worked"] || '';
@@ -222,7 +217,6 @@ export default function Directory() {
         return bVal.localeCompare(aVal);
       });
     } else if (searchTerm) {
-      // Special sort when searching: Candidates first, then team roles, then professor roles
       data.sort((a, b) => {
         const aIsCandidate = a.searchMatch?.type === 'candidate';
         const bIsCandidate = b.searchMatch?.type === 'candidate';
@@ -325,7 +319,6 @@ export default function Directory() {
       });
 
       if (latest.identifier) {
-        // Load roster for this weekend
         const { data: roster, error: rosterError } = await supabase
           .from(rosterTable)
           .select('*')
@@ -356,7 +349,6 @@ export default function Directory() {
 
     if (!currentProfile) return;
 
-    // Check for duplicates
     const existing = activeTeamRoster.find(
       m => m.pescadore_key === currentProfile.PescadoreKey && m.role === roleName
     );
@@ -384,7 +376,6 @@ export default function Directory() {
       
       if (error) throw error;
 
-      // Update local roster
       setActiveTeamRoster([...activeTeamRoster, data[0]]);
       
       window.showMainStatus(
@@ -831,19 +822,16 @@ function ProfileView({
         gap: '16px',
         alignItems: 'flex-start'
       }}>
-        {/* Left side: Profile content - 70% when panel open, 100% when closed */}
         <div 
-          className="card pad"
           style={{ 
             width: roleSelectorOpen ? '70%' : '100%',
             transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            minWidth: 0,
-            padding: 0
+            minWidth: 0
           }}
         >
           <div id="profileContainer" className="profile-container">
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
-              <div className={`card pad profile-main-info`}>
+              <div className="card pad profile-main-info">
                 <div className="profile-header">
                   <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                     <h2 className="profile-name">{fullName}</h2>
@@ -923,18 +911,15 @@ function ProfileView({
           </div>
         </div>
 
-        {/* Right side: Role selector panel - 30% */}
         {roleSelectorOpen && (
           <div 
-            className="card pad"
+            className="card pad role-selector-slide-in"
             style={{
               width: '30%',
-              transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
               minWidth: 0,
               height: 'fit-content',
               position: 'sticky',
-              top: '16px',
-              animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+              top: '16px'
             }}
           >
             <RoleSelectorPanel 
@@ -945,20 +930,6 @@ function ProfileView({
             />
           </div>
         )}
-      </div>
-
-      <style>{`
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-      `}</style>
       </div>
     </div>
   );
@@ -978,185 +949,180 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
         paddingBottom: '12px',
         borderBottom: '1px solid var(--border)'
       }}>
-          <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Assign Role</h3>
-          <button 
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '24px',
-              cursor: 'pointer',
-              color: 'var(--muted)',
-              lineHeight: '1',
-              padding: '0',
-              width: '24px',
-              height: '24px'
-            }}
-          >
-            ×
-          </button>
+        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Assign Role</h3>
+        <button 
+          onClick={onClose}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '24px',
+            cursor: 'pointer',
+            color: 'var(--muted)',
+            lineHeight: '1',
+            padding: '0',
+            width: '24px',
+            height: '24px'
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {activeTeamIdentifier && (
+        <div style={{ 
+          fontSize: '0.85rem', 
+          color: 'var(--muted)', 
+          marginBottom: '16px',
+          padding: '8px',
+          background: 'var(--surface)',
+          borderRadius: '6px'
+        }}>
+          Adding to: <strong>{activeTeamIdentifier}</strong>
         </div>
+      )}
 
-        {activeTeamIdentifier && (
-          <div style={{ 
-            fontSize: '0.85rem', 
-            color: 'var(--muted)', 
-            marginBottom: '16px',
-            padding: '8px',
-            background: 'var(--surface)',
-            borderRadius: '6px'
-          }}>
-            Adding to: <strong>{activeTeamIdentifier}</strong>
-          </div>
-        )}
-
-        {/* Team Roles Section */}
-        <div style={{ marginBottom: '24px' }}>
-          <h4 style={{ 
-            margin: '0 0 12px 0', 
-            fontSize: '0.9rem', 
-            fontWeight: '600',
-            color: 'var(--ink)'
-          }}>
-            Team Roles
-          </h4>
-          <div 
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gridTemplateRows: `repeat(${teamRowsNeeded}, auto)`,
-              gridAutoFlow: 'column',
-              gap: '8px'
-            }}
-          >
-            {ROLE_CONFIG.team.map(role => {
-              const count = getRoleCount(role.name);
-              return (
-                <button
-                  key={role.key}
-                  onClick={() => onAssignRole(role.name)}
-                  style={{
-                    padding: '8px 10px',
-                    fontSize: '0.75rem',
-                    border: '1px solid var(--border)',
-                    borderRadius: '6px',
-                    background: 'white',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '4px',
-                    transition: 'all 0.2s ease',
-                    textAlign: 'left'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--surface)';
-                    e.currentTarget.style.borderColor = 'var(--accentB)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.borderColor = 'var(--border)';
-                  }}
-                >
-                  <span style={{ flex: '1', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {role.name}
+      <div style={{ marginBottom: '24px' }}>
+        <h4 style={{ 
+          margin: '0 0 12px 0', 
+          fontSize: '0.9rem', 
+          fontWeight: '600',
+          color: 'var(--ink)'
+        }}>
+          Team Roles
+        </h4>
+        <div 
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateRows: `repeat(${teamRowsNeeded}, auto)`,
+            gridAutoFlow: 'column',
+            gap: '8px'
+          }}
+        >
+          {ROLE_CONFIG.team.map(role => {
+            const count = getRoleCount(role.name);
+            return (
+              <button
+                key={role.key}
+                onClick={() => onAssignRole(role.name)}
+                style={{
+                  padding: '8px 10px',
+                  fontSize: '0.75rem',
+                  border: '1px solid var(--border)',
+                  borderRadius: '6px',
+                  background: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '4px',
+                  transition: 'all 0.2s ease',
+                  textAlign: 'left'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--surface)';
+                  e.currentTarget.style.borderColor = 'var(--accentB)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white';
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                }}
+              >
+                <span style={{ flex: '1', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {role.name}
+                </span>
+                {count > 0 && (
+                  <span style={{
+                    background: '#2ea44f',
+                    color: 'white',
+                    borderRadius: '999px',
+                    padding: '2px 6px',
+                    fontSize: '0.7rem',
+                    fontWeight: '600',
+                    minWidth: '20px',
+                    textAlign: 'center'
+                  }}>
+                    {count}
                   </span>
-                  {count > 0 && (
-                    <span style={{
-                      background: '#2ea44f',
-                      color: 'white',
-                      borderRadius: '999px',
-                      padding: '2px 6px',
-                      fontSize: '0.7rem',
-                      fontWeight: '600',
-                      minWidth: '20px',
-                      textAlign: 'center'
-                    }}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                )}
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Professor Roles Section */}
-        <div>
-          <h4 style={{ 
-            margin: '0 0 12px 0', 
-            fontSize: '0.9rem', 
-            fontWeight: '600',
-            color: 'var(--ink)'
-          }}>
-            Professor Roles
-          </h4>
-          <div 
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gridTemplateRows: `repeat(${profRowsNeeded}, auto)`,
-              gridAutoFlow: 'column',
-              gap: '8px'
-            }}
-          >
-            {ROLE_CONFIG.professor.map(role => {
-              const count = getRoleCount(role.name);
-              return (
-                <button
-                  key={role.key}
-                  onClick={() => onAssignRole(role.name)}
-                  style={{
-                    padding: '8px 10px',
-                    fontSize: '0.75rem',
-                    border: '1px solid var(--border)',
-                    borderRadius: '6px',
-                    background: 'white',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '4px',
-                    transition: 'all 0.2s ease',
-                    textAlign: 'left'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--surface)';
-                    e.currentTarget.style.borderColor = 'var(--accentB)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.borderColor = 'var(--border)';
-                  }}
-                >
-                  <span style={{ flex: '1', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {role.name}
+      <div>
+        <h4 style={{ 
+          margin: '0 0 12px 0', 
+          fontSize: '0.9rem', 
+          fontWeight: '600',
+          color: 'var(--ink)'
+        }}>
+          Professor Roles
+        </h4>
+        <div 
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateRows: `repeat(${profRowsNeeded}, auto)`,
+            gridAutoFlow: 'column',
+            gap: '8px'
+          }}
+        >
+          {ROLE_CONFIG.professor.map(role => {
+            const count = getRoleCount(role.name);
+            return (
+              <button
+                key={role.key}
+                onClick={() => onAssignRole(role.name)}
+                style={{
+                  padding: '8px 10px',
+                  fontSize: '0.75rem',
+                  border: '1px solid var(--border)',
+                  borderRadius: '6px',
+                  background: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '4px',
+                  transition: 'all 0.2s ease',
+                  textAlign: 'left'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--surface)';
+                  e.currentTarget.style.borderColor = 'var(--accentB)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white';
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                }}
+              >
+                <span style={{ flex: '1', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {role.name}
+                </span>
+                {count > 0 && (
+                  <span style={{
+                    background: '#2ea44f',
+                    color: 'white',
+                    borderRadius: '999px',
+                    padding: '2px 6px',
+                    fontSize: '0.7rem',
+                    fontWeight: '600',
+                    minWidth: '20px',
+                    textAlign: 'center'
+                  }}>
+                    {count}
                   </span>
-                  {count > 0 && (
-                    <span style={{
-                      background: '#2ea44f',
-                      color: 'white',
-                      borderRadius: '999px',
-                      padding: '2px 6px',
-                      fontSize: '0.7rem',
-                      fontWeight: '600',
-                      minWidth: '20px',
-                      textAlign: 'center'
-                    }}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
-
-function RectorQualificationCard
 
 function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
   const speakingProfRoles = ROLE_CONFIG.professor.filter(r => r.key !== 'Prof_Silent').map(r => r.key);

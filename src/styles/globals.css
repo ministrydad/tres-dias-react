@@ -3750,3 +3750,19 @@ body.light-theme .mci-app .detail-panel {
 #team-viewer-app .profile-container > div:first-child .card.pad {
     padding: 16px; /* Match the profile card padding */
 }
+
+/* Team Viewer - Role Selector Slide Animation */
+.role-selector-slide-in {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
