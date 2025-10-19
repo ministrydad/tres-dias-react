@@ -1,5 +1,5 @@
 // src/modules/TeamViewer/Directory.jsx
-// UPDATED: Grid flows top-to-bottom in columns (not row-by-row)
+// UPDATED: Added sliding role selector panel + active team management
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
@@ -68,6 +68,14 @@ export default function Directory() {
   const [currentView, setCurrentView] = useState('directory');
   const [currentProfile, setCurrentProfile] = useState(null);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(-1);
+  
+  // Team management state
+  const [activeTeamIdentifier, setActiveTeamIdentifier] = useState('');
+  const [activeTeamRoster, setActiveTeamRoster] = useState([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
+  
+  // Role selector panel state
+  const [roleSelectorOpen, setRoleSelectorOpen] = useState(false);
 
   const primaryDropdownRef = useRef(null);
   const secondaryDropdownRef = useRef(null);
@@ -88,6 +96,19 @@ export default function Directory() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  // Load latest team when gender changes
+  useEffect(() => {
+    if (orgId && activeTeamIdentifier) {
+      // Reload roster if gender changes and we have an active team
+      const genderFromIdentifier = activeTeamIdentifier.toLowerCase().includes('men') ? 'men' : 'women';
+      if (genderFromIdentifier !== currentGender) {
+        // Gender changed, clear active team
+        setActiveTeamIdentifier('');
+        setActiveTeamRoster([]);
+      }
+    }
+  }, [currentGender, activeTeamIdentifier, orgId]);
 
   function performSearch() {
     let data = [...allPescadores[currentGender]];
@@ -206,16 +227,13 @@ export default function Directory() {
         const aIsCandidate = a.searchMatch?.type === 'candidate';
         const bIsCandidate = b.searchMatch?.type === 'candidate';
         
-        // Candidates come first
         if (aIsCandidate && !bIsCandidate) return -1;
         if (!aIsCandidate && bIsCandidate) return 1;
         
-        // Both are service matches - sort by role order
         if (a.searchMatch?.type === 'service' && b.searchMatch?.type === 'service') {
           const aRole = a.searchMatch.role;
           const bRole = b.searchMatch.role;
           
-          // Get role order from ROLE_CONFIG
           const teamRoleOrder = ROLE_CONFIG.team.map(r => r.name);
           const professorRoleOrder = ROLE_CONFIG.professor.map(r => r.name);
           
@@ -224,7 +242,6 @@ export default function Directory() {
           const aProfIndex = professorRoleOrder.indexOf(aRole);
           const bProfIndex = professorRoleOrder.indexOf(bRole);
           
-          // Team roles come before professor roles
           if (aTeamIndex !== -1 && bTeamIndex !== -1) {
             return aTeamIndex - bTeamIndex;
           }
@@ -235,7 +252,6 @@ export default function Directory() {
           if (aProfIndex !== -1 && bTeamIndex !== -1) return 1;
         }
         
-        // Default: alphabetical by last name
         return (a.Last || '').localeCompare(b.Last || '');
       });
     } else {
@@ -283,6 +299,108 @@ export default function Directory() {
     return count;
   }
 
+  async function handleManageLatestWeekend() {
+    setLoadingTeam(true);
+    try {
+      const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
+      
+      const { data: teams, error } = await supabase
+        .from(rosterTable)
+        .select('weekend_identifier')
+        .eq('org_id', orgId);
+      
+      if (error) throw error;
+
+      const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
+      let latest = { number: 0, identifier: null };
+
+      (teams || []).forEach(team => {
+        const idStr = (team.weekend_identifier || '').trim();
+        if (idStr.startsWith(prefix)) {
+          const num = parseInt(idStr.match(/\d+/)?.[0] || '0', 10);
+          if (num > latest.number) {
+            latest = { number: num, identifier: idStr };
+          }
+        }
+      });
+
+      if (latest.identifier) {
+        // Load roster for this weekend
+        const { data: roster, error: rosterError } = await supabase
+          .from(rosterTable)
+          .select('*')
+          .eq('weekend_identifier', latest.identifier)
+          .eq('org_id', orgId);
+        
+        if (rosterError) throw rosterError;
+
+        setActiveTeamIdentifier(latest.identifier);
+        setActiveTeamRoster(roster || []);
+        window.showMainStatus(`Loaded ${latest.identifier} - ${(roster || []).length} members`, false);
+      } else {
+        window.showMainStatus(`No ${currentGender}'s team found. Create one in Team List first.`, true);
+      }
+    } catch (error) {
+      console.error('Error loading latest team:', error);
+      window.showMainStatus(`Error loading team: ${error.message}`, true);
+    } finally {
+      setLoadingTeam(false);
+    }
+  }
+
+  async function assignRole(roleName) {
+    if (!activeTeamIdentifier) {
+      window.showMainStatus('Please load a team first using "Manage Latest Weekend"', true);
+      return;
+    }
+
+    if (!currentProfile) return;
+
+    // Check for duplicates
+    const existing = activeTeamRoster.find(
+      m => m.pescadore_key === currentProfile.PescadoreKey && m.role === roleName
+    );
+    
+    if (existing) {
+      window.showMainStatus(
+        `${currentProfile.Preferred || currentProfile.First} is already assigned as ${roleName}`,
+        true
+      );
+      return;
+    }
+
+    try {
+      const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
+      
+      const { data, error } = await supabase
+        .from(rosterTable)
+        .insert({
+          weekend_identifier: activeTeamIdentifier,
+          role: roleName,
+          pescadore_key: currentProfile.PescadoreKey,
+          org_id: orgId
+        })
+        .select();
+      
+      if (error) throw error;
+
+      // Update local roster
+      setActiveTeamRoster([...activeTeamRoster, data[0]]);
+      
+      window.showMainStatus(
+        `${currentProfile.Preferred || currentProfile.First} added as ${roleName}`,
+        false
+      );
+    } catch (error) {
+      console.error('Error assigning role:', error);
+      window.showMainStatus(`Error: ${error.message}`, true);
+    }
+  }
+
+  function getRoleCount(roleName) {
+    return activeTeamRoster.filter(m => m.role === roleName).length;
+  }
+
   function handleSearch() {
     performSearch();
   }
@@ -303,6 +421,7 @@ export default function Directory() {
     setCurrentView('directory');
     setCurrentProfile(null);
     setCurrentProfileIndex(-1);
+    setRoleSelectorOpen(false);
   }
 
   function navigateProfile(direction) {
@@ -311,6 +430,18 @@ export default function Directory() {
       setCurrentProfileIndex(newIndex);
       setCurrentProfile(filteredPescadores[newIndex]);
     }
+  }
+
+  function openRoleSelector() {
+    if (!activeTeamIdentifier) {
+      window.showMainStatus('Please load a team first using "Manage Latest Weekend"', true);
+      return;
+    }
+    setRoleSelectorOpen(true);
+  }
+
+  function closeRoleSelector() {
+    setRoleSelectorOpen(false);
   }
 
   function toggleDropdown(ref) {
@@ -522,9 +653,18 @@ export default function Directory() {
                   <div className="utility-buttons">
                     <button className="clear-button" onClick={handleClear}>Clear</button>
                     <button className="print-button">Print Report</button>
-                    <button className="view-team-button" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      Manage Latest Weekend
-                      <span className="team-count-badge" id="teamCountBadgeProfile" style={{ display: 'none' }}>0</span>
+                    <button 
+                      className="view-team-button" 
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                      onClick={handleManageLatestWeekend}
+                      disabled={loadingTeam}
+                    >
+                      {loadingTeam ? 'Loading...' : 'Manage Latest Weekend'}
+                      {activeTeamRoster.length > 0 && (
+                        <span className="team-count-badge" style={{ display: 'inline-block' }}>
+                          {activeTeamRoster.length}
+                        </span>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -532,7 +672,9 @@ export default function Directory() {
             </div>
             <div className="card pad">
               <div className="directory-header">
-                <h2 className="directory-title" id="directoryTitle">Directory</h2>
+                <h2 className="directory-title" id="directoryTitle">
+                  {activeTeamIdentifier ? `Directory - ${activeTeamIdentifier}` : 'Directory'}
+                </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <span className="directory-count">
                     Total Candidates: <strong>{filteredPescadores.filter(p => p.searchMatch?.type === 'candidate').length}</strong>
@@ -564,8 +706,6 @@ export default function Directory() {
                           : `${person.Last || ''}, ${person.Preferred || person.First || ''}`;
 
                         const hasSearchMatch = person.searchMatch;
-
-                        // Show badge if it's a filter match (not just search term match)
                         const showFilterBadge = primaryFilter && !hasSearchMatch;
                         
                         return (
@@ -613,6 +753,12 @@ export default function Directory() {
             onBack={showDirectory}
             onNavigate={navigateProfile}
             getRectorQualificationStatus={getRectorQualificationStatus}
+            activeTeamIdentifier={activeTeamIdentifier}
+            roleSelectorOpen={roleSelectorOpen}
+            onOpenRoleSelector={openRoleSelector}
+            onCloseRoleSelector={closeRoleSelector}
+            onAssignRole={assignRole}
+            getRoleCount={getRoleCount}
           />
         )}
 
@@ -621,132 +767,369 @@ export default function Directory() {
   );
 }
 
-function ProfileView({ profile, index, total, onBack, onNavigate, getRectorQualificationStatus }) {
+function ProfileView({ 
+  profile, 
+  index, 
+  total, 
+  onBack, 
+  onNavigate, 
+  getRectorQualificationStatus,
+  activeTeamIdentifier,
+  roleSelectorOpen,
+  onOpenRoleSelector,
+  onCloseRoleSelector,
+  onAssignRole,
+  getRoleCount
+}) {
   const isDeceased = profile.Deceased === true || (profile.Deceased || '').toLowerCase() === 'y' || (profile.Deceased || '').toLowerCase() === 'yes';
   const isDoNotCall = profile.Do_Not_Call === true || (profile.Do_Not_Call || '').toLowerCase() === 'y' || (profile.Do_Not_Call || '').toLowerCase() === 'yes';
   const isSpiritualDirector = (profile['Spiritual Director'] || 'N').toUpperCase() === 'E';
-
-  let statusClasses = '';
-  if (isSpiritualDirector) statusClasses += ' is-spiritual-director';
-  if (isDeceased) statusClasses += ' deceased';
-  else if (isDoNotCall) statusClasses += ' do-not-call';
 
   const fullName = `${profile.Preferred || profile.First || ''} ${profile.Last || ''}`.trim();
   const legalName = profile.First !== profile.Preferred && profile.Preferred ? profile.First : null;
 
   return (
-    <div id="profileView" className="profile-view">
-      <div className="navigation" style={{ marginTop: 0, marginBottom: '16px' }}>
-        <button className="back-button" onClick={onBack}>← Back to Directory</button>
-        <div className="nav-controls">
-          <button 
-            id="prevButton" 
-            className="nav-button" 
-            onClick={() => onNavigate(-1)}
-            disabled={index === 0}
-          >
-            Previous
-          </button>
-          <span id="profileCounter" className="profile-counter">
-            {index + 1} of {total}
-          </span>
-          <button 
-            id="nextButton" 
-            className="nav-button" 
-            onClick={() => onNavigate(1)}
-            disabled={index === total - 1}
-          >
-            Next
-          </button>
-        </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="print-button">Print Profile</button>
-          <button className="view-team-button">Add to Team</button>
-        </div>
-      </div>
-
-      <div id="profileContainer" className="profile-container">
-        {/* 40/60 Split: Profile Info + Rector Qualification - Equal Heights */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
-          <div className={`card pad profile-main-info`}>
-            <div className="profile-header">
-              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-                <h2 className="profile-name">{fullName}</h2>
-                {legalName && (
-                  <span className="legal-name-badge">Legal: {legalName}</span>
-                )}
-                {(profile["Candidate Weekend"] || profile["Last weekend worked"]) && (
-                  <span className="name-separator"></span>
-                )}
-                {profile["Candidate Weekend"] && (
-                  <span className="profile-weekend-info">
-                    Candidate: <span className="last-served-highlight">{profile["Candidate Weekend"]}</span>
-                  </span>
-                )}
-                {profile["Last weekend worked"] && (
-                  <span className="profile-weekend-info">
-                    Last Served: <span className="last-served-highlight">{profile["Last weekend worked"]}</span>
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="main-info-item">
-              <span className="main-info-label">Address:</span>
-              <span className="main-info-value">
-                {profile.Address || ''}, {profile.City || ''}, {profile.State || ''} {profile.Zip || ''}
-              </span>
-            </div>
-            <div className="main-info-item">
-              <span className="main-info-label">Church:</span>
-              <span className="main-info-value">{profile.Church || 'N/A'}</span>
-            </div>
-            <div className="main-info-item">
-              <span className="main-info-label">Email:</span>
-              <span className="main-info-value">{profile.Email || 'N/A'}</span>
-            </div>
-            <div className="main-info-item">
-              <span className="main-info-label">Phone:</span>
-              <span className="main-info-value">{profile.Phone1 || 'N/A'}</span>
-            </div>
-            
-            {/* Status Banner at Bottom */}
-            {(isDeceased || isDoNotCall || isSpiritualDirector) && (
-              <div style={{
-                marginTop: '12px',
-                marginLeft: '-24px',
-                marginRight: '-24px',
-                marginBottom: '-24px',
-                padding: '6px',
-                textAlign: 'center',
-                fontWeight: 'bold',
-                fontSize: '12px',
-                textTransform: 'uppercase',
-                letterSpacing: '1px',
-                color: 'white',
-                backgroundColor: isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745',
-                borderBottomLeftRadius: '8px',
-                borderBottomRightRadius: '8px'
-              }}>
-                {isDeceased ? 'DECEASED' : isDoNotCall ? 'DO NOT CALL' : 'SPIRITUAL DIRECTOR'}
-              </div>
-            )}
+    <div id="profileView" className="profile-view" style={{ display: 'flex', gap: '16px', width: '100%' }}>
+      {/* Left side: Profile content - 70% when panel open, 100% when closed */}
+      <div style={{ 
+        flex: roleSelectorOpen ? '0 0 70%' : '1',
+        transition: 'flex 0.3s ease',
+        minWidth: 0
+      }}>
+        <div className="navigation" style={{ marginTop: 0, marginBottom: '16px' }}>
+          <button className="back-button" onClick={onBack}>← Back to Directory</button>
+          <div className="nav-controls">
+            <button 
+              id="prevButton" 
+              className="nav-button" 
+              onClick={() => onNavigate(-1)}
+              disabled={index === 0}
+            >
+              Previous
+            </button>
+            <span id="profileCounter" className="profile-counter">
+              {index + 1} of {total}
+            </span>
+            <button 
+              id="nextButton" 
+              className="nav-button" 
+              onClick={() => onNavigate(1)}
+              disabled={index === total - 1}
+            >
+              Next
+            </button>
           </div>
-
-          <RectorQualificationCard profile={profile} getRectorQualificationStatus={getRectorQualificationStatus} />
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button className="print-button">Print Profile</button>
+            <button className="view-team-button" onClick={onOpenRoleSelector}>
+              Add to Team
+            </button>
+          </div>
         </div>
-        <TeamRolesCard profile={profile} />
-        <ProfessorRolesCard profile={profile} />
+
+        <div id="profileContainer" className="profile-container">
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
+            <div className={`card pad profile-main-info`}>
+              <div className="profile-header">
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <h2 className="profile-name">{fullName}</h2>
+                  {legalName && (
+                    <span className="legal-name-badge">Legal: {legalName}</span>
+                  )}
+                  {(profile["Candidate Weekend"] || profile["Last weekend worked"]) && (
+                    <span className="name-separator"></span>
+                  )}
+                  {profile["Candidate Weekend"] && (
+                    <span className="profile-weekend-info">
+                      Candidate: <span className="last-served-highlight">{profile["Candidate Weekend"]}</span>
+                    </span>
+                  )}
+                  {profile["Last weekend worked"] && (
+                    <span className="profile-weekend-info">
+                      Last Served: <span className="last-served-highlight">{profile["Last weekend worked"]}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="main-info-item">
+                <span className="main-info-label">Address:</span>
+                <span className="main-info-value">
+                  {profile.Address || ''}, {profile.City || ''}, {profile.State || ''} {profile.Zip || ''}
+                </span>
+              </div>
+              <div className="main-info-item">
+                <span className="main-info-label">Church:</span>
+                <span className="main-info-value">{profile.Church || 'N/A'}</span>
+              </div>
+              <div className="main-info-item">
+                <span className="main-info-label">Email:</span>
+                <span className="main-info-value">{profile.Email || 'N/A'}</span>
+              </div>
+              <div className="main-info-item">
+                <span className="main-info-label">Phone:</span>
+                <span className="main-info-value">{profile.Phone1 || 'N/A'}</span>
+              </div>
+              
+              {(isDeceased || isDoNotCall || isSpiritualDirector) && (
+                <div style={{
+                  marginTop: '12px',
+                  marginLeft: '-24px',
+                  marginRight: '-24px',
+                  marginBottom: '-24px',
+                  padding: '6px',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  color: 'white',
+                  backgroundColor: isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745',
+                  borderBottomLeftRadius: '8px',
+                  borderBottomRightRadius: '8px'
+                }}>
+                  {isDeceased ? 'DECEASED' : isDoNotCall ? 'DO NOT CALL' : 'SPIRITUAL DIRECTOR'}
+                </div>
+              )}
+            </div>
+
+            <RectorQualificationCard profile={profile} getRectorQualificationStatus={getRectorQualificationStatus} />
+          </div>
+          <TeamRolesCard profile={profile} />
+          <ProfessorRolesCard profile={profile} />
+        </div>
+
+        <div className="refresh-section" style={{ marginTop: '16px' }}>
+          <div className="button-group">
+            <button id="refreshButton" className="refresh-button">Refresh Data</button>
+            <button id="editButton" className="edit-button">Edit Profile</button>
+          </div>
+          <div id="lastUpdated" className="last-updated" style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+            Data last refreshed: {new Date().toLocaleString()}
+          </div>
+        </div>
       </div>
 
-      <div className="refresh-section" style={{ marginTop: '16px' }}>
-        <div className="button-group">
-          <button id="refreshButton" className="refresh-button">Refresh Data</button>
-          <button id="editButton" className="edit-button">Edit Profile</button>
+      {/* Right side: Role selector panel - 30% */}
+      {roleSelectorOpen && (
+        <RoleSelectorPanel 
+          onClose={onCloseRoleSelector}
+          onAssignRole={onAssignRole}
+          getRoleCount={getRoleCount}
+          activeTeamIdentifier={activeTeamIdentifier}
+        />
+      )}
+    </div>
+  );
+}
+
+function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIdentifier }) {
+  const teamRowsNeeded = Math.ceil(ROLE_CONFIG.team.length / 4);
+  const profRowsNeeded = Math.ceil(ROLE_CONFIG.professor.length / 4);
+
+  return (
+    <div style={{
+      flex: '0 0 30%',
+      animation: 'slideInRight 0.3s ease',
+      height: 'fit-content',
+      position: 'sticky',
+      top: '16px'
+    }}>
+      <div className="card pad" style={{ margin: 0 }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '16px',
+          paddingBottom: '12px',
+          borderBottom: '1px solid var(--border)'
+        }}>
+          <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Assign Role</h3>
+          <button 
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '24px',
+              cursor: 'pointer',
+              color: 'var(--muted)',
+              lineHeight: '1',
+              padding: '0',
+              width: '24px',
+              height: '24px'
+            }}
+          >
+            ×
+          </button>
         </div>
-        <div id="lastUpdated" className="last-updated" style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-          Data last refreshed: {new Date().toLocaleString()}
+
+        {activeTeamIdentifier && (
+          <div style={{ 
+            fontSize: '0.85rem', 
+            color: 'var(--muted)', 
+            marginBottom: '16px',
+            padding: '8px',
+            background: 'var(--surface)',
+            borderRadius: '6px'
+          }}>
+            Adding to: <strong>{activeTeamIdentifier}</strong>
+          </div>
+        )}
+
+        {/* Team Roles Section */}
+        <div style={{ marginBottom: '24px' }}>
+          <h4 style={{ 
+            margin: '0 0 12px 0', 
+            fontSize: '0.9rem', 
+            fontWeight: '600',
+            color: 'var(--ink)'
+          }}>
+            Team Roles
+          </h4>
+          <div 
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateRows: `repeat(${teamRowsNeeded}, auto)`,
+              gridAutoFlow: 'column',
+              gap: '8px'
+            }}
+          >
+            {ROLE_CONFIG.team.map(role => {
+              const count = getRoleCount(role.name);
+              return (
+                <button
+                  key={role.key}
+                  onClick={() => onAssignRole(role.name)}
+                  style={{
+                    padding: '8px 10px',
+                    fontSize: '0.75rem',
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
+                    background: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '4px',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--surface)';
+                    e.currentTarget.style.borderColor = 'var(--accentB)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                  }}
+                >
+                  <span style={{ flex: '1', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {role.name}
+                  </span>
+                  {count > 0 && (
+                    <span style={{
+                      background: 'var(--accentB)',
+                      color: 'white',
+                      borderRadius: '999px',
+                      padding: '2px 6px',
+                      fontSize: '0.7rem',
+                      fontWeight: '600',
+                      minWidth: '20px',
+                      textAlign: 'center'
+                    }}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Professor Roles Section */}
+        <div>
+          <h4 style={{ 
+            margin: '0 0 12px 0', 
+            fontSize: '0.9rem', 
+            fontWeight: '600',
+            color: 'var(--ink)'
+          }}>
+            Professor Roles
+          </h4>
+          <div 
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateRows: `repeat(${profRowsNeeded}, auto)`,
+              gridAutoFlow: 'column',
+              gap: '8px'
+            }}
+          >
+            {ROLE_CONFIG.professor.map(role => {
+              const count = getRoleCount(role.name);
+              return (
+                <button
+                  key={role.key}
+                  onClick={() => onAssignRole(role.name)}
+                  style={{
+                    padding: '8px 10px',
+                    fontSize: '0.75rem',
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
+                    background: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '4px',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--surface)';
+                    e.currentTarget.style.borderColor = 'var(--accentB)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                  }}
+                >
+                  <span style={{ flex: '1', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {role.name}
+                  </span>
+                  {count > 0 && (
+                    <span style={{
+                      background: 'var(--accentB)',
+                      color: 'white',
+                      borderRadius: '999px',
+                      padding: '2px 6px',
+                      fontSize: '0.7rem',
+                      fontWeight: '600',
+                      minWidth: '20px',
+                      textAlign: 'center'
+                    }}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
