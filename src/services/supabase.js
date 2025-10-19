@@ -31,6 +31,7 @@ export async function logErrorToSupabase(error, module, orgId = null) {
     const logData = {
       org_id: orgId,
       user_id: user?.id || null,
+      
       user_email: user?.email || 'unknown',
       module: module,
       error_message: error.message,
