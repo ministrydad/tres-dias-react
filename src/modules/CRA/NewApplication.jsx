@@ -1,5 +1,5 @@
 // src/modules/CRA/NewApplication.jsx
-// COMPLETE FILE - Updated with column width adjustments and simplified dropdown
+// COMPLETE FILE - Fixed: Removed status column, removed submittedAt, added default values, improved error handling
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
@@ -74,7 +74,7 @@ export default function NewApplication() {
       setAllSponsors(filtered);
     } catch (error) {
       console.error('Error loading sponsors:', error);
-      alert('Error loading sponsor list: ' + error.message);
+      window.showMainStatus('Error loading sponsor list: ' + error.message, true);
     } finally {
       setIsLoadingSponsors(false);
     }
@@ -85,7 +85,7 @@ export default function NewApplication() {
       const { data, error } = await supabase
         .from('app_settings')
         .select('community_name')
-        .eq('id', 1)
+        .eq('org_id', orgId)  // ✅ FIXED: Changed from .eq('id', 1)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -221,7 +221,7 @@ export default function NewApplication() {
 
   const handleSubmit = async () => {
     if (!formData.c_lastname || (!formData.m_first && !formData.f_first)) {
-      alert('Last name and at least one first name are required.');
+      window.showMainStatus('Last name and at least one first name are required.', true);
       return;
     }
 
@@ -245,14 +245,29 @@ export default function NewApplication() {
         m_age: formData.m_age === '' ? null : parseInt(formData.m_age) || null,
         f_age: formData.f_age === '' ? null : parseInt(formData.f_age) || null,
         gender: hasMan && !hasWoman ? 'men' : !hasMan && hasWoman ? 'women' : null,
-        status: 'Pending',
-        submittedAt: new Date().toISOString()
+        
+        // ✅ FIXED: Removed status field (doesn't exist - calculated dynamically)
+        // ✅ FIXED: Removed submittedAt (use database default created_at)
+        
+        // ✅ ADDED: Default values for fields used by other modules
+        attendance: null,
+        m_smoke: false,
+        f_smoke: false,
+        m_diet: false,
+        f_diet: false,
+        m_diettext: '',
+        f_diettext: '',
+        letter_sent_sponsor: false,
+        letter_sent_candidate: false,
+        is_checked_in: false
       };
 
       const { error } = await supabase.from('cra_applications').insert([data]);
       if (error) throw error;
 
       setSaveStatus('✓ Saved');
+      window.showMainStatus('✓ Application saved successfully', false);
+      
       setTimeout(() => {
         setSaveStatus('');
         handleClear();
@@ -260,7 +275,7 @@ export default function NewApplication() {
 
     } catch (error) {
       console.error('Error saving application:', error);
-      alert(`Error saving application: ${error.message}`);
+      window.showMainStatus(`Error: ${error.message}`, true);
       setSaveStatus('');
     } finally {
       setIsSaving(false);
