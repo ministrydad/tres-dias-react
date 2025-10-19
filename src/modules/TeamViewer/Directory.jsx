@@ -829,16 +829,18 @@ function ProfileView({
       <div style={{ 
         display: 'flex', 
         gap: '16px',
-        position: 'relative',
-        overflow: 'visible'
+        alignItems: 'flex-start'
       }}>
         {/* Left side: Profile content - 70% when panel open, 100% when closed */}
-        <div style={{ 
-          flex: roleSelectorOpen ? '0 0 70%' : '1',
-          transition: 'flex 0.3s ease',
-          minWidth: 0,
-          overflow: 'visible'
-        }}>
+        <div 
+          className="card pad"
+          style={{ 
+            width: roleSelectorOpen ? '70%' : '100%',
+            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            minWidth: 0,
+            padding: 0
+          }}
+        >
           <div id="profileContainer" className="profile-container">
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
               <div className={`card pad profile-main-info`}>
@@ -922,21 +924,41 @@ function ProfileView({
         </div>
 
         {/* Right side: Role selector panel - 30% */}
-        <div style={{
-          flex: roleSelectorOpen ? '0 0 calc(30% - 8px)' : '0 0 0',
-          transition: 'flex 0.3s ease',
-          overflow: 'hidden',
-          opacity: roleSelectorOpen ? 1 : 0
-        }}>
-          {roleSelectorOpen && (
+        {roleSelectorOpen && (
+          <div 
+            className="card pad"
+            style={{
+              width: '30%',
+              transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              minWidth: 0,
+              height: 'fit-content',
+              position: 'sticky',
+              top: '16px',
+              animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          >
             <RoleSelectorPanel 
               onClose={onCloseRoleSelector}
               onAssignRole={onAssignRole}
               getRoleCount={getRoleCount}
               activeTeamIdentifier={activeTeamIdentifier}
             />
-          )}
-        </div>
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
       </div>
     </div>
   );
@@ -947,21 +969,15 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
   const profRowsNeeded = Math.ceil(ROLE_CONFIG.professor.length / 4);
 
   return (
-    <div style={{
-      height: 'fit-content',
-      position: 'sticky',
-      top: '16px',
-      width: '100%'
-    }}>
-      <div className="card pad" style={{ margin: 0 }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '16px',
-          paddingBottom: '12px',
-          borderBottom: '1px solid var(--border)'
-        }}>
+    <div>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '16px',
+        paddingBottom: '12px',
+        borderBottom: '1px solid var(--border)'
+      }}>
           <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Assign Role</h3>
           <button 
             onClick={onClose}
@@ -1139,6 +1155,8 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
     </div>
   );
 }
+
+function RectorQualificationCard
 
 function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
   const speakingProfRoles = ROLE_CONFIG.professor.filter(r => r.key !== 'Prof_Silent').map(r => r.key);
