@@ -1,3 +1,4 @@
+// src/modules/Settings/AppSettings.jsx
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -23,13 +24,6 @@ const BUDGET_KEYS = [
   'Chapel', 'Table', 'Worship', 'Palanca', 'Storeroom'
 ];
 
-const DEFAULT_SETTINGS = {
-  community_name: 'Placeholder Inc.',
-  weekend_fee: 265,
-  team_fee: 30,
-  sponsor_fee: 50
-};
-
 export default function AppSettings() {
   const { orgId } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -50,6 +44,22 @@ export default function AppSettings() {
   
   // User management
   const [users, setUsers] = useState([]);
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [selectedPerson, setSelectedPerson] = useState(null);
+  const [inviteFormData, setInviteFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: 'User',
+    permissions: {
+      'team-viewer-app': true,
+      'team-book': true,
+      'meeting-check-in-app': true,
+      'candidate-registration': true,
+      'secretariat-app': true,
+      'app-settings': true
+    }
+  });
   
   // Subscription status state
   const [subscriptionStatus, setSubscriptionStatus] = useState('trial');
@@ -71,8 +81,8 @@ export default function AppSettings() {
         supabase.from('app_settings').select('*').eq('id', 1).single(),
         supabase.from('app_budgets').select('*').eq('id', 1).single(),
         supabase.from('secretariat_roster').select('*').eq('org_id', orgId),
-        supabase.from('men_raw').select('PescadoreKey, First, Last, Preferred').eq('org_id', orgId),
-        supabase.from('women_raw').select('PescadoreKey, First, Last, Preferred').eq('org_id', orgId),
+        supabase.from('men_raw').select('PescadoreKey, First, Last, Preferred, Email').eq('org_id', orgId),
+        supabase.from('women_raw').select('PescadoreKey, First, Last, Preferred, Email').eq('org_id', orgId),
         supabase.from('memberships').select('role, permissions, profiles(user_id, full_name, email)').eq('org_id', orgId),
         supabase.from('organizations').select('billing_status, trial_expires_at').eq('id', orgId).single()
       ]);
@@ -102,9 +112,18 @@ export default function AppSettings() {
       }, {});
       setRosterData(roster);
 
-      // Load all members
-      const members = [...(menResult.data || []), ...(womenResult.data || [])];
-      setAllMembers(members);
+      // Load all members (combine men + women, filter out those already users)
+      const existingUserEmails = new Set(
+        (usersResult.data || [])
+          .map(member => member.profiles?.email)
+          .filter(Boolean)
+      );
+      
+      const allPeople = [...(menResult.data || []), ...(womenResult.data || [])]
+        .filter(person => person.Email && !existingUserEmails.has(person.Email))
+        .sort((a, b) => (a.Last || '').localeCompare(b.Last || ''));
+      
+      setAllMembers(allPeople);
 
       // Load users from memberships table
       if (usersResult.data && usersResult.data.length > 0) {
@@ -134,7 +153,7 @@ export default function AppSettings() {
           statusText = 'Your subscription is active.';
         } else if (status === 'waived') {
           statusText = 'Your subscription is provided free of charge.';
-        } else { // trial
+        } else {
           if (trialExpires && trialExpires > now) {
             const daysLeft = Math.ceil((trialExpires - now) / (1000 * 60 * 60 * 24));
             statusText = `Your trial expires in ${daysLeft} day(s).`;
@@ -168,10 +187,10 @@ export default function AppSettings() {
 
       if (error) throw error;
       
-      alert('General settings saved successfully.');
+      window.showMainStatus('General settings saved successfully.');
     } catch (error) {
       console.error('Error saving general settings:', error);
-      alert(`Failed to save settings: ${error.message}`);
+      window.showMainStatus(`Failed to save settings: ${error.message}`, true);
     }
   }
 
@@ -190,10 +209,10 @@ export default function AppSettings() {
 
       if (error) throw error;
       
-      alert('Budget settings saved successfully.');
+      window.showMainStatus('Budget settings saved successfully.');
     } catch (error) {
       console.error('Error saving budget settings:', error);
-      alert(`Failed to save budget settings: ${error.message}`);
+      window.showMainStatus(`Failed to save budget settings: ${error.message}`, true);
     }
   }
 
@@ -215,12 +234,12 @@ export default function AppSettings() {
 
       if (error) throw error;
       
-      alert('Term lengths have been saved successfully.');
+      window.showMainStatus('Term lengths have been saved successfully.');
       setHasLoaded(false);
       await loadAllData();
     } catch (error) {
       console.error('Error saving term lengths:', error);
-      alert(`Failed to save term lengths: ${error.message}`);
+      window.showMainStatus(`Failed to save term lengths: ${error.message}`, true);
     }
   }
 
@@ -229,6 +248,94 @@ export default function AppSettings() {
       ...prev,
       [key]: value
     }));
+  }
+
+  function openInviteForm() {
+    setShowInviteForm(true);
+    setSelectedPerson(null);
+    setInviteFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      role: 'User',
+      permissions: {
+        'team-viewer-app': true,
+        'team-book': true,
+        'meeting-check-in-app': true,
+        'candidate-registration': true,
+        'secretariat-app': true,
+        'app-settings': true
+      }
+    });
+  }
+
+  function closeInviteForm() {
+    setShowInviteForm(false);
+    setSelectedPerson(null);
+  }
+
+  function handlePersonSelection(e) {
+    const personKey = e.target.value;
+    if (!personKey) {
+      setSelectedPerson(null);
+      setInviteFormData(prev => ({
+        ...prev,
+        firstName: '',
+        lastName: '',
+        email: ''
+      }));
+      return;
+    }
+
+    const person = allMembers.find(p => p.PescadoreKey === personKey);
+    if (person) {
+      setSelectedPerson(person);
+      setInviteFormData(prev => ({
+        ...prev,
+        firstName: person.Preferred || person.First || '',
+        lastName: person.Last || '',
+        email: person.Email || ''
+      }));
+    }
+  }
+
+  function handlePermissionToggle(permKey) {
+    setInviteFormData(prev => ({
+      ...prev,
+      permissions: {
+        ...prev.permissions,
+        [permKey]: !prev.permissions[permKey]
+      }
+    }));
+  }
+
+  async function handleInviteUser() {
+    if (!inviteFormData.email || !inviteFormData.firstName || !inviteFormData.lastName) {
+      window.showMainStatus('Please fill in all required fields.', true);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('invite-user', {
+        body: {
+          email: inviteFormData.email,
+          full_name: `${inviteFormData.firstName} ${inviteFormData.lastName}`,
+          role: inviteFormData.role,
+          permissions: inviteFormData.permissions,
+          org_id: orgId
+        }
+      });
+
+      if (error) throw error;
+
+      window.showMainStatus('Invitation sent successfully! User will receive an email to set up their account.');
+      closeInviteForm();
+      setHasLoaded(false);
+      await loadAllData();
+    } catch (error) {
+      console.error('Error inviting user:', error);
+      window.showMainStatus(`Failed to invite user: ${error.message}`, true);
+    }
   }
 
   if (loading) {
@@ -331,10 +438,17 @@ export default function AppSettings() {
         </div>
       </div>
 
-      {/* User Management */}
-      <div className="card pad" style={{ marginTop: '16px' }}>
-        <div className="section-title">User Management</div>
-        <div id="user-management-container">
+      {/* User Management with Sliding Panel */}
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', marginTop: '16px' }}>
+        <div 
+          className="card pad"
+          style={{
+            width: showInviteForm ? '45%' : '100%',
+            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            minWidth: 0
+          }}
+        >
+          <div className="section-title">User Management</div>
           <div id="user-management-header">
             <p style={{ color: 'var(--muted)', fontSize: '0.9rem', maxWidth: '75%', margin: 0 }}>
               Invite new users to your organization and manage their access permissions.
@@ -342,7 +456,7 @@ export default function AppSettings() {
             <button 
               id="inviteUserBtn" 
               className="btn btn-primary"
-              onClick={() => console.log('Open invite modal')}
+              onClick={openInviteForm}
             >
               Invite New User
             </button>
@@ -392,6 +506,187 @@ export default function AppSettings() {
             </table>
           </div>
         </div>
+
+        {showInviteForm && (
+          <div
+            className="card pad"
+            style={{
+              width: '53%',
+              animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              maxHeight: 'calc(100vh - 200px)',
+              overflowY: 'auto'
+            }}
+          >
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <div className="section-title">Invite New User</div>
+              <button 
+                className="btn btn-small"
+                onClick={closeInviteForm}
+                style={{ padding: '4px 12px', fontSize: '0.9rem' }}
+              >
+                Close ✕
+              </button>
+            </div>
+
+            <div className="field">
+              <label className="label">Select Person from Directory</label>
+              <select 
+                className="input"
+                value={selectedPerson?.PescadoreKey || ''}
+                onChange={handlePersonSelection}
+              >
+                <option value="">-- Select from directory (optional) --</option>
+                {allMembers.map(person => (
+                  <option key={person.PescadoreKey} value={person.PescadoreKey}>
+                    {person.Last}, {person.Preferred || person.First}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-2">
+              <div className="field">
+                <label className="label">First Name *</label>
+                <input 
+                  className="input"
+                  type="text"
+                  value={inviteFormData.firstName}
+                  onChange={(e) => setInviteFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                  readOnly={!!selectedPerson}
+                />
+              </div>
+              <div className="field">
+                <label className="label">Last Name *</label>
+                <input 
+                  className="input"
+                  type="text"
+                  value={inviteFormData.lastName}
+                  onChange={(e) => setInviteFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                  readOnly={!!selectedPerson}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-2">
+              <div className="field">
+                <label className="label">Email Address *</label>
+                <input 
+                  className="input"
+                  type="email"
+                  value={inviteFormData.email}
+                  onChange={(e) => setInviteFormData(prev => ({ ...prev, email: e.target.value }))}
+                  readOnly={!!selectedPerson}
+                />
+              </div>
+              <div className="field">
+                <label className="label">Role</label>
+                <select 
+                  className="input"
+                  value={inviteFormData.role}
+                  onChange={(e) => setInviteFormData(prev => ({ ...prev, role: e.target.value }))}
+                >
+                  <option value="User">User</option>
+                  <option value="Admin">Admin</option>
+                  <option value="SuperAdmin">Super Admin</option>
+                </select>
+              </div>
+            </div>
+
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
+
+            <div className="field">
+              <label className="label">Module Permissions</label>
+              <div id="permissions-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginTop: '20px' }}>
+                {[
+                  { key: 'team-viewer-app', label: 'Directory' },
+                  { key: 'team-book', label: 'Team Book' },
+                  { key: 'meeting-check-in-app', label: 'Team Meetings' },
+                  { key: 'candidate-registration', label: 'Candidate Registration' },
+                  { key: 'secretariat-app', label: 'Secretariat' },
+                  { key: 'app-settings', label: 'Settings' }
+                ].map(perm => (
+                  <div key={perm.key} className="permission-item" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    padding: '7px 12px',
+                    borderRadius: '8px'
+                  }}>
+                    <label className="label" style={{ margin: 0, flexGrow: 1, fontWeight: 600 }}>
+                      {perm.label}
+                    </label>
+                    <label className="switch" style={{
+                      position: 'relative',
+                      display: 'inline-block',
+                      width: '44px',
+                      height: '24px'
+                    }}>
+                      <input 
+                        type="checkbox"
+                        checked={inviteFormData.permissions[perm.key]}
+                        onChange={() => handlePermissionToggle(perm.key)}
+                        style={{ opacity: 0, width: 0, height: 0 }}
+                      />
+                      <span className="slider" style={{
+                        position: 'absolute',
+                        cursor: 'pointer',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: inviteFormData.permissions[perm.key] ? 'var(--accentA)' : 'var(--border)',
+                        transition: '.4s',
+                        borderRadius: '24px'
+                      }}>
+                        <span style={{
+                          position: 'absolute',
+                          content: '""',
+                          height: '18px',
+                          width: '18px',
+                          left: '3px',
+                          bottom: '3px',
+                          backgroundColor: 'white',
+                          transition: '.4s',
+                          borderRadius: '50%',
+                          transform: inviteFormData.permissions[perm.key] ? 'translateX(20px)' : 'translateX(0)'
+                        }}></span>
+                      </span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ 
+              display: 'flex', 
+              gap: '12px', 
+              marginTop: '24px',
+              paddingTop: '20px',
+              borderTop: '1px solid var(--border)'
+            }}>
+              <button 
+                className="btn" 
+                onClick={closeInviteForm}
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleInviteUser}
+                style={{ flex: 1 }}
+              >
+                Send Invitation
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Secretariat Configuration */}
@@ -514,7 +809,6 @@ export default function AppSettings() {
       <div className="card pad" style={{ marginTop: '16px' }}>
         <div className="section-title">Subscription & Billing</div>
         <div className="grid grid-2" style={{ gap: '24px', alignItems: 'start' }}>
-          {/* Left side: Status and plan details */}
           <div>
             <div className="label" style={{ fontSize: '1rem', marginBottom: '12px' }}>Current Plan</div>
             <div id="subscriptionStatusContainer" style={{ marginBottom: '16px' }}>
@@ -540,7 +834,6 @@ export default function AppSettings() {
                 <p style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Billed monthly</p>
               </div>
 
-              {/* ✅ ADDED: Features List - THIS WAS THE MISSING 5% */}
               <ul style={{ listStyle: 'none', paddingLeft: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.9rem', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style={{ color: 'var(--accentA)', flexShrink: 0 }}>
@@ -602,7 +895,6 @@ export default function AppSettings() {
             </div>
           </div>
 
-          {/* Right side: Billing history */}
           <div>
             <div className="label" style={{ fontSize: '1rem', marginBottom: '12px' }}>Billing History</div>
             <div 
@@ -619,6 +911,19 @@ export default function AppSettings() {
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </section>
   );
 }

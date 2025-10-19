@@ -1,5 +1,5 @@
 // src/modules/TeamViewer/Directory.jsx
-// UPDATED: Rector Qualified filter now excludes those who have already served as Rector (E)
+// UPDATED: Grid flows top-to-bottom in columns (not row-by-row)
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
@@ -132,7 +132,6 @@ export default function Directory() {
         data = data.filter(p => !p["Last weekend worked"]);
         break;
       case 'rector-qualified':
-        // ✅ UPDATED: Exclude anyone who has already served as Rector (E)
         data = data.filter(p => 
           getRectorQualificationStatus(p) === 4 && 
           p['Rector'] !== 'E'
@@ -534,16 +533,27 @@ export default function Directory() {
             <div className="card pad">
               <div className="directory-header">
                 <h2 className="directory-title" id="directoryTitle">Directory</h2>
-                <span className="directory-count" id="directoryCount">{filteredPescadores.length} results</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <span className="directory-count">
+                    Total Candidates: <strong>{filteredPescadores.filter(p => p.searchMatch?.type === 'candidate').length}</strong>
+                  </span>
+                  <span className="directory-count">
+                    Total Team: <strong>{filteredPescadores.filter(p => p.searchMatch?.type === 'service').length}</strong>
+                  </span>
+                  <span className="directory-count" id="directoryCount">{filteredPescadores.length} results</span>
+                </div>
               </div>
               {(() => {
-                const rowsNeeded = Math.ceil(filteredPescadores.length / 4);
+                const rowsNeeded = Math.ceil(filteredPescadores.length / 5);
                 
                 return (
                   <div 
                     className="names-grid" 
                     id="namesGrid"
-                    style={{ gridTemplateRows: `repeat(${rowsNeeded}, auto)` }}
+                    style={{ 
+                      gridTemplateRows: `repeat(${rowsNeeded}, auto)`,
+                      gridAutoFlow: 'column'
+                    }}
                   >
                     {filteredPescadores.length === 0 ? (
                       <div className="loading">No results found.</div>
@@ -658,7 +668,7 @@ function ProfileView({ profile, index, total, onBack, onNavigate, getRectorQuali
       <div id="profileContainer" className="profile-container">
         {/* 40/60 Split: Profile Info + Rector Qualification - Equal Heights */}
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
-          <div className={`card pad profile-main-info${statusClasses}`}>
+          <div className={`card pad profile-main-info`}>
             <div className="profile-header">
               <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                 <h2 className="profile-name">{fullName}</h2>
@@ -698,6 +708,28 @@ function ProfileView({ profile, index, total, onBack, onNavigate, getRectorQuali
               <span className="main-info-label">Phone:</span>
               <span className="main-info-value">{profile.Phone1 || 'N/A'}</span>
             </div>
+            
+            {/* Status Banner at Bottom */}
+            {(isDeceased || isDoNotCall || isSpiritualDirector) && (
+              <div style={{
+                marginTop: '12px',
+                marginLeft: '-24px',
+                marginRight: '-24px',
+                marginBottom: '-24px',
+                padding: '6px',
+                textAlign: 'center',
+                fontWeight: 'bold',
+                fontSize: '12px',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                color: 'white',
+                backgroundColor: isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745',
+                borderBottomLeftRadius: '8px',
+                borderBottomRightRadius: '8px'
+              }}>
+                {isDeceased ? 'DECEASED' : isDoNotCall ? 'DO NOT CALL' : 'SPIRITUAL DIRECTOR'}
+              </div>
+            )}
           </div>
 
           <RectorQualificationCard profile={profile} getRectorQualificationStatus={getRectorQualificationStatus} />
