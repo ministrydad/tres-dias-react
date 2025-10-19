@@ -829,13 +829,15 @@ function ProfileView({
       <div style={{ 
         display: 'flex', 
         gap: '16px',
-        position: 'relative'
+        position: 'relative',
+        overflow: 'visible'
       }}>
         {/* Left side: Profile content - 70% when panel open, 100% when closed */}
         <div style={{ 
           flex: roleSelectorOpen ? '0 0 70%' : '1',
           transition: 'flex 0.3s ease',
-          minWidth: 0
+          minWidth: 0,
+          overflow: 'visible'
         }}>
           <div id="profileContainer" className="profile-container">
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
@@ -920,14 +922,21 @@ function ProfileView({
         </div>
 
         {/* Right side: Role selector panel - 30% */}
-        {roleSelectorOpen && (
-          <RoleSelectorPanel 
-            onClose={onCloseRoleSelector}
-            onAssignRole={onAssignRole}
-            getRoleCount={getRoleCount}
-            activeTeamIdentifier={activeTeamIdentifier}
-          />
-        )}
+        <div style={{
+          flex: roleSelectorOpen ? '0 0 calc(30% - 8px)' : '0 0 0',
+          transition: 'flex 0.3s ease',
+          overflow: 'hidden',
+          opacity: roleSelectorOpen ? 1 : 0
+        }}>
+          {roleSelectorOpen && (
+            <RoleSelectorPanel 
+              onClose={onCloseRoleSelector}
+              onAssignRole={onAssignRole}
+              getRoleCount={getRoleCount}
+              activeTeamIdentifier={activeTeamIdentifier}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -939,10 +948,10 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
 
   return (
     <div style={{
-      flex: '0 0 30%',
       height: 'fit-content',
       position: 'sticky',
-      top: '16px'
+      top: '16px',
+      width: '100%'
     }}>
       <div className="card pad" style={{ margin: 0 }}>
         <div style={{ 
