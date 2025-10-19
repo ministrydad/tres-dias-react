@@ -748,20 +748,23 @@ export default function Directory() {
         )}
 
         {currentView === 'profile' && currentProfile && (
-          <ProfileView 
-            profile={currentProfile}
-            index={currentProfileIndex}
-            total={filteredPescadores.length}
-            onBack={showDirectory}
-            onNavigate={navigateProfile}
-            getRectorQualificationStatus={getRectorQualificationStatus}
-            activeTeamIdentifier={activeTeamIdentifier}
-            roleSelectorOpen={roleSelectorOpen}
-            onOpenRoleSelector={openRoleSelector}
-            onCloseRoleSelector={closeRoleSelector}
-            onAssignRole={assignRole}
-            getRoleCount={getRoleCount}
-          />
+          <>
+            {console.log('Rendering ProfileView - roleSelectorOpen:', roleSelectorOpen, 'activeTeamIdentifier:', activeTeamIdentifier)}
+            <ProfileView 
+              profile={currentProfile}
+              index={currentProfileIndex}
+              total={filteredPescadores.length}
+              onBack={showDirectory}
+              onNavigate={navigateProfile}
+              getRectorQualificationStatus={getRectorQualificationStatus}
+              activeTeamIdentifier={activeTeamIdentifier}
+              roleSelectorOpen={roleSelectorOpen}
+              onOpenRoleSelector={openRoleSelector}
+              onCloseRoleSelector={closeRoleSelector}
+              onAssignRole={assignRole}
+              getRoleCount={getRoleCount}
+            />
+          </>
         )}
 
       </div>
@@ -783,6 +786,9 @@ function ProfileView({
   onAssignRole,
   getRoleCount
 }) {
+  console.log('ProfileView render - roleSelectorOpen:', roleSelectorOpen);
+  console.log('ProfileView render - onOpenRoleSelector type:', typeof onOpenRoleSelector);
+  
   const isDeceased = profile.Deceased === true || (profile.Deceased || '').toLowerCase() === 'y' || (profile.Deceased || '').toLowerCase() === 'yes';
   const isDoNotCall = profile.Do_Not_Call === true || (profile.Do_Not_Call || '').toLowerCase() === 'y' || (profile.Do_Not_Call || '').toLowerCase() === 'yes';
   const isSpiritualDirector = (profile['Spiritual Director'] || 'N').toUpperCase() === 'E';
@@ -817,7 +823,13 @@ function ProfileView({
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button className="print-button">Print Profile</button>
-          <button className="view-team-button" onClick={onOpenRoleSelector}>
+          <button 
+            className="view-team-button" 
+            onClick={() => {
+              console.log('Add to Team button clicked!');
+              onOpenRoleSelector();
+            }}
+          >
             Add to Team
           </button>
         </div>
