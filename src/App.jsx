@@ -1,112 +1,188 @@
-// src/services/supabase.js
-import { createClient } from '@supabase/supabase-js';
+// src/App.jsx
+import { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { PescadoresProvider } from './context/PescadoresContext';
+import LoginPage from './components/auth/LoginPage';
+import Sidebar from './components/layout/Sidebar';
+import Directory from './modules/TeamViewer/Directory';
+import TeamList from './modules/TeamViewer/TeamList';
+import ViewRoster from './modules/CRA/ViewRoster';
+import FollowUpCalls from './modules/CRA/FollowUpCalls';
+import LiveCheckIn from './modules/CRA/LiveCheckIn';
+import Reports from './modules/CRA/Reports';
+import AccountSettings from './modules/Account/AccountSettings';
+import SecretariatDashboard from './modules/Secretariat/SecretariatDashboard';
+import AppSettings from './modules/Settings/AppSettings';
+import SuperAdmin from './modules/SuperAdmin/SuperAdmin';
+import NewApplication from './modules/CRA/NewApplication';
+import EmailReports from './modules/CRA/EmailReports';
+import CheckIn from './modules/TeamMeetings/CheckIn';
+import MCIReports from './modules/TeamMeetings/Reports';
+import Budget from './modules/TeamMeetings/Budget';
+import ConfirmModal from './components/common/ConfirmModal';
+import { MainStatusBar } from './components/common/StatusBar';
+import './styles/globals.css';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+function Dashboard() {
+  const { user, orgId, permissions } = useAuth();
+  const [currentView, setCurrentView] = useState('directory');
+  const [editingAppId, setEditingAppId] = useState(null); // ✅ ADDED
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables!');
-  console.error('VITE_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
-  console.error('VITE_SUPABASE_ANON_KEY:', supabaseKey ? 'Set' : 'Missing');
-}
+  // Handle MCI Check-In initialization (matching original script.js behavior)
+  useEffect(() => {
+    if (currentView === 'mci-checkin') {
+      setTimeout(() => {
+        const mciControls = document.getElementById('mciControls');
+        if (mciControls) {
+          mciControls.style.display = 'flex';
+        }
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-  },
-  global: {
-    headers: {
-      'x-client-info': 'tres-dias-team-tools',
-    },
-  },
-  db: {
-    schema: 'public',
-  },
-});
-
-// Connection keepalive - ping every 2 minutes
-let keepaliveInterval = null;
-
-export function startKeepalive() {
-  if (keepaliveInterval) return;
-  
-  console.log('🏓 Starting connection keepalive');
-  
-  // DON'T ping immediately - wait 2 minutes before first ping
-  keepaliveInterval = setInterval(() => {
-    pingDatabase();
-  }, 120000); // 2 minutes
-}
-
-export function stopKeepalive() {
-  if (keepaliveInterval) {
-    clearInterval(keepaliveInterval);
-    keepaliveInterval = null;
-    console.log('🛑 Stopped keepalive');
-  }
-}
-
-async function pingDatabase() {
-  try {
-    console.log('🏓 Ping...');
-    
-    // Add timeout to ping itself
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    const { error } = await supabase
-      .from('cra_applications')
-      .select('id')
-      .limit(1)
-      .abortSignal(controller.signal);
-    
-    clearTimeout(timeoutId);
-    
-    if (error) {
-      console.warn('⚠️ Ping failed:', error.message);
-    } else {
-      console.log('✅ Pong!');
+        const menToggleOption = document.querySelector('#mciGenderToggle .opt[data-gender="men"]');
+        if (menToggleOption && window.MCI) {
+          window.MCI.selectGender('men', menToggleOption);
+        }
+      }, 100);
     }
-  } catch (err) {
-    console.error('❌ Ping error:', err.message);
-  }
+  }, [currentView]);
+
+  // ✅ ADDED: Clear editingAppId when switching away from new-application view
+  useEffect(() => {
+    if (currentView !== 'cra-new-application') {
+      setEditingAppId(null);
+    }
+  }, [currentView]);
+
+  // ✅ ADDED: Enhanced navigation handler that accepts options
+  const handleNavigate = (view, options = {}) => {
+    setCurrentView(view);
+    
+    if (options.editingAppId) {
+      setEditingAppId(options.editingAppId);
+    }
+  };
+
+  const getViewTitle = () => {
+    switch(currentView) {
+      case 'directory': return 'Directory';
+      case 'team-list': return 'Team List';
+      case 'mci-checkin': return 'Team Meetings - Check-In';
+      case 'mci-reports': return 'Team Meetings - Reports';
+      case 'mci-budget': return 'Team Meetings - Budget';
+      case 'cra-view-roster': return 'Candidate Registration - View Roster';
+      case 'cra-followup': return 'Candidate Registration - Follow-up Calls';
+      case 'cra-checkin': return 'Candidate Registration - Live Check-in';
+      case 'cra-reports': return 'Candidate Registration - Reports';
+      case 'cra-new-application': return editingAppId ? 'Candidate Registration - Edit Application' : 'Candidate Registration - New Application'; // ✅ CHANGED
+      case 'cra-email': return 'Candidate Registration - Email Reports';
+      case 'account': return 'Account Settings';
+      case 'secretariat': return 'Secretariat';
+      case 'app-settings': return 'App Settings';
+      case 'super-admin': return 'Super Admin';
+      default: return 'Dashboard';
+    }
+  };
+
+  const renderView = () => {
+    console.log('🔍 Current view:', currentView, 'Editing ID:', editingAppId); // ✅ CHANGED
+    switch(currentView) {
+      case 'directory':
+        return <Directory />;
+      case 'team-list':
+        return <TeamList />;
+      case 'cra-view-roster':
+        return <ViewRoster onNavigate={handleNavigate} />; // ✅ CHANGED
+      case 'cra-followup':
+        return <FollowUpCalls />;
+      case 'cra-checkin':
+        return <LiveCheckIn />;
+      case 'cra-reports':
+        return <Reports />;
+      case 'cra-new-application':
+        return <NewApplication editingAppId={editingAppId} onNavigate={handleNavigate} />; // ✅ CHANGED
+      case 'cra-email':
+        return <EmailReports />;
+      case 'account':
+        return <AccountSettings />;
+      case 'secretariat':
+        return <SecretariatDashboard />;
+      case 'app-settings':
+        return <AppSettings />;
+      case 'super-admin':
+        return <SuperAdmin />;
+      case 'mci-checkin':
+        return <CheckIn />;
+      case 'mci-reports':
+        return <MCIReports />;
+      case 'mci-budget':
+        return <Budget />;
+      default:
+        return (
+          <div className="app-panel" style={{ display: 'block', padding: '30px' }}>
+            <div className="card pad">
+              <h2>{getViewTitle()}</h2>
+              <p>This module will be converted soon!</p>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <PescadoresProvider> 
+      <div className="app-container" style={{ display: 'flex' }}>
+        <Sidebar 
+          currentView={currentView} 
+          onNavigate={handleNavigate} // ✅ CHANGED
+          permissions={permissions}
+        />
+        
+        <main className="main-content">
+          <MainStatusBar />
+          <ConfirmModal />
+         
+          <div className="main-header">
+            <h1 id="app-title">{getViewTitle()}</h1>
+          </div>
+
+          <div className="app-panel-container">
+            {renderView()}
+          </div>
+        </main>
+      </div>
+    </PescadoresProvider>
+  );
 }
 
-// Auto-start/stop keepalive on auth changes
-supabase.auth.onAuthStateChange((event, session) => {
-  console.log('🔐 Auth event:', event);
-  
-  if (event === 'SIGNED_IN') {
-    startKeepalive();
-  }
-  if (event === 'SIGNED_OUT') {
-    stopKeepalive();
-  }
-  if (event === 'TOKEN_REFRESHED') {
-    console.log('🔄 Token refreshed');
-  }
-});
+function AppContent() {
+  const { user, loading } = useAuth();
 
-export async function logErrorToSupabase(error, module, orgId = null) {
-  if (!supabase || !orgId) {
-    console.error("Cannot log error - missing supabase or orgId");
-    return;
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '24px',
+        fontFamily: 'Source Sans Pro', sans-serif'
+      }}>
+        <div className="progress-bar-container">
+          <div className="progress-bar-label">Loading...</div>
+          <div className="progress-bar-track">
+            <div className="progress-bar-fill"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    const logData = {
-      org_id: orgId,
-      user_id: user?.id || null,
-      user_email: user?.email || 'unknown',
-      module: module,
-      error_message: error.message,
-      stack_trace: error.stack || null
-    };
-    await supabase.from('error_logs').insert(logData);
-  } catch (loggingError) {
-    console.error('Failed to log error:', loggingError.message);
-  }
+  return user ? <Dashboard /> : <LoginPage />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
 }

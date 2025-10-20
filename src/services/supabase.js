@@ -10,33 +10,6 @@ if (!supabaseUrl || !supabaseKey) {
   console.error('VITE_SUPABASE_ANON_KEY:', supabaseKey ? 'Set' : 'Missing');
 }
 
-// Custom fetch that forces fresh connections
-const customFetch = (url, options = {}) => {
-  console.log('🌐 Custom fetch:', url);
-  
-  // Force connection: close header to prevent reuse
-  const headers = {
-    ...options.headers,
-    'Connection': 'close',
-  };
-  
-  // Create abort controller with timeout
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => {
-    console.warn('⏱️ Fetch timeout after 8 seconds');
-    controller.abort();
-  }, 8000);
-  
-  return fetch(url, {
-    ...options,
-    headers,
-    signal: controller.signal,
-    keepalive: false,
-  }).finally(() => {
-    clearTimeout(timeoutId);
-  });
-};
-
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
@@ -47,7 +20,6 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     headers: {
       'x-client-info': 'tres-dias-team-tools',
     },
-    fetch: customFetch,
   },
   db: {
     schema: 'public',
@@ -61,8 +33,8 @@ export function startKeepalive() {
   if (keepaliveInterval) return;
   
   console.log('🏓 Starting connection keepalive');
-  pingDatabase();
   
+  // DON'T ping immediately - wait 2 minutes before first ping
   keepaliveInterval = setInterval(() => {
     pingDatabase();
   }, 120000); // 2 minutes
@@ -79,7 +51,19 @@ export function stopKeepalive() {
 async function pingDatabase() {
   try {
     console.log('🏓 Ping...');
-    const { error } = await supabase.from('cra_applications').select('id').limit(1);
+    
+    // Add timeout to ping itself
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const { error } = await supabase
+      .from('cra_applications')
+      .select('id')
+      .limit(1)
+      .abortSignal(controller.signal);
+    
+    clearTimeout(timeoutId);
+    
     if (error) {
       console.warn('⚠️ Ping failed:', error.message);
     } else {
