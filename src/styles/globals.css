@@ -1007,7 +1007,7 @@ body.light-theme .toggle .opt.active {
 .modal .box .body {
     padding: 22px;
     max-height: 70vh;
-    /*overflow: auto;*/
+    overflow: auto;
 }
 
 .modal .box .foot {
