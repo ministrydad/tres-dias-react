@@ -5,11 +5,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 
-// TEMPORARY: For testing in console
-if (typeof window !== 'undefined') {
-  window.testSupabase = supabase;
-}
-
 export default function NewApplication({ editingAppId, onNavigate }) {
   const { orgId } = useAuth();
   
@@ -331,7 +326,15 @@ export default function NewApplication({ editingAppId, onNavigate }) {
     setIsSaving(true);
     setSaveStatus('Saving...');
 
+    // Create AbortController for timeout protection
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.warn('⏱️ Request timeout - aborting after 8 seconds');
+      abortController.abort();
+    }, 8000); // 8 second timeout
+
     try {
+      console.log('💾 Starting save operation...');
       const hasMan = formData.m_first && formData.m_first.trim() !== '';
       const hasWoman = formData.f_first && formData.f_first.trim() !== '';
       
@@ -350,16 +353,20 @@ export default function NewApplication({ editingAppId, onNavigate }) {
         gender: hasMan && !hasWoman ? 'men' : !hasMan && hasWoman ? 'women' : null
       };
 
-      // NEW: Update existing application if editing, otherwise insert new
+      // Update existing application if editing, otherwise insert new
       if (editingAppId) {
+        console.log('📝 Updating application ID:', editingAppId);
         const { error } = await supabase
           .from('cra_applications')
           .update(data)
           .eq('id', editingAppId)
-          .eq('org_id', orgId);
+          .eq('org_id', orgId)
+          .abortSignal(abortController.signal);
 
         if (error) throw error;
 
+        clearTimeout(timeoutId);
+        console.log('✅ Update successful');
         window.showMainStatus('Application updated successfully', false);
         setSaveStatus('✓ Updated');
         
@@ -368,9 +375,16 @@ export default function NewApplication({ editingAppId, onNavigate }) {
           onNavigate('cra-view-roster');
         }, 1000);
       } else {
-        const { error } = await supabase.from('cra_applications').insert([data]);
+        console.log('➕ Inserting new application');
+        const { error } = await supabase
+          .from('cra_applications')
+          .insert([data])
+          .abortSignal(abortController.signal);
+        
         if (error) throw error;
 
+        clearTimeout(timeoutId);
+        console.log('✅ Insert successful');
         window.showMainStatus('Application saved successfully', false);
         setSaveStatus('✓ Saved');
         
@@ -381,11 +395,25 @@ export default function NewApplication({ editingAppId, onNavigate }) {
       }
 
     } catch (error) {
-      console.error('Error saving application:', error);
-      window.showMainStatus(`Error saving application: ${error.message}`, true);
+      clearTimeout(timeoutId);
+      
+      // Handle different error types
+      if (error.name === 'AbortError') {
+        console.error('❌ Request timed out after 8 seconds');
+        window.showMainStatus('Save request timed out. Please check your connection and try again.', true);
+      } else if (error.message?.includes('JWT') || error.message?.includes('session')) {
+        console.error('❌ Session/auth error:', error);
+        window.showMainStatus('Your session may have expired. Please refresh the page and try again.', true);
+      } else {
+        console.error('❌ Error saving application:', error);
+        window.showMainStatus(`Error saving application: ${error.message}`, true);
+      }
+      
       setSaveStatus('');
     } finally {
+      clearTimeout(timeoutId);
       setIsSaving(false);
+      console.log('🏁 Save operation completed');
     }
   };
 
