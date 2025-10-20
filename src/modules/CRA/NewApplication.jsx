@@ -342,9 +342,7 @@ export default function NewApplication({ editingAppId, onNavigate }) {
         payment_sp_check: paymentFields.sp.check,
         m_age: formData.m_age === '' ? null : parseInt(formData.m_age) || null,
         f_age: formData.f_age === '' ? null : parseInt(formData.f_age) || null,
-        gender: hasMan && !hasWoman ? 'men' : !hasMan && hasWoman ? 'women' : null,
-        status: 'Pending',
-        submittedAt: new Date().toISOString()
+        gender: hasMan && !hasWoman ? 'men' : !hasMan && hasWoman ? 'women' : null
       };
 
       // NEW: Update existing application if editing, otherwise insert new
