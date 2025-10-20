@@ -11,17 +11,17 @@ export function AuthProvider({ children }) {
   const [permissions, setPermissions] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   
-  // ✅ NEW: Track if we've already initialized to prevent duplicate queries
+  // ✅ Track if we've already initialized to prevent duplicate queries
   const isInitializedRef = useRef(false);
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
       if (session?.user) {
         initializeUser(session.user);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     // Listen for auth events
@@ -31,9 +31,9 @@ export function AuthProvider({ children }) {
         
         if (event === 'SIGNED_IN') {
           console.log('✅ User signed in');
-          setUser(session?.user ?? null);
           
           // ✅ FIXED: Only initialize if not already initialized
+          // Wait for initializeUser to complete before setting user with profile data
           if (session?.user && !isInitializedRef.current) {
             await initializeUser(session.user);
           } else if (isInitializedRef.current) {
@@ -49,14 +49,14 @@ export function AuthProvider({ children }) {
           isInitializedRef.current = false; // ✅ Reset flag on logout
         } 
         else if (event === 'TOKEN_REFRESHED') {
-          // ✅ CRITICAL: Just update the user object, DON'T re-query database
-          console.log('🔄 Token refreshed - keeping existing org/permissions');
-          setUser(session?.user ?? null);
-          // Don't call initializeUser() - we already have orgId and permissions!
+          // ✅ CRITICAL: Just log it, DON'T re-query database
+          console.log('🔄 Token refreshed - keeping existing user/org/permissions');
+          // Keep existing user object with profile data intact
+          // No need to call initializeUser() - we already have everything!
         }
         else if (event === 'USER_UPDATED') {
           console.log('📝 User updated');
-          setUser(session?.user ?? null);
+          // Keep existing user object with profile data intact
         }
         else if (event === 'INITIAL_SESSION') {
           console.log('🎬 Initial session detected');
@@ -97,7 +97,7 @@ export function AuthProvider({ children }) {
         setIsSuperAdmin(false);
       }
 
-      // Set user with profile data for sidebar display
+      // ✅ CRITICAL: Set user with profile data for sidebar display
       setUser({
         id: authUser.id,
         email: authUser.email,
@@ -107,10 +107,14 @@ export function AuthProvider({ children }) {
 
       // ✅ Mark as initialized
       isInitializedRef.current = true;
+      
+      // ✅ Stop loading spinner after everything is set
+      setLoading(false);
 
     } catch (error) {
       console.error('❌ Failed to initialize user:', error);
       setIsSuperAdmin(false);
+      setLoading(false);
     }
   };
 
