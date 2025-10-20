@@ -26,7 +26,29 @@ import './styles/globals.css';
 function Dashboard() {
   const { user, orgId, permissions } = useAuth();
   const [currentView, setCurrentView] = useState('directory');
-  const [editingAppId, setEditingAppId] = useState(null); // ✅ ADDED
+  const [editingAppId, setEditingAppId] = useState(null);
+
+  // ✅ NEW: Start keepalive AFTER Dashboard mounts (prevents zombie freeze)
+  useEffect(() => {
+    let cleanupFn;
+    
+    // Dynamically import to avoid circular dependency issues
+    import('./services/supabase').then(({ startKeepalive, stopKeepalive }) => {
+      console.log('📍 Dashboard mounted - starting keepalive');
+      startKeepalive();
+      
+      // Store cleanup function
+      cleanupFn = stopKeepalive;
+    });
+
+    // Cleanup on unmount
+    return () => {
+      if (cleanupFn) {
+        console.log('📍 Dashboard unmounting - stopping keepalive');
+        cleanupFn();
+      }
+    };
+  }, []); // Empty dependency array - run once on mount
 
   // Handle MCI Check-In initialization (matching original script.js behavior)
   useEffect(() => {
@@ -45,14 +67,14 @@ function Dashboard() {
     }
   }, [currentView]);
 
-  // ✅ ADDED: Clear editingAppId when switching away from new-application view
+  // Clear editingAppId when switching away from new-application view
   useEffect(() => {
     if (currentView !== 'cra-new-application') {
       setEditingAppId(null);
     }
   }, [currentView]);
 
-  // ✅ ADDED: Enhanced navigation handler that accepts options
+  // Enhanced navigation handler that accepts options
   const handleNavigate = (view, options = {}) => {
     setCurrentView(view);
     
@@ -72,7 +94,7 @@ function Dashboard() {
       case 'cra-followup': return 'Candidate Registration - Follow-up Calls';
       case 'cra-checkin': return 'Candidate Registration - Live Check-in';
       case 'cra-reports': return 'Candidate Registration - Reports';
-      case 'cra-new-application': return editingAppId ? 'Candidate Registration - Edit Application' : 'Candidate Registration - New Application'; // ✅ CHANGED
+      case 'cra-new-application': return editingAppId ? 'Candidate Registration - Edit Application' : 'Candidate Registration - New Application';
       case 'cra-email': return 'Candidate Registration - Email Reports';
       case 'account': return 'Account Settings';
       case 'secretariat': return 'Secretariat';
@@ -83,14 +105,14 @@ function Dashboard() {
   };
 
   const renderView = () => {
-    console.log('🔍 Current view:', currentView, 'Editing ID:', editingAppId); // ✅ CHANGED
+    console.log('🔍 Current view:', currentView, 'Editing ID:', editingAppId);
     switch(currentView) {
       case 'directory':
         return <Directory />;
       case 'team-list':
         return <TeamList />;
       case 'cra-view-roster':
-        return <ViewRoster onNavigate={handleNavigate} />; // ✅ CHANGED
+        return <ViewRoster onNavigate={handleNavigate} />;
       case 'cra-followup':
         return <FollowUpCalls />;
       case 'cra-checkin':
@@ -98,7 +120,7 @@ function Dashboard() {
       case 'cra-reports':
         return <Reports />;
       case 'cra-new-application':
-        return <NewApplication editingAppId={editingAppId} onNavigate={handleNavigate} />; // ✅ CHANGED
+        return <NewApplication editingAppId={editingAppId} onNavigate={handleNavigate} />;
       case 'cra-email':
         return <EmailReports />;
       case 'account':
@@ -132,7 +154,7 @@ function Dashboard() {
       <div className="app-container" style={{ display: 'flex' }}>
         <Sidebar 
           currentView={currentView} 
-          onNavigate={handleNavigate} // ✅ CHANGED
+          onNavigate={handleNavigate}
           permissions={permissions}
         />
         

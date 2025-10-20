@@ -74,13 +74,16 @@ async function pingDatabase() {
   }
 }
 
-// Auto-start/stop keepalive on auth changes
+// ✅ FIXED: Removed auto-start from auth events
+// Keepalive is now manually started in App.jsx Dashboard after mount
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('🔐 Auth event:', event);
   
-  if (event === 'SIGNED_IN') {
-    startKeepalive();
-  }
+  // ✅ REMOVED: Auto-start moved to Dashboard component
+  // if (event === 'SIGNED_IN') {
+  //   startKeepalive();
+  // }
+  
   if (event === 'SIGNED_OUT') {
     stopKeepalive();
   }
