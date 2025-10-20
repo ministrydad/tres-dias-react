@@ -1,6 +1,7 @@
 // src/context/PescadoresContext.jsx
 // Shared cache for men_raw and women_raw data
 // Prevents re-fetching on every navigation
+// UPDATED: Added timeout protection to prevent infinite loading
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
@@ -19,6 +20,7 @@ export function PescadoresProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
     const abortController = new AbortController();
+    let timeoutId;
 
     const fetchData = async () => {
       if (!orgId) {
@@ -28,6 +30,16 @@ export function PescadoresProvider({ children }) {
 
       setLoading(true);
       setError(null);
+
+      // Safety timeout: Force loading to false after 10 seconds
+      timeoutId = setTimeout(() => {
+        if (isMounted) {
+          console.error('PescadoresContext: Fetch timeout after 10 seconds');
+          setLoading(false);
+          setError(new Error('Request timed out'));
+          window.showMainStatus?.('Connection timeout - please refresh', true);
+        }
+      }, 10000); // 10 second timeout
 
       try {
         console.log('PescadoresContext: Fetching data from Supabase...');
@@ -45,6 +57,9 @@ export function PescadoresProvider({ children }) {
             .abortSignal(abortController.signal)
         ]);
 
+        // Clear timeout on successful fetch
+        clearTimeout(timeoutId);
+
         if (menResult.error) throw menResult.error;
         if (womenResult.error) throw womenResult.error;
 
@@ -57,6 +72,8 @@ export function PescadoresProvider({ children }) {
           setLastFetched(new Date());
         }
       } catch (error) {
+        clearTimeout(timeoutId); // Clear timeout on error too
+        
         if (error.name === 'AbortError') {
           console.log('PescadoresContext: Fetch aborted');
           return;
@@ -79,6 +96,7 @@ export function PescadoresProvider({ children }) {
     return () => {
       isMounted = false;
       abortController.abort();
+      if (timeoutId) clearTimeout(timeoutId); // Clean up timeout
       console.log('PescadoresContext: Cleanup executed');
     };
   }, [orgId]);
@@ -89,6 +107,18 @@ export function PescadoresProvider({ children }) {
       setLoading(true);
     }
     setError(null);
+
+    let timeoutId;
+
+    // Add timeout protection to manual refresh too
+    if (!silent) {
+      timeoutId = setTimeout(() => {
+        console.error('PescadoresContext: Manual refresh timeout');
+        setLoading(false);
+        setError(new Error('Refresh timed out'));
+        window.showMainStatus?.('Refresh timeout - please try again', true);
+      }, 10000);
+    }
 
     try {
       if (!silent) {
@@ -106,6 +136,8 @@ export function PescadoresProvider({ children }) {
           .eq('org_id', orgId)
       ]);
 
+      if (timeoutId) clearTimeout(timeoutId);
+
       if (menResult.error) throw menResult.error;
       if (womenResult.error) throw womenResult.error;
 
@@ -119,6 +151,7 @@ export function PescadoresProvider({ children }) {
         window.showMainStatus?.('Directory data refreshed', false);
       }
     } catch (error) {
+      if (timeoutId) clearTimeout(timeoutId);
       console.error('PescadoresContext: Error refreshing data:', error);
       setError(error);
       if (!silent) {
