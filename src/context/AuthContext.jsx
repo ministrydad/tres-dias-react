@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabase';
 
 const AuthContext = createContext();
@@ -10,6 +10,9 @@ export function AuthProvider({ children }) {
   const [orgId, setOrgId] = useState(null);
   const [permissions, setPermissions] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  
+  // ✅ NEW: Track if we've already initialized to prevent duplicate queries
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
     // Get initial session
@@ -21,17 +24,20 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    // ✅ FIXED: Properly handle all auth events
+    // Listen for auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔐 Auth event:', event); // Debug logging
+        console.log('🔐 Auth event:', event);
         
-        // ✅ Handle different events appropriately
         if (event === 'SIGNED_IN') {
           console.log('✅ User signed in');
           setUser(session?.user ?? null);
-          if (session?.user) {
+          
+          // ✅ FIXED: Only initialize if not already initialized
+          if (session?.user && !isInitializedRef.current) {
             await initializeUser(session.user);
+          } else if (isInitializedRef.current) {
+            console.log('⏭️ Already initialized - skipping duplicate init');
           }
         } 
         else if (event === 'SIGNED_OUT') {
@@ -40,6 +46,7 @@ export function AuthProvider({ children }) {
           setOrgId(null);
           setPermissions(null);
           setIsSuperAdmin(false);
+          isInitializedRef.current = false; // ✅ Reset flag on logout
         } 
         else if (event === 'TOKEN_REFRESHED') {
           // ✅ CRITICAL: Just update the user object, DON'T re-query database
@@ -50,6 +57,10 @@ export function AuthProvider({ children }) {
         else if (event === 'USER_UPDATED') {
           console.log('📝 User updated');
           setUser(session?.user ?? null);
+        }
+        else if (event === 'INITIAL_SESSION') {
+          console.log('🎬 Initial session detected');
+          // This fires on page load - handled by getSession above
         }
       }
     );
@@ -94,10 +105,12 @@ export function AuthProvider({ children }) {
         display_name: profile?.display_name,
       });
 
+      // ✅ Mark as initialized
+      isInitializedRef.current = true;
+
     } catch (error) {
       console.error('❌ Failed to initialize user:', error);
       setIsSuperAdmin(false);
-      // Don't throw - allow app to continue with limited functionality
     }
   };
 
@@ -141,6 +154,7 @@ export function AuthProvider({ children }) {
     setOrgId(null);
     setPermissions(null);
     setIsSuperAdmin(false);
+    isInitializedRef.current = false; // ✅ Reset on manual logout too
   };
 
   const value = {
