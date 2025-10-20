@@ -1,4 +1,3 @@
-// src/modules/CRA/FollowUpCalls.jsx
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -12,8 +11,9 @@ export default function FollowUpCalls() {
   const [currentApp, setCurrentApp] = useState(null);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [followupData, setFollowupData] = useState({
-    attendance: null,  // Changed to null (three-state: null, 'yes', 'no')
+    attendance: null,
     smoker: false,
+    wheelchair: false,
     diet: false,
     diet_details: '',
     letter_sent_sponsor: false,
@@ -68,15 +68,16 @@ export default function FollowUpCalls() {
   const openFollowupForm = (app) => {
     setCurrentApp(app);
     
-    // Load gender-specific values based on current filter
     const prefix = currentFilter === 'men' ? 'm_' : 'f_';
     const smokeCol = `${prefix}smoke`;
+    const wheelchairCol = `${prefix}wheelchair`;
     const dietCol = `${prefix}diet`;
     const dietTextCol = `${prefix}diettext`;
     
     setFollowupData({
-      attendance: app.attendance || null,  // Load as string or null
+      attendance: app.attendance || null,
       smoker: app[smokeCol] || false,
+      wheelchair: app[wheelchairCol] || false,
       diet: app[dietCol] || false,
       diet_details: app[dietTextCol] || '',
       letter_sent_sponsor: app.letter_sent_sponsor || false,
@@ -108,11 +109,11 @@ export default function FollowUpCalls() {
     if (!currentApp) return;
 
     try {
-      // Build payload with gender-specific column names
       const prefix = currentFilter === 'men' ? 'm_' : 'f_';
       const payload = {
-        attendance: followupData.attendance,  // Now saves 'yes', 'no', or null
+        attendance: followupData.attendance,
         [`${prefix}smoke`]: followupData.smoker,
+        [`${prefix}wheelchair`]: followupData.wheelchair,
         [`${prefix}diet`]: followupData.diet,
         [`${prefix}diettext`]: followupData.diet_details,
         letter_sent_sponsor: followupData.letter_sent_sponsor,
@@ -136,7 +137,6 @@ export default function FollowUpCalls() {
     }
   };
 
-  // Calculate status for badge display
   const getCalculatedStatus = (app) => {
     if (app.attendance === 'yes') return 'Confirmed';
     if (app.attendance === 'no') return 'Withdrawn';
@@ -175,6 +175,7 @@ export default function FollowUpCalls() {
     const prefix = currentFilter === 'men' ? 'm_' : 'f_';
     return {
       smoker: app[`${prefix}smoke`] || false,
+      wheelchair: app[`${prefix}wheelchair`] || false,
       diet: app[`${prefix}diet`] || false,
       dietDetails: app[`${prefix}diettext`] || ''
     };
@@ -290,6 +291,7 @@ export default function FollowUpCalls() {
                                   <strong>Special Needs:</strong>
                                   <div style={{ marginTop: '8px', fontSize: '0.9rem' }}>
                                     <div><strong>Smoker:</strong> {details.smoker ? 'Yes' : 'No'}</div>
+                                    <div><strong>Wheelchair:</strong> {details.wheelchair ? 'Yes' : 'No'}</div>
                                     <div><strong>Special Diet:</strong> {details.diet ? 'Yes' : 'No'}</div>
                                     {details.diet && details.dietDetails && (
                                       <div style={{ marginTop: '4px', fontStyle: 'italic', color: 'var(--muted)' }}>
@@ -364,7 +366,6 @@ export default function FollowUpCalls() {
 
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
 
-            {/* THREE-STATE ATTENDANCE TOGGLE */}
             <div className="field" style={{ marginBottom: '20px' }}>
               <label className="label">Are they attending the upcoming weekend?</label>
               <div className="toggle" id="followup_attendance" style={{ display: 'flex', gap: '0' }}>
@@ -394,8 +395,7 @@ export default function FollowUpCalls() {
 
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
 
-            {/* Smoker & Diet Section */}
-            <div className="grid grid-2">
+            <div className="grid grid-3">
               <div className="field" style={{ marginBottom: 0 }}>
                 <label className="label">Smoker?</label>
                 <div className="toggle" id="followup_smoker">
@@ -408,6 +408,24 @@ export default function FollowUpCalls() {
                   <div 
                     className={`opt ${followupData.smoker ? 'active' : ''}`}
                     onClick={() => handleToggle('smoker')}
+                  >
+                    Yes
+                  </div>
+                </div>
+              </div>
+
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label className="label">Wheelchair?</label>
+                <div className="toggle" id="followup_wheelchair">
+                  <div 
+                    className={`opt ${!followupData.wheelchair ? 'active' : ''}`}
+                    onClick={() => handleToggle('wheelchair')}
+                  >
+                    No
+                  </div>
+                  <div 
+                    className={`opt ${followupData.wheelchair ? 'active' : ''}`}
+                    onClick={() => handleToggle('wheelchair')}
                   >
                     Yes
                   </div>
@@ -448,7 +466,6 @@ export default function FollowUpCalls() {
 
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
 
-            {/* Letters Sent Section */}
             <div className="grid grid-2">
               <div className="field" style={{ marginBottom: 0 }}>
                 <label className="label">Sponsor Letter Sent?</label>
