@@ -1143,17 +1143,12 @@ body.light-theme .toggle .opt.active {
     background-color: #f8f9fa;
     color: #333;
     margin: 0;
-    padding: 0;
-    min-height: 100vh;  /* ← CHANGED */
-    overflow: visible;  /* ← CHANGED */
+    padding: 24px;
 }
 
 #team-viewer-app .container {
     max-width: none;
     margin: 0;
-    min-height: 100vh;  /* ← CHANGED */
-    display: flex;
-    flex-direction: column;
 }
 
 #team-viewer-app button {
@@ -1566,11 +1561,8 @@ body.light-theme .toggle .opt.active {
 
 /* Profile View */
 #team-viewer-app .profile-view {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;  /* ← CHANGED */
-    overflow: visible;  /* ← CHANGED */
-    padding-bottom: 40px;  /* ← ADD SOME BREATHING ROOM */
+    display: block;
+    padding-bottom: 40px;
 }
 
 #team-viewer-app .navigation {
@@ -1626,10 +1618,6 @@ body.light-theme .toggle .opt.active {
 
 /* Profile Container */
 #team-viewer-app .profile-container {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-    padding-right: 8px;
     display: flex;
     flex-direction: column;
     gap: 16px;
