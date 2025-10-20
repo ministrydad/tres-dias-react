@@ -14,13 +14,18 @@
    9. Toggles & Switches
    10. Tables & Grids
    11. Pills & Badges
-   12. Directory Styles
-   13. Check-In Flip Cards
+   12. Status Bar System
+   13. Modals & Overlays
    14. Authentication UI
-   15. Modals & Overlays
-   16. Utility Classes
-   17. Animations
-   18. Print Styles
+   15. Team Viewer Module
+   16. Team List Module
+   17. CRA Module
+   18. MCI Module (Meeting Check-In)
+   19. Secretariat Module
+   20. Super Admin Module
+   21. Animations
+   22. Utility Classes
+   23. Print Styles
    =============================================== */
 
 
@@ -81,6 +86,7 @@ body {
     height: 100vh;
 }
 
+/* Presentation Mode */
 .app-container.presentation-mode .sidebar,
 .app-container.presentation-mode .main-header,
 .app-container.presentation-mode #cra-checkin-controls {
@@ -102,6 +108,25 @@ body {
     padding: 24px;
 }
 
+#exitPresentationModeBtn {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    border-radius: 999px;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.app-container.presentation-mode #exitPresentationModeBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 
 /* ===============================================
    4. SIDEBAR NAVIGATION
@@ -115,14 +140,6 @@ body {
     padding: 24px;
     gap: 16px;
     transition: background-color 0.3s, border-color 0.3s;
-}
-
-.sidebar-nav {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
 }
 
 body.light-theme .sidebar {
@@ -187,6 +204,14 @@ body.light-theme .sidebar {
 }
 
 /* Navigation */
+.sidebar-nav {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
 .nav-section-title {
     font-size: 0.75rem;
     font-weight: 700;
@@ -281,7 +306,7 @@ body.light-theme .submenu-item a.active {
     background: transparent;
 }
 
-/* Footer */
+/* Sidebar Footer */
 .sidebar-footer {
     margin-top: auto;
     border-top: 1px solid var(--border);
@@ -515,6 +540,18 @@ body.light-theme .btn-danger {
     color: var(--bg);
 }
 
+.btn-approve {
+    border-color: var(--accentA);
+    color: var(--accentA);
+    background-color: rgba(46, 164, 79, 0.15);
+}
+
+.btn-deny {
+    border-color: var(--accentD);
+    color: var(--accentD);
+    background-color: rgba(220, 53, 69, 0.15);
+}
+
 /* Button Spinner */
 .btn .spinner {
     animation: rotate 2s linear infinite;
@@ -724,6 +761,43 @@ body.light-theme .toggle .opt.active {
     color: var(--muted);
 }
 
+/* Generic Badge Styles */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 999px;
+    text-transform: capitalize;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.badge-success {
+    background-color: rgba(46, 164, 79, 0.15);
+    color: var(--accentA);
+}
+
+.badge-warning {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: var(--accentC);
+}
+
+.badge-info {
+    background-color: rgba(0, 163, 255, 0.15);
+    color: var(--accentB);
+}
+
+.badge-default {
+    background-color: rgba(108, 117, 125, 0.15);
+    color: var(--muted);
+}
+
+.badge-danger {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+}
+
 /* Payment Badges */
 .payment-badge {
     display: inline-flex;
@@ -840,174 +914,1453 @@ body.light-theme .toggle .opt.active {
 
 
 /* ===============================================
-   12. DIRECTORY STYLES
+   12. STATUS BAR SYSTEM
    =============================================== */
 
-/* Two-Column Controls Layout */
-.controls-main-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-    align-items: start;
-}
-
-.controls-left-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.controls-right-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-/* Search Group */
-.search-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.search-input-group {
-    display: flex;
-    gap: 10px;
-    align-items: stretch;
-}
-
-.search-input {
-    flex: 1;
-    padding: 10px 14px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 0.95rem;
-    background: rgba(255, 255, 255, .06);
-    color: var(--ink);
-    font-family: 'Source Sans Pro', sans-serif;
-}
-
-body.light-theme .search-input {
-    background: #fff;
-}
-
-.search-button {
-    padding: 10px 24px;
+/* Main Status Bar - Modal Style (Full Screen Width) */
+#mainStatusBar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    z-index: 9999;
     background-color: var(--accentA);
     color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-}
-
-.search-button:hover {
-    background-color: #059669;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(46, 164, 79, .35);
-}
-
-/* Utility Buttons Row */
-.utility-buttons {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.clear-button,
-.print-button,
-.view-team-button {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    white-space: nowrap;
-    transition: all 0.2s;
-}
-
-.clear-button {
-    background-color: #6c757d;
-    color: white;
-}
-
-.print-button {
-    background-color: #ffc107;
-    color: #333;
-}
-
-.view-team-button {
-    background-color: var(--accentA);
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.clear-button:hover {
-    background-color: #5a6268;
-    transform: translateY(-2px);
-}
-
-.print-button:hover {
-    background-color: #e0a800;
-    transform: translateY(-2px);
-}
-
-.view-team-button:hover {
-    background-color: #059669;
-    transform: translateY(-2px);
-}
-
-/* Names Grid */
-.names-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
-}
-
-.name-box {
-    padding: 14px 16px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-weight: 600;
-    font-size: 0.9rem;
     text-align: center;
+    font-weight: 600;
+    padding: 12px;
+    font-size: 1rem;
+    transform: translateY(-100%);
+    transition: transform 0.4s ease-in-out;
 }
 
-body.light-theme .name-box {
-    background: #f8f9fa;
+#mainStatusBar.visible {
+    transform: translateY(0);
 }
 
-.name-box:hover {
+#mainStatusBar.error {
+    background-color: var(--accentD);
+}
+
+/* Generic Status Bar (for modals) */
+.status-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    background-color: var(--accentA);
+    color: white;
+    text-align: center;
+    font-weight: 600;
+    padding: 12px;
+    transform: translateY(-100%);
+    transition: transform 0.4s ease-in-out;
+}
+
+.status-bar.visible {
+    transform: translateY(0);
+}
+
+.status-bar.error {
+    background-color: var(--accentD);
+}
+
+
+/* ===============================================
+   13. MODALS & OVERLAYS
+   =============================================== */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 24px;
+}
+
+.modal .box {
+    width: min(740px, 92vw);
+    margin: 4vh auto;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal .box.small {
+    width: min(480px, 92vw);
+}
+
+.modal .box .head {
+    padding: 18px 22px;
     background: var(--panel-header);
-    border-color: var(--accentB);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 163, 255, 0.15);
+    border-bottom: 1px solid var(--border);
+    font-weight: 900;
 }
 
-/* Profile View */
-.profile-header-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.modal .box .body {
+    padding: 22px;
+    max-height: 70vh;
+    overflow: auto;
 }
 
-.profile-navigation {
+.modal .box .foot {
+    padding: 16px 22px;
+    background: var(--panel-header);
+    border-top: 1px solid var(--border);
     display: flex;
-    align-items: center;
+    justify-content: flex-end;
     gap: 8px;
 }
 
 
 /* ===============================================
-   13. CHECK-IN FLIP CARDS
+   14. AUTHENTICATION UI
    =============================================== */
+#auth-container {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    z-index: 2000;
+    padding: 24px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 740px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--panel);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.auth-image-panel {
+    background: linear-gradient(to bottom, #dee2e6, #f8f9fa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-image-panel::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-image: url('/rooster_head_v4.svg');
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.4));
+}
+
+.auth-form-panel {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.auth-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+.auth-subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    margin: 0 0 24px 0;
+}
+
+.auth-links {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.85rem;
+}
+
+.auth-links a {
+    color: var(--accentB);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
+.auth-links span {
+    color: var(--muted);
+    margin: 0 8px;
+}
+
+.auth-status-bar {
+    background-color: var(--accentD);
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: none;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.auth-status-bar.visible {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .auth-card {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+    }
+    .auth-image-panel {
+        display: none;
+    }
+}
+
+
+/* ===============================================
+   15. TEAM VIEWER MODULE
+   =============================================== */
+
+#team-viewer-app {
+    background-color: #f8f9fa;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+#team-viewer-app .container {
+    max-width: none;
+    margin: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#team-viewer-app button {
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+/* Directory Layout */
+#team-viewer-app .directory-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Top card stays at natural height */
+#team-viewer-app .directory-container > .card:first-child {
+    flex-shrink: 0;
+    padding: 18px 24px;
+}
+
+/* Bottom card fills remaining space */
+#team-viewer-app .directory-container > .card:last-child {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Controls Grid */
+#team-viewer-app .controls-main-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 30px;
+}
+
+#team-viewer-app .controls-left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#team-viewer-app .controls-right-panel {
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #e0e0e0;
+    padding-left: 30px;
+}
+
+/* Search Controls */
+#team-viewer-app .search-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#team-viewer-app .search-input-group {
+    display: flex;
+}
+
+#team-viewer-app .search-input-group .search-input {
+    border-right: none;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+#team-viewer-app .search-input-group .search-button {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+#team-viewer-app .search-input,
+#team-viewer-app .search-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 15px;
+    box-sizing: border-box;
+    height: 37px;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-weight: 300;
+    background-color: #fff;
+}
+
+#team-viewer-app .search-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    height: 37px;
+}
+
+#team-viewer-app .search-button:hover {
+    background-color: #218838;
+}
+
+#team-viewer-app .clear-button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    height: 37px;
+}
+
+#team-viewer-app .print-button {
+    background-color: #ffc107;
+    color: #333;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    height: 37px;
+}
+
+#team-viewer-app .search-button,
+#team-viewer-app .clear-button,
+#team-viewer-app .print-button,
+#team-viewer-app .view-team-button {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+#team-viewer-app .search-button:hover,
+#team-viewer-app .clear-button:hover,
+#team-viewer-app .print-button:hover,
+#team-viewer-app .view-team-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+#team-viewer-app .utility-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+
+#team-viewer-app .utility-buttons .clear-button,
+#team-viewer-app .utility-buttons .print-button {
+    flex: 0 1 110px;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    padding: 6px 8px;
+}
+
+#team-viewer-app .utility-buttons .view-team-button {
+    flex: 1 1 100px;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#team-viewer-app .view-team-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#team-viewer-app .team-count-badge {
+    background-color: rgba(255, 255, 255, 0.3);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Custom Dropdown Styles */
+#team-viewer-app .dropdown-container {
+    position: relative;
+    width: 100%;
+}
+
+#team-viewer-app .dropdown-btn {
+    width: 100%;
+    padding: 8px 12px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 15px;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-weight: 300;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 37px;
+    color: #333;
+}
+
+#team-viewer-app .dropdown-btn::after {
+    content: '▼';
+    font-size: 10px;
+    margin-left: 8px;
+}
+
+#team-viewer-app .dropdown-btn.disabled {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+#team-viewer-app .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    z-index: 1000;
+    margin-top: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: all 0.2s ease;
+}
+
+#team-viewer-app .dropdown-container.open .dropdown-content {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#team-viewer-app .dropdown-content a {
+    color: #333;
+    padding: 10px 16px;
+    text-decoration: none;
+    display: block;
+    transition: background-color 0.2s ease;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+#team-viewer-app .dropdown-content a:hover,
+#team-viewer-app .dropdown-content a.selected {
+    background: #f0f8ff;
+    color: #007bff;
+}
+
+#team-viewer-app .dropdown-content .dropdown-divider {
+    height: 1px;
+    margin: 5px 0;
+    overflow: hidden;
+    background-color: #e9ecef;
+}
+
+/* Toggle Inset Container */
+#team-viewer-app .toggle-inset-container {
+    display: flex;
+    justify-content: center;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    padding: 5px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 20px;
+}
+
+#team-viewer-app .controls-right-panel .toggle-inset-container {
+    width: 100%;
+}
+
+#team-viewer-app .toggle-inset-option {
+    padding: 8px 19px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    background-color: transparent;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    flex-grow: 1;
+    text-align: center;
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+#team-viewer-app #genderToggleContainer .toggle-inset-option {
+    padding: 8px 14px;
+}
+
+#team-viewer-app .toggle-inset-option.active {
+    background-color: #28a745;
+    color: white;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Directory Header */
+#team-viewer-app .directory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #007bff;
+    flex-shrink: 0;
+}
+
+#team-viewer-app .directory-title {
+    font-size: 1rem;
+    font-weight: 900;
+    color: #333;
+}
+
+#team-viewer-app .directory-count {
+    font-size: 16px;
+    color: #666;
+}
+
+/* Names Grid - FIXED: Prevent stretching */
+#team-viewer-app .names-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    padding: 6px;
+    overflow-y: auto;
+    min-height: 0;
+    align-content: start; /* CRITICAL FIX: Prevents vertical stretching of grid items */
+}
+
+#team-viewer-app .name-box {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 8px 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    text-align: center;
+    /* No height property - let content determine height */
+}
+
+#team-viewer-app .name-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+/* Enhanced Search Result */
+#team-viewer-app .name-box.enhanced-search-result {
+    height: 60px; /* Fixed height only for enhanced results */
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    justify-content: stretch;
+}
+
+#team-viewer-app .name-section {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+#team-viewer-app .search-match-badge {
+    flex-shrink: 0;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#team-viewer-app .search-match-badge.candidate {
+    background-color: var(--accentB);
+    color: white;
+}
+
+#team-viewer-app .search-match-badge.service {
+    background-color: var(--accentA);
+    color: white;
+}
+
+#team-viewer-app .search-match-badge.filter {
+    background-color: var(--accentA);
+    color: white;
+}
+
+/* Profile View */
+#team-viewer-app .profile-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+#team-viewer-app .navigation {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    background: #ffffff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #dee2e6;
+}
+
+#team-viewer-app .back-button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#team-viewer-app .nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#team-viewer-app .nav-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+#team-viewer-app .nav-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+#team-viewer-app .profile-counter {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Profile Container */
+#team-viewer-app .profile-container {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Profile Info Grid - Equal Height Cards */
+#team-viewer-app .profile-container > div:first-child {
+    display: grid;
+    grid-template-columns: 40% 60%;
+    gap: 16px;
+}
+
+#team-viewer-app .profile-container > div:first-child > .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#team-viewer-app .profile-container > div:first-child .card.pad {
+    padding: 16px;
+}
+
+/* Profile Main Info */
+#team-viewer-app .profile-main-info {
+    background-color: #ffffff;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+#team-viewer-app .profile-header {
+    margin-bottom: 8px;
+}
+
+#team-viewer-app .profile-name {
+    font-size: 1rem;
+    font-weight: 900;
+    color: #333;
+    margin: 0 0 12px 0;
+    margin-right: 15px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#team-viewer-app .profile-weekend-info {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 15px;
+    font-size: 0.8em;
+    color: #333;
+    font-weight: 600;
+}
+
+#team-viewer-app .last-served-highlight {
+    background-color: #ffc107;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: bold;
+    color: #333;
+    display: inline-block;
+    font-size: 0.9em;
+}
+
+#team-viewer-app .name-separator {
+    display: inline-block;
+    border-left: 1px solid #ccc;
+    height: 24px;
+    margin: 0 5px 0 15px;
+    vertical-align: middle;
+}
+
+#team-viewer-app .legal-name-badge {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 12px;
+    font-size: 0.7em;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 8px;
+    background-color: #e9ecef;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+#team-viewer-app .main-info-item {
+    margin: 2px 0;
+    font-size: 14px;
+    display: flex;
+    align-items: flex-start;
+}
+
+#team-viewer-app .main-info-label {
+    font-weight: bold;
+    width: 100px;
+    flex-shrink: 0;
+    color: #555;
+}
+
+#team-viewer-app .main-info-value {
+    color: #333;
+    flex: 1;
+}
+
+/* Status Classes */
+#team-viewer-app .profile-main-info.is-spiritual-director {
+    box-shadow: 0 0 8px 2px rgba(40, 167, 69, 0.4);
+    border-left: 5px solid #28a745;
+}
+
+#team-viewer-app .profile-main-info.do-not-call {
+    border-left: 40px solid #dc3545;
+    position: relative;
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.3);
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+#team-viewer-app .profile-main-info.do-not-call::before {
+    content: "DO NOT CALL";
+    position: absolute;
+    left: -83px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    z-index: 10;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+#team-viewer-app .profile-main-info.deceased {
+    border-left: 40px solid #000000;
+    position: relative;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+#team-viewer-app .profile-main-info.deceased::before {
+    content: "DECEASED";
+    position: absolute;
+    left: -83px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    z-index: 10;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Rector Qualification */
+#team-viewer-app .rector-qualification-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#team-viewer-app .qualification-labels {
+    display: flex;
+    justify-content: space-around;
+}
+
+#team-viewer-app .qualification-label {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #555;
+    padding: 0 4px;
+}
+
+#team-viewer-app .segmented-bar-container {
+    display: flex;
+    width: 100%;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background-color: var(--bg);
+}
+
+#team-viewer-app .bar-segment {
+    flex: 1;
+    height: 100%;
+}
+
+#team-viewer-app .bar-segment.pass {
+    background-color: var(--accentA);
+}
+
+#team-viewer-app .bar-segment.fail {
+    background-color: var(--accentD);
+}
+
+/* Roles Section */
+#team-viewer-app .roles-section {
+    margin-top: 0;
+    padding: 0;
+}
+
+#team-viewer-app .roles-title {
+    font-weight: 900;
+    font-size: 1rem;
+    color: #333;
+}
+
+#team-viewer-app .roles-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+}
+
+#team-viewer-app .legend {
+    display: flex;
+    gap: 20px;
+    font-size: 12px;
+}
+
+#team-viewer-app .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#team-viewer-app .legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+
+#team-viewer-app .role-header-legend {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#team-viewer-app .role-header-legend.team-headers {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto;
+    column-gap: 10px;
+}
+
+#team-viewer-app .role-header-legend.professor-headers {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+    column-gap: 10px;
+}
+
+#team-viewer-app .role-header-set {
+    display: grid;
+    grid-template-columns: 55% 15% 18% 12%;
+    gap: 2px;
+}
+
+#team-viewer-app .role-header-name,
+#team-viewer-app .role-header-status,
+#team-viewer-app .role-header-last,
+#team-viewer-app .role-header-qty {
+    padding: 10px 8px;
+    background-color: #495057;
+    color: white;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#team-viewer-app .role-header-name {
+    text-align: left;
+}
+
+#team-viewer-app .role-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-flow: row;
+    gap: 6px;
+    font-size: 13px;
+}
+
+#team-viewer-app .professor-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(5, auto);
+}
+
+#team-viewer-app .team-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+#team-viewer-app .role-item {
+    display: grid;
+    grid-template-columns: 55% 15% 18% 12%;
+    gap: 2px;
+    align-items: stretch;
+    margin-bottom: 2px;
+    min-height: 32px;
+}
+
+#team-viewer-app .role-name,
+#team-viewer-app .role-status-cell,
+#team-viewer-app .role-last-cell,
+#team-viewer-app .role-qty-cell {
+    padding: 6px 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 13px;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+}
+
+#team-viewer-app .role-name {
+    color: #333;
+    justify-content: flex-start;
+}
+
+#team-viewer-app .role-status-cell,
+#team-viewer-app .role-last-cell,
+#team-viewer-app .role-qty-cell {
+    justify-content: center;
+}
+
+#team-viewer-app .role-status {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    font-weight: bold;
+    color: white;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+#team-viewer-app .service-number {
+    font-size: 11px;
+    font-weight: 600;
+    color: #333;
+    text-transform: uppercase;
+}
+
+#team-viewer-app .quantity-number {
+    font-size: 11px;
+    font-weight: 600;
+    color: #28a745;
+    text-transform: uppercase;
+}
+
+#team-viewer-app .status-N {
+    background-color: #dc3545;
+}
+
+#team-viewer-app .status-I {
+    background-color: #ffc107;
+    color: #333;
+}
+
+#team-viewer-app .status-E {
+    background-color: #28a745;
+}
+
+/* Refresh Section */
+#team-viewer-app .refresh-section {
+    flex-shrink: 0;
+    text-align: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+}
+
+#team-viewer-app .button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+#team-viewer-app .refresh-button,
+#team-viewer-app .edit-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#team-viewer-app .edit-button {
+    background-color: #007bff;
+}
+
+#team-viewer-app .last-updated {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Loading State */
+#team-viewer-app .loading {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+    color: #666;
+}
+
+/* Role Selector Slide Animation */
+.role-selector-slide-in {
+    animation: slideInRight 0.3s ease-out;
+}
+
+
+/* ===============================================
+   16. TEAM LIST MODULE
+   =============================================== */
+
+#team-list-app .card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#team-list-app .team-list-controls {
+    padding: 15px 24px 20px;
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+    justify-content: space-between;
+}
+
+#team-list-app .team-list-header-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: center;
+}
+
+.team-total-card {
+    padding: 8px 16px;
+    border-radius: 12px;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    text-align: center;
+    min-width: 150px;
+}
+
+.team-total-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.team-total-count {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.1;
+}
+
+#team-list-app .rector-section {
+    text-align: center;
+    margin-bottom: 0;
+    padding: 16px;
+    background: var(--panel-header);
+    border-radius: 12px;
+}
+
+#team-list-app .rector-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #6c757d;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+#team-list-app .rector-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 18px;
+    border: 1px solid #28a745;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
+}
+
+#team-list-app .rector-badge:hover {
+    background-color: #dc3545;
+    border-color: #c82333;
+    color: white;
+}
+
+#team-list-app .rector-badge:hover .rector-name {
+    display: none;
+}
+
+#team-list-app .rector-badge .remove-rector-btn {
+    display: none;
+    color: #fff;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+#team-list-app .rector-badge:hover .remove-rector-btn {
+    display: inline-block;
+}
+
+#team-list-app #teamListGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#team-list-app .unified-team-section {
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+body.light-theme #team-list-app .unified-team-section {
+    background-color: white;
+}
+
+#team-list-app .unified-team-header {
+    background-color: #495057;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 12px 12px 0 0;
+    font-weight: 500;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#team-list-app .team-header-count-badge {
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 11px;
+    margin-left: 8px;
+    min-width: 18px;
+    text-align: center;
+}
+
+#team-list-app .unified-team-members.two-column {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+}
+
+#team-list-app .unified-team-members.two-column .unified-member-item {
+    border-right: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+#team-list-app .unified-team-members.two-column .unified-member-item:nth-child(even) {
+    border-right: none;
+}
+
+#team-list-app .single-role-name {
+    font-weight: 500;
+    color: #495057;
+    min-width: 120px;
+    flex-shrink: 0;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+#team-list-app .single-role-assigned {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-grow: 1;
+    justify-content: space-between;
+    padding: 8px 12px;
+}
+
+#team-list-app .unified-member-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    padding: 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+    min-height: 32px;
+}
+
+#team-list-app .unified-member-item:last-child {
+    border-bottom: none;
+}
+
+#team-list-app .member-role-label {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+#team-list-app .member-role-label.head {
+    background-color: #28a745;
+    color: white;
+}
+
+#team-list-app .member-role-label.asst-head {
+    background-color: #ffc107;
+    color: #333;
+}
+
+#team-list-app .unified-member-name {
+    color: #333;
+    font-weight: 400;
+    flex-grow: 1;
+}
+
+#team-list-app .remove-teammate-btn {
+    background-color: #dc3545;
+    color: white;
+    border: 1px solid #dc3545;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+#team-list-app .remove-teammate-btn:hover {
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+}
+
+/* Team List Remove Animation */
+.unified-member-item.removing,
+.rector-badge.removing {
+    animation: slideOutRight 0.5s ease-in-out forwards;
+}
+
+.unified-member-item.removing .remove-teammate-btn,
+.rector-badge.removing {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+
+/* ===============================================
+   17. CRA MODULE (Candidate Registration & Applications)
+   =============================================== */
+
+/* CRA Reports */
+#cra-reports .controls {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+#cra-report-output {
+    margin-top: 16px;
+}
+
+.report-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+}
+
+.report-tabs .tab {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+}
+
+.report-tabs .tab:hover {
+    color: var(--ink);
+}
+
+.report-tabs .tab.active {
+    color: var(--accentB);
+    border-bottom-color: var(--accentB);
+}
+
+.reports-header {
+    background: var(--panel-header);
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 65px;
+}
+
+/* CRA Check-In Flip Cards */
 #cra-checkin-controls {
     display: flex;
     justify-content: space-between;
@@ -1192,18 +2545,6 @@ body.light-theme .flip-card-front {
     white-space: nowrap;
 }
 
-.btn-approve {
-    border-color: var(--accentA);
-    color: var(--accentA);
-    background-color: rgba(46, 164, 79, 0.15);
-}
-
-.btn-deny {
-    border-color: var(--accentD);
-    color: var(--accentD);
-    background-color: rgba(220, 53, 69, 0.15);
-}
-
 .checkin-actions .btn-approve {
     flex-grow: 2;
 }
@@ -1321,1496 +2662,266 @@ body.light-theme .flip-card-front {
     animation: explode 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-/* Exit Presentation Button */
-#exitPresentationModeBtn {
-    display: none;
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    border-radius: 999px;
-    width: 56px;
-    height: 56px;
-    padding: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.app-container.presentation-mode #exitPresentationModeBtn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 
 /* ===============================================
-   14. AUTHENTICATION UI
+   18. MCI MODULE (Meeting Check-In)
    =============================================== */
-#auth-container {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-    z-index: 2000;
-    padding: 24px;
-}
 
-.auth-card {
-    width: 100%;
-    max-width: 740px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    background: var(--panel);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-}
-
-.auth-image-panel {
-    background: linear-gradient(to bottom, #dee2e6, #f8f9fa);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.auth-image-panel::before {
-    content: '';
-    display: block;
-    width: 100%;
-    height: 100%;
-    background-image: url('/rooster_head_v4.svg');
-    background-size: 100%;
-    background-repeat: no-repeat;
-    background-position: center;
-    filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.4));
-}
-
-.auth-form-panel {
-    padding: 40px;
+.mci-app {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    gap: 16px;
+    height: 100%;
 }
 
-.auth-title {
-    font-size: 1.6rem;
-    font-weight: 700;
-    margin: 0 0 8px 0;
-}
-
-.auth-subtitle {
-    font-size: 1rem;
-    color: var(--muted);
-    margin: 0 0 24px 0;
-}
-
-.auth-links {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 0.85rem;
-}
-
-.auth-links a {
-    color: var(--accentB);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.auth-links a:hover {
-    text-decoration: underline;
-}
-
-.auth-links span {
-    color: var(--muted);
-    margin: 0 8px;
-}
-
-.auth-status-bar {
-    background-color: var(--accentD);
-    color: white;
-    padding: 12px;
-    border-radius: 8px;
-    text-align: center;
-    font-weight: 600;
-    margin-bottom: 20px;
-    display: none;
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.auth-status-bar.visible {
-    display: block;
-    opacity: 1;
-    transform: translateY(0);
-}
-
-@media (max-width: 768px) {
-    .auth-card {
-        grid-template-columns: 1fr;
-        max-width: 400px;
-    }
-    .auth-image-panel {
-        display: none;
-    }
-}
-
-
-/* ===============================================
-   15. CRA REPORTS UI
-   =============================================== */
-#cra-reports .controls {
+.mci-app .controls-bar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 15px;
     display: flex;
+    justify-content: space-between;
     align-items: flex-end;
-    gap: 24px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
+    gap: 15px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
 }
 
-#cra-report-output {
-    margin-top: 16px;
+body.light-theme .mci-app .controls-bar,
+body.light-theme .mci-app .member-list,
+body.light-theme .mci-app .detail-panel {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
 }
 
-.report-tabs {
+.mci-app .main-container {
+    display: grid;
+    grid-template-columns: 40% 1fr;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+}
+
+.mci-app .member-list,
+.mci-app .detail-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
     display: flex;
-    gap: 8px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
 }
 
-.report-tabs .tab {
-    padding: 10px 16px;
-    cursor: pointer;
-    font-weight: 600;
-    color: var(--muted);
-    border-bottom: 3px solid transparent;
-    margin-bottom: -1px;
-}
-
-.report-tabs .tab:hover {
-    color: var(--ink);
-}
-
-.report-tabs .tab.active {
-    color: var(--accentB);
-    border-bottom-color: var(--accentB);
-}
-
-.reports-header {
+.mci-app .list-header,
+.mci-app .status-legend,
+.mci-app .reports-header,
+.mci-app .meeting-control-container {
     background: var(--panel-header);
     padding: 18px 20px;
     border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-height: 65px;
+    height: 65px;
 }
 
-
-/* ===============================================
-   16. UTILITY CLASSES
-   =============================================== */
-#addRecipientBtn,
-#quickAddContainer > .btn {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+.mci-app .reports-header h2 {
+    font-size: 1rem;
+    font-weight: 900;
 }
 
-
-/* ===============================================
-   17. ANIMATIONS
-   =============================================== */
-@keyframes pulse-glow {
-    0% {
-        box-shadow: 0 0 6px rgba(0, 163, 255, 0.8), 0 0 12px rgba(0, 163, 255, 0.6), 0 0 3px #fff;
-    }
-    50% {
-        box-shadow: 0 0 14px rgba(0, 163, 255, 1), 0 0 22px rgba(0, 163, 255, 0.9), 0 0 5px #fff;
-    }
-    100% {
-        box-shadow: 0 0 6px rgba(0, 163, 255, 0.8), 0 0 12px rgba(0, 163, 255, 0.6), 0 0 3px #fff;
-    }
+.mci-app .list-header > span {
+    font-size: 1.1rem;
+    font-weight: 700;
 }
 
-@keyframes rotate {
-    100% {
-        transform: rotate(360deg);
-    }
+.mci-app .status-label {
+    font-size: 11px;
+    font-weight: normal;
+    color: var(--muted);
 }
 
-@keyframes dash {
-    0% {
-        stroke-dasharray: 1, 150;
-        stroke-dashoffset: 0;
-    }
-    50% {
-        stroke-dasharray: 90, 150;
-        stroke-dashoffset: -35;
-    }
-    100% {
-        stroke-dasharray: 90, 150;
-        stroke-dashoffset: -124;
-    }
+.mci-app .empty-list-message {
+    font-size: 11px;
+    font-weight: normal;
+    color: var(--muted);
+    text-align: center;
+    padding: 40px 20px;
 }
 
-@keyframes sweep-right {
-    to {
-        left: 150%;
-    }
+#detailPanelName {
+    font-weight: 700;
+    font-size: 1.1rem;
 }
 
-@keyframes explode {
-    0% {
-        transform: translate(-50%, -50%) scale(0.5);
-        opacity: 1;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        transform: translate(-50%, -50%) translate(var(--x-end), var(--y-end)) scale(1);
-        opacity: 0;
-    }
-}
-
-@keyframes flash-border {
-    0%,
-    100% {
-        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
-    }
-    50% {
-        box-shadow: 0 8px 30px rgba(255, 193, 7, 0.6);
-    }
-}
-
-/* ===============================================
-   TEAM VIEWER APP SCOPED STYLES
-   ADD THIS TO THE END OF YOUR globals.css FILE
-   =============================================== */
-
-#team-viewer-app {
-    background-color: #f8f9fa;
-    color: #333;
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow-y: auto;
-}
-
-#team-viewer-app .container {
-    max-width: none;
-    margin: 0;
-}
-
-#team-viewer-app button {
-    font-family: 'Source Sans Pro', sans-serif;
-}
-
-/* Directory Container */
-#team-viewer-app .directory-container {
-    display: flex;
-    flex-direction: column;
+.mci-app .status-legend {
+    justify-content: flex-end;
     gap: 16px;
 }
 
-/* Controls Grid - UPDATED */
-#team-viewer-app .controls-main-grid {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: 30px;
+.mci-app .list-content {
+    overflow: auto;
+    flex: 1;
 }
 
-#team-viewer-app .controls-left-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-#team-viewer-app .controls-right-panel {
-    display: flex;
-    flex-direction: column;
-    border-left: 1px solid #e0e0e0;
-    padding-left: 30px;
-}
-
-/* Search Controls */
-#team-viewer-app .search-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-#team-viewer-app .search-input-group {
-    display: flex;
-}
-
-#team-viewer-app .search-input-group .search-input {
-    border-right: none;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-#team-viewer-app .search-input-group .search-button {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
-#team-viewer-app .search-input,
-#team-viewer-app .search-select {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 15px;
-    box-sizing: border-box;
-    height: 37px;
-    font-family: 'Source Sans Pro', sans-serif;
-    font-weight: 300;
-    background-color: #fff;
-}
-
-#team-viewer-app .search-button {
-    background-color: #28a745;
-    color: white;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    height: 37px;
-}
-
-#team-viewer-app .search-button:hover {
-    background-color: #218838;
-}
-
-#team-viewer-app .clear-button {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 700;
-    height: 37px;
-}
-
-#team-viewer-app .print-button {
-    background-color: #ffc107;
-    color: #333;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    height: 37px;
-}
-
-#team-viewer-app .search-button,
-#team-viewer-app .clear-button,
-#team-viewer-app .print-button,
-#team-viewer-app .view-team-button {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease-in-out;
-}
-
-#team-viewer-app .search-button:hover,
-#team-viewer-app .clear-button:hover,
-#team-viewer-app .print-button:hover,
-#team-viewer-app .view-team-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-}
-
-#team-viewer-app .utility-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: auto;
-}
-
-#team-viewer-app .utility-buttons .clear-button,
-#team-viewer-app .utility-buttons .print-button {
-    flex: 0 1 110px;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 13px;
-    padding: 6px 8px;
-}
-
-#team-viewer-app .utility-buttons .view-team-button {
-    flex: 1 1 100px;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-#team-viewer-app .view-team-button {
-    background-color: #28a745;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* Custom Dropdown Styles */
-#team-viewer-app .dropdown-container {
-    position: relative;
-    width: 100%;
-}
-
-#team-viewer-app .dropdown-btn {
-    width: 100%;
-    padding: 8px 12px;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    text-align: left;
-    font-size: 15px;
-    font-family: 'Source Sans Pro', sans-serif;
-    font-weight: 300;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 37px;
-    color: #333;
-}
-
-#team-viewer-app .dropdown-btn::after {
-    content: '▼';
-    font-size: 10px;
-    margin-left: 8px;
-}
-
-#team-viewer-app .dropdown-btn.disabled {
-    background-color: #e9ecef;
-    color: #6c757d;
-    cursor: not-allowed;
-}
-
-#team-viewer-app .dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 100%;
-    z-index: 1000;
-    margin-top: 8px;
-    max-height: 250px;
-    overflow-y: auto;
-    opacity: 0;
-    transform: translateY(-5px);
-    transition: all 0.2s ease;
-}
-
-#team-viewer-app .dropdown-container.open .dropdown-content {
-    display: block;
-    opacity: 1;
-    transform: translateY(0);
-}
-
-#team-viewer-app .dropdown-content a {
-    color: #333;
-    padding: 10px 16px;
-    text-decoration: none;
-    display: block;
-    transition: background-color 0.2s ease;
-    font-weight: 400;
-    font-size: 14px;
-}
-
-#team-viewer-app .dropdown-content a:hover,
-#team-viewer-app .dropdown-content a.selected {
-    background: #f0f8ff;
-    color: #007bff;
-}
-
-#team-viewer-app .dropdown-content .dropdown-divider {
-    height: 1px;
-    margin: 5px 0;
-    overflow: hidden;
-    background-color: #e9ecef;
-}
-
-/* Toggle Inset Container */
-#team-viewer-app .toggle-inset-container {
-    display: flex;
-    justify-content: center;
-    background-color: #e9ecef;
-    border-radius: 8px;
-    padding: 5px;
-    width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 20px;
-}
-
-#team-viewer-app .controls-right-panel .toggle-inset-container {
-    width: 100%;
-}
-
-#team-viewer-app .toggle-inset-option {
-    padding: 8px 19px;
-    cursor: pointer;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 700;
-    color: #333;
-    background-color: transparent;
-    border: 1px solid transparent;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-    flex-grow: 1;
-    text-align: center;
-    font-family: 'Source Sans Pro', sans-serif;
-}
-
-#team-viewer-app #genderToggleContainer .toggle-inset-option {
-    padding: 8px 14px;
-}
-
-#team-viewer-app .toggle-inset-option.active {
-    background-color: #28a745;
-    color: white;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Directory Header */
-#team-viewer-app .directory-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #007bff;
-}
-
-#team-viewer-app .directory-title {
-    font-size: 1rem;
-    font-weight: 900;
-    color: #333;
-}
-
-#team-viewer-app .directory-count {
-    font-size: 16px;
-    color: #666;
-}
-
-/* Names Grid */
-#team-viewer-app .names-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    /*grid-auto-flow: column;*/
-    gap: 6px;
-    max-height: 70vh;
-    overflow-y: auto;
-    padding: 6px;
-}
-
-
-
-#team-viewer-app .name-box {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    padding: 8px 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 14px;
-    text-align: center;
-}
-
-#team-viewer-app .name-box:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-}
-
-/* Enhanced Search Result */
-#team-viewer-app .name-box.enhanced-search-result {
-    height: 60px;
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    justify-content: stretch;
-}
-
-#team-viewer-app .name-section {
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-#team-viewer-app .search-match-badge {
-    flex-shrink: 0;
-    height: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-#team-viewer-app .search-match-badge.candidate {
-    background-color: var(--accentB);
-    color: white;
-}
-
-#team-viewer-app .search-match-badge.service {
-    background-color: var(--accentA);
-    color: white;
-}
-
-#team-viewer-app .search-match-badge.filter {
-    background-color: var(--accentA); /* Green for filter matches */
-    color: white;
-}
-
-/* Profile View */
-#team-viewer-app .profile-view {
-    display: block;
-}
-
-#team-viewer-app .navigation {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 20px 0;
-    background: #ffffff;
+.member-item {
     padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 1px solid #dee2e6;
-}
-
-#team-viewer-app .back-button {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-#team-viewer-app .nav-controls {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-#team-viewer-app .nav-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s;
-}
-
-#team-viewer-app .nav-button:disabled {
-    background-color: #6c757d;
-    cursor: not-allowed;
-}
-
-#team-viewer-app .profile-counter {
-    font-size: 16px;
-    font-weight: bold;
-    color: #333;
-}
-
-/* Profile Main Info */
-#team-viewer-app .profile-main-info {
-    background-color: #ffffff;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-#team-viewer-app .profile-header {
-    margin-bottom: 8px;
-}
-
-#team-viewer-app .profile-name {
-    font-size: 1rem;
-    font-weight: 900;
-    color: #333;
-    margin: 0 0 12px 0;
-    margin-right: 15px;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-#team-viewer-app .profile-weekend-info {
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 15px;
-    font-size: 0.8em;
-    color: #333;
-    font-weight: 600;
-}
-
-#team-viewer-app .last-served-highlight {
-    background-color: #ffc107;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-weight: bold;
-    color: #333;
-    display: inline-block;
-    font-size: 0.9em;
-}
-
-#team-viewer-app .name-separator {
-    display: inline-block;
-    border-left: 1px solid #ccc;
-    height: 24px;
-    margin: 0 5px 0 15px;
-    vertical-align: middle;
-}
-
-#team-viewer-app .legal-name-badge {
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 12px;
-    font-size: 0.7em;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 8px;
-    background-color: #e9ecef;
-    color: #495057;
-    border: 1px solid #dee2e6;
-}
-
-#team-viewer-app .main-info-item {
-    margin: 2px 0;
-    font-size: 14px;
-    display: flex;
-    align-items: flex-start;
-}
-
-#team-viewer-app .main-info-label {
-    font-weight: bold;
-    width: 100px;
-    flex-shrink: 0;
-    color: #555;
-}
-
-#team-viewer-app .main-info-value {
-    color: #333;
-    flex: 1;
-}
-
-/* Status Classes */
-#team-viewer-app .profile-main-info.is-spiritual-director {
-    box-shadow: 0 0 8px 2px rgba(40, 167, 69, 0.4);
-    border-left: 5px solid #28a745;
-}
-
-#team-viewer-app .profile-main-info.do-not-call {
-    border-left: 40px solid #dc3545;
-    position: relative;
-    box-shadow: 0 0 15px rgba(220, 53, 69, 0.3);
-    background-color: rgba(220, 53, 69, 0.05);
-}
-
-#team-viewer-app .profile-main-info.do-not-call::before {
-    content: "DO NOT CALL";
-    position: absolute;
-    left: -83px;
-    top: 50%;
-    transform: translateY(-50%) rotate(-90deg);
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    white-space: nowrap;
-    z-index: 10;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-#team-viewer-app .profile-main-info.deceased {
-    border-left: 40px solid #000000;
-    position: relative;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-    background-color: rgba(0, 0, 0, 0.05);
-}
-
-#team-viewer-app .profile-main-info.deceased::before {
-    content: "DECEASED";
-    position: absolute;
-    left: -83px;
-    top: 50%;
-    transform: translateY(-50%) rotate(-90deg);
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    white-space: nowrap;
-    z-index: 10;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* Rector Qualification */
-#team-viewer-app .rector-qualification-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-#team-viewer-app .qualification-labels {
-    display: flex;
-    justify-content: space-around;
-}
-
-#team-viewer-app .qualification-label {
-    flex: 1;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 600;
-    color: #555;
-    padding: 0 4px;
-}
-
-#team-viewer-app .segmented-bar-container {
-    display: flex;
-    width: 100%;
-    height: 12px;
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    background-color: var(--bg);
-}
-
-#team-viewer-app .bar-segment {
-    flex: 1;
-    height: 100%;
-}
-
-#team-viewer-app .bar-segment.pass {
-    background-color: var(--accentA);
-}
-
-#team-viewer-app .bar-segment.fail {
-    background-color: var(--accentD);
-}
-
-/* Roles Section */
-#team-viewer-app .roles-section {
-    margin-top: 0;
-     padding: 0; /* Remove any extra padding */
-}
-
-
-#team-viewer-app .roles-title {
-    font-weight: 900;
-    font-size: 1rem;
-    color: #333;
-}
-
-#team-viewer-app .roles-header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #007bff;
-    padding-bottom: 10px;
-}
-
-#team-viewer-app .legend {
-    display: flex;
-    gap: 20px;
-    font-size: 12px;
-}
-
-#team-viewer-app .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-#team-viewer-app .legend-color {
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
-}
-
-#team-viewer-app .role-header-legend {
-    display: grid;
-    gap: 6px;
-    margin-bottom: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-#team-viewer-app .role-header-legend.team-headers {
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto;
-    column-gap: 10px;
-}
-
-#team-viewer-app .role-header-legend.professor-headers {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: auto;
-    column-gap: 10px;
-}
-
-#team-viewer-app .role-header-set {
-    display: grid;
-    grid-template-columns: 55% 15% 18% 12%;
-    gap: 2px;
-}
-
-#team-viewer-app .role-header-name,
-#team-viewer-app .role-header-status,
-#team-viewer-app .role-header-last,
-#team-viewer-app .role-header-qty {
-    padding: 10px 8px;
-    background-color: #495057;
-    color: white;
-    border-radius: 4px;
-    text-align: center;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-#team-viewer-app .role-header-name {
-    text-align: left;
-}
-
-#team-viewer-app .role-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-auto-flow: row;
-    gap: 6px;
-    font-size: 13px;
-}
-
-#team-viewer-app .professor-grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(5, auto);
-}
-
-#team-viewer-app .team-grid {
-    grid-template-columns: repeat(3, 1fr);
-}
-
-#team-viewer-app .role-item {
-    display: grid;
-    grid-template-columns: 55% 15% 18% 12%;
-    gap: 2px;
-    align-items: stretch;
-    margin-bottom: 2px;
-    min-height: 32px;
-}
-
-#team-viewer-app .role-name,
-#team-viewer-app .role-status-cell,
-#team-viewer-app .role-last-cell,
-#team-viewer-app .role-qty-cell {
-    padding: 6px 8px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    font-size: 13px;
-    min-height: 20px;
-    display: flex;
-    align-items: center;
-}
-
-#team-viewer-app .role-name {
-    color: #333;
-    justify-content: flex-start;
-}
-
-#team-viewer-app .role-status-cell,
-#team-viewer-app .role-last-cell,
-#team-viewer-app .role-qty-cell {
-    justify-content: center;
-}
-
-#team-viewer-app .role-status {
-    width: 16px;
-    height: 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 3px;
-    font-weight: bold;
-    color: white;
-    font-size: 11px;
-    flex-shrink: 0;
-}
-
-#team-viewer-app .service-number {
-    font-size: 11px;
-    font-weight: 600;
-    color: #333;
-    text-transform: uppercase;
-}
-
-#team-viewer-app .quantity-number {
-    font-size: 11px;
-    font-weight: 600;
-    color: #28a745;
-    text-transform: uppercase;
-}
-
-#team-viewer-app .status-N {
-    background-color: #dc3545;
-}
-
-#team-viewer-app .status-I {
-    background-color: #ffc107;
-    color: #333;
-}
-
-#team-viewer-app .status-E {
-    background-color: #28a745;
-}
-
-/* Refresh Section */
-#team-viewer-app .refresh-section {
-    text-align: center;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #e0e0e0;
-}
-
-#team-viewer-app .button-group {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    align-items: center;
-}
-
-#team-viewer-app .refresh-button,
-#team-viewer-app .edit-button {
-    background-color: #28a745;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-}
-
-#team-viewer-app .edit-button {
-    background-color: #007bff;
-}
-
-#team-viewer-app .last-updated {
-    font-size: 12px;
-    color: #666;
-    margin-top: 5px;
-}
-
-/* Loading State */
-#team-viewer-app .loading {
-    text-align: center;
-    padding: 50px;
-    font-size: 18px;
-    color: #666;
-}
-
-/* Profile Container */
-#team-viewer-app .profile-container {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-/* Accordion Submenu Styles */
-.nav-item.has-submenu > a {
-    justify-content: space-between;
-}
-
-.nav-item.has-submenu > a::after {
-    content: '›';
-    font-size: 1.5rem;
-    transition: transform 0.2s;
-}
-
-.nav-item.open > a::after {
-    transform: rotate(90deg);
-}
-
-.submenu {
-    list-style: none;
-    padding-left: 24px;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-in-out;
-}
-
-.nav-item.open > .submenu {
-    max-height: 260px;
-}
-
-.submenu-item a {
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    transition: color 0.2s, background-color 0.2s;
-}
-
-.submenu-item a.active {
-    color: var(--accentA-light);
-    font-weight: 700;
-    background: transparent;
-}
-
-body.light-theme .submenu-item a.active {
-    color: var(--accentB);
-    font-weight: 700;
-    background: transparent;
-}
-
-/* ====================================================== */
-/* ========== TEAM LIST STYLES - ADD TO GLOBALS.CSS ===== */
-/* ====================================================== */
-
-/* --- STYLES FOR TEAM LIST PAGE --- */
-#team-list-app .card {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-#team-list-app .team-list-controls {
-    padding: 15px 24px 20px;
-    display: flex;
-    align-items: flex-end;
-    gap: 20px;
     border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
     justify-content: space-between;
-}
-
-#team-list-app .team-list-header-grid {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 20px;
     align-items: center;
+    transition: .2s;
+    border-left: 5px solid transparent;
 }
 
-.team-total-card {
-    padding: 8px 16px;
-    border-radius: 12px;
-    background-color: var(--bg);
-    border: 1px solid var(--border);
-    text-align: center;
-    min-width: 150px;
-}
-
-.team-total-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.team-total-count {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--ink);
-    line-height: 1.1;
-}
-
-#team-list-app .rector-section {
-    text-align: center;
-    margin-bottom: 0;
-    padding: 16px;
+.member-item:hover {
     background: var(--panel-header);
-    border-radius: 12px;
 }
 
-#team-list-app .rector-title {
-    font-weight: 600;
-    font-size: 14px;
-    color: #6c757d;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-    text-transform: uppercase;
+.member-item.selected {
+    background: rgba(0, 163, 255, .08);
+    border-left-color: var(--accentB);
 }
 
-#team-list-app .rector-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 18px;
-    border: 1px solid #28a745;
-    border-radius: 4px;
-    font-size: 16px;
+.member-name {
     font-weight: 700;
-    color: #333;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
 }
 
-#team-list-app .rector-badge:hover {
-    background-color: #dc3545;
-    border-color: #c82333;
-    color: white;
-}
-
-#team-list-app .rector-badge:hover .rector-name {
-    display: none;
-}
-
-#team-list-app .rector-badge .remove-rector-btn {
-    display: none;
-    color: #fff;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-#team-list-app .rector-badge:hover .remove-rector-btn {
-    display: inline-block;
-}
-
-#team-list-app #teamListGrid {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-#team-list-app .unified-team-section {
-    background-color: white;
-    border: 1px solid #dee2e6;
-    border-radius: 12px;
-    margin-bottom: 15px;
-}
-
-body.light-theme #team-list-app .unified-team-section {
-    background-color: white;
-}
-
-#team-list-app .unified-team-header {
-    background-color: #495057;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 12px 12px 0 0;
-    font-weight: 500;
-    font-size: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-#team-list-app .team-header-count-badge {
-    background-color: rgba(255, 255, 255, 0.2);
-    padding: 2px 6px;
-    border-radius: 8px;
-    font-size: 11px;
-    margin-left: 8px;
-    min-width: 18px;
-    text-align: center;
-}
-
-#team-list-app .unified-team-members {
-    /* Default single column for team sections */
-}
-
-#team-list-app .unified-team-members.two-column {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0;
-}
-
-#team-list-app .unified-team-members.two-column .unified-member-item {
-    border-right: 1px solid #f0f0f0;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-#team-list-app .unified-team-members.two-column .unified-member-item:nth-child(even) {
-    border-right: none;
-}
-
-#team-list-app .single-role-name {
-    font-weight: 500;
-    color: #495057;
-    min-width: 120px;
-    flex-shrink: 0;
-    background-color: #f8f9fa;
-    padding: 10px;
-    border-radius: 0;
-    margin: 0;
-    display: flex;
-    align-items: center;
-}
-
-#team-list-app .single-role-assigned {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-grow: 1;
-    justify-content: space-between;
-    padding: 8px 12px;
-}
-
-#team-list-app .unified-member-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: stretch;
-    padding: 0;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 13px;
-    min-height: 32px;
-}
-
-#team-list-app .unified-member-item:last-child {
-    border-bottom: none;
-}
-
-#team-list-app .member-role-label {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: bold;
-    margin-left: 10px;
-}
-
-#team-list-app .member-role-label.head {
-    background-color: #28a745;
-    color: white;
-}
-
-#team-list-app .member-role-label.asst-head {
-    background-color: #ffc107;
-    color: #333;
-}
-
-#team-list-app .unified-member-name {
-    color: #333;
-    font-weight: 400;
-    flex-grow: 1;
-}
-
-#team-list-app .remove-teammate-btn {
-    background-color: #dc3545;
-    color: white;
-    border: 1px solid #dc3545;
+.status-dot {
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
+    border: 2px solid var(--muted);
+    display: inline-block;
+}
+
+.status-dot.complete {
+    background: var(--accentA);
+    border-color: var(--accentA);
+}
+
+.attendance-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+}
+
+.meet-btn {
+    position: relative;
+    padding: 8px 0;
+    font-weight: 700;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, .06);
+    color: var(--ink);
     cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    width: 22px;
-    height: 22px;
+}
+
+.meet-btn.attended {
+    background: var(--accentA);
+    color: #111;
+    border-color: var(--accentA);
+}
+
+.meet-btn.zoom {
+    background: var(--accentB);
+    color: #111;
+    border-color: var(--accentB);
+}
+
+.meet-btn.zoom::after {
+    content: "Z";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 6px;
+    font-size: 10px;
+    font-weight: 900;
+    background-image: linear-gradient(to bottom right, #4dabf7, var(--accentB));
+    color: var(--bg);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    line-height: 1;
-    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    animation: pulse-glow 2s infinite ease-in-out;
 }
 
-#team-list-app .remove-teammate-btn:hover {
-    transform: scale(1.1) translateY(-2px);
-    box-shadow: 0 3px 7px rgba(0,0,0,0.3);
+.inline-status {
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+    flex-wrap: wrap;
 }
 
-/* --- END: Team List Styles --- */
-
-/* ====================================================== */
-/* ============ CRA BADGE STYLES - ADD TO GLOBALS.CSS === */
-/* ====================================================== */
-
-/* Generic Badge Styles for CRA Status */
-.badge {
-    display: inline-block;
-    padding: 4px 10px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    border-radius: 999px;
-    text-transform: capitalize;
-    text-align: center;
-    line-height: 1.2;
-}
-
-.badge-success {
-    background-color: rgba(46, 164, 79, 0.15);
+.amount-paid {
     color: var(--accentA);
+    font-weight: 900;
 }
 
-body.light-theme .badge-success {
-    background-color: rgba(46, 164, 79, 0.15);
-    color: var(--accentA);
+.amount-due {
+    color: var(--accentD);
+    font-weight: 900;
 }
 
-.badge-warning {
-    background-color: rgba(255, 193, 7, 0.15);
-    color: var(--accentC);
+.mci-app .detail-panel {
+    overflow: hidden;
 }
 
-body.light-theme .badge-warning {
-    background-color: rgba(255, 193, 7, 0.15);
-    color: var(--accentC);
+#detailContent {
+    height: 100%;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
 }
 
-.badge-info {
-    background-color: rgba(0, 163, 255, 0.15);
-    color: var(--accentB);
+.fee-card {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
 }
 
-body.light-theme .badge-info {
-    background-color: rgba(0, 163, 255, 0.15);
-    color: var(--accentB);
+.fee-card .inline-status {
+    margin-top: auto;
+    padding-top: 10px;
 }
 
-.badge-default {
-    background-color: rgba(108, 117, 125, 0.15);
-    color: var(--muted);
+.payment-options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
 }
 
-body.light-theme .badge-default {
-    background-color: rgba(108, 117, 125, 0.15);
-    color: var(--muted);
+.meeting-dots-container {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
 }
 
-.badge-danger {
-    background-color: rgba(220, 53, 69, 0.15);
-    color: #dc3545;
+.meeting-status-dot {
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    border: 2px solid var(--muted);
+    background-color: transparent;
+    transition: all 0.2s;
 }
 
-body.light-theme .badge-danger {
-    background-color: rgba(220, 53, 69, 0.15);
-    color: #dc3545;
+.meeting-status-dot.attended {
+    background-color: var(--accentA);
+    border-color: var(--accentA);
 }
 
-/* --- END: CRA Badge Styles --- */
 
-/* ====================================================== */
-/* ========== SECRETARIAT MODULE STYLES ================ */
-/* ====================================================== */
+/* ===============================================
+   19. SECRETARIAT MODULE
+   =============================================== */
 
-/* Secretariat Config Styles */
+/* Secretariat Config */
 #secretariat-positions-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -2844,7 +2955,7 @@ body.light-theme .badge-danger {
     font-size: 0.9rem;
 }
 
-/* Secretariat Dashboard Styles */
+/* Secretariat Dashboard */
 .secretariat-dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -2948,9 +3059,17 @@ body.light-theme .badge-danger {
     transition: width 0.5s ease-in-out;
 }
 
-.secretariat-card .timeline-fill.green { background-color: var(--accentA); }
-.secretariat-card .timeline-fill.yellow { background-color: var(--accentC); }
-.secretariat-card .timeline-fill.red { background-color: var(--accentD); }
+.secretariat-card .timeline-fill.green {
+    background-color: var(--accentA);
+}
+
+.secretariat-card .timeline-fill.yellow {
+    background-color: var(--accentC);
+}
+
+.secretariat-card .timeline-fill.red {
+    background-color: var(--accentD);
+}
 
 .secretariat-card .timeline-transition-overlay {
     position: absolute;
@@ -3043,14 +3162,14 @@ body.light-theme .custom-date-input {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
     width: 280px;
     top: calc(100% + 8px);
     left: 0;
 }
 
 body.light-theme .date-picker-dropdown {
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .date-picker-dropdown .picker-header {
@@ -3108,61 +3227,77 @@ body.light-theme .date-picker-dropdown {
     background: var(--accentB);
     color: white;
 }
-/* --- NEW: Weekend History Table Styles --- */
+
+/* Weekend History Table */
 #weekend-history-tbody .history-parent-row.active {
     background-color: rgba(46, 164, 79, 0.1);
     border-left: 4px solid var(--accentA);
 }
+
 #weekend-history-tbody .history-parent-row.active:hover {
     background-color: rgba(46, 164, 79, 0.2);
 }
+
 #weekend-history-tbody .active .expand-icon {
     color: var(--accentA);
 }
+
 #weekend-history-tbody .history-parent-row {
     cursor: pointer;
     transition: background-color 0.2s;
 }
+
 #weekend-history-tbody .history-parent-row:hover {
     background-color: var(--panel-header);
 }
+
 #weekend-history-tbody .expand-icon {
     transition: transform 0.2s;
     display: inline-block;
     font-weight: 700;
-    font-size: 1.5rem; /* Increased size */
-    line-height: 0.8; /* Adjusted vertical alignment */
+    font-size: 1.5rem;
+    line-height: 0.8;
 }
+
 #weekend-history-tbody .history-parent-row.expanded .expand-icon {
     transform: rotate(90deg);
 }
+
 #weekend-history-tbody .detail-container {
     padding: 16px;
     background: var(--bg);
     border-top: 2px solid var(--accentB);
 }
+
 #weekend-history-tbody .detail-table {
     width: 100%;
     border-collapse: collapse;
 }
+
 #weekend-history-tbody .detail-table th,
 #weekend-history-tbody .detail-table td {
     padding: 10px 8px;
     text-align: left;
     border-bottom: 1px solid var(--border);
 }
+
 #weekend-history-tbody .detail-table thead th {
     background-color: transparent;
     font-size: 0.8rem;
     text-transform: uppercase;
     color: var(--muted);
 }
+
 #weekend-history-tbody .detail-table tbody tr:last-child td {
     border-bottom: none;
 }
-/* --- END: Weekend History Table Styles --- */
 
-/* --- User List Table Styles --- */
+
+/* ===============================================
+   20. SUPER ADMIN MODULE
+   =============================================== */
+
+/* User List Table */
 #user-list-table {
     margin-top: 20px;
 }
@@ -3191,9 +3326,8 @@ body.light-theme .date-picker-dropdown {
     gap: 8px;
     justify-content: flex-end;
 }
-/* --- END: User List Table Styles --- */
 
-/* --- Data Management Card Styles --- */
+/* Data Management Card */
 .data-management-card {
     display: flex;
     flex-direction: column;
@@ -3213,18 +3347,16 @@ body.light-theme .date-picker-dropdown {
     justify-content: flex-end;
     margin-top: 12px;
 }
-/* --- END: Data Management Card Styles --- */
 
-/* --- User Management Header --- */
+/* User Management Header */
 #user-management-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
 }
-/* --- END: User Management Header --- */
 
-/* --- Super Admin Status Pills --- */
+/* Status Pills */
 .status-badge-admin {
     display: inline-block;
     padding: 4px 12px;
@@ -3233,536 +3365,155 @@ body.light-theme .date-picker-dropdown {
     font-weight: 700;
     text-transform: capitalize;
 }
+
 .status-badge-admin.trial {
-    background-color: rgba(255, 193, 7, 0.15); /* --accentC */
+    background-color: rgba(255, 193, 7, 0.15);
     color: var(--accentC);
 }
+
 .status-badge-admin.active {
-    background-color: rgba(46, 164, 79, 0.15); /* --accentA */
+    background-color: rgba(46, 164, 79, 0.15);
     color: var(--accentA);
 }
+
 .status-badge-admin.waived {
-    background-color: rgba(0, 163, 255, 0.15); /* --accentB */
+    background-color: rgba(0, 163, 255, 0.15);
     color: var(--accentB);
 }
-/* --- END: Super Admin Status Pills --- */
 
-/* ====================================================== */
-/* ========= SKELETON LOADER ANIMATION STYLES ========== */
-/* ====================================================== */
 
-/* 
-  NOTE: All styles are now inline in the SkeletonLoader.jsx component.
-  This file is kept for consistency but can be removed if desired.
-  The component uses scoped <style jsx> for self-contained styling.
-*/
-
-/* Optional: Global fade-in for the skeleton loader container */
-.skeleton-loader-container {
-  animation: fade-in 0.3s ease-in;
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* ====================================================== */
-/* ======= END: SKELETON LOADER ANIMATION STYLES ======= */
-/* ====================================================== */
-
-/* Directory: Fixed header + bottom card scroll only */
-#team-viewer-app {
-  height: 100%;
-  overflow: hidden; /* Prevent outer scroll */
-}
-
-#team-viewer-app .container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-#team-viewer-app .directory-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* Top card stays at natural height */
-#team-viewer-app .directory-container > .card:first-child {
-  flex-shrink: 0;
-}
-
-/* Bottom card fills remaining space */
-#team-viewer-app .directory-container > .card:last-child {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* Directory header stays fixed */
-#team-viewer-app .directory-header {
-  flex-shrink: 0;
-}
-
-/* Names grid scrolls inside bottom card */
-#team-viewer-app .names-grid {
-  flex: 1;
-  max-height: none !important;
-  overflow-y: auto !important;
-  min-height: 0;
-}
-
-/* Add to the end of globals.css - Make Directory Controls More Compact */
-
-/* Reduce vertical spacing in controls */
-#team-viewer-app .controls-main-grid {
-  grid-template-columns: 1.2fr 1fr; /* Slightly adjusted ratio */
-  gap: 20px; /* Reduced from 30px */
-}
-
-#team-viewer-app .controls-left-panel {
-  gap: 12px; /* Reduced from 20px */
-}
-
-#team-viewer-app .controls-right-panel {
-  gap: 12px; /* Reduced from default */
-  padding-left: 20px; /* Reduced from 30px */
-}
-
-/* Reduce label spacing */
-#team-viewer-app .label {
-  margin-bottom: 4px; /* Reduced from 6px */
-}
-
-/* Make dropdowns more compact */
-#team-viewer-app .dropdown-btn {
-  padding: 6px 12px; /* Reduced from 8px 12px */
-  height: 34px; /* Reduced from 37px */
-  font-size: 14px; /* Slightly smaller */
-}
-
-/* Make search input more compact */
-#team-viewer-app .search-input {
-  padding: 6px 12px; /* Reduced from 8px 12px */
-  height: 34px; /* Reduced from 37px */
-  font-size: 14px;
-}
-
-#team-viewer-app .search-button {
-  padding: 6px 16px; /* Reduced from 8px 20px */
-  height: 34px; /* Reduced from 37px */
-  font-size: 13px;
-}
-
-/* Make toggle buttons more compact */
-#team-viewer-app .toggle-inset-container {
-  padding: 4px; /* Reduced from 5px */
-  margin-bottom: 0; /* Remove bottom margin */
-  margin-top: -4px; /* ADDED: Shift toggles up closer to labels */
-}
-
-#team-viewer-app .toggle-inset-option {
-  padding: 6px 16px; /* Reduced from 8px 19px */
-  font-size: 13px; /* Slightly smaller */
-}
-
-/* Make utility buttons more compact */
-#team-viewer-app .utility-buttons {
-  gap: 8px; /* Reduced from 10px */
-}
-
-#team-viewer-app .clear-button,
-#team-viewer-app .print-button,
-#team-viewer-app .view-team-button {
-  padding: 6px 14px; /* More compact */
-  height: 34px; /* Match other inputs */
-  font-size: 13px;
-}
-
-/* Reduce top card padding slightly */
-#team-viewer-app .directory-container > .card:first-child {
-  padding: 18px 24px; /* Reduced from 24px */
-}
-
-/* Main Status Bar - Modal Style (Clean & Shorter, Full Screen Width) */
-#mainStatusBar {
-    position: fixed;           /* ← Changed from absolute */
-    top: 0;
-    left: 0;                   /* ← Starts at very left edge (over sidebar) */
-    right: 0;                  /* ← Ends at very right edge */
-    width: 100vw;              /* ← Full viewport width */
-    z-index: 9999;             /* ← Higher z-index to go over everything */
-    background-color: var(--accentA);
-    color: white;
-    text-align: center;
-    font-weight: 600;
-    padding: 12px;
-    font-size: 1rem;
-    transform: translateY(-100%);
-    transition: transform 0.4s ease-in-out;
-}
-
-#mainStatusBar.visible {
-    transform: translateY(0);
-}
-
-#mainStatusBar.error {
-    background-color: var(--accentD);
-}
-/* ====================================================== */
-/* ================ MCI (Meeting Check-In) CSS ========== */
-/* ====================================================== */
-
-.mci-app {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    height: 100%;
-}
-
-.mci-app .controls-bar {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 15px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
-}
-
-body.light-theme .mci-app .controls-bar,
-body.light-theme .mci-app .member-list,
-body.light-theme .mci-app .detail-panel {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
-}
-
-.mci-app .main-container {
-    display: grid;
-    grid-template-columns: 40% 1fr;
-    gap: 16px;
-    flex: 1;
-    min-height: 0
-}
-
-.mci-app .member-list,
-.mci-app .detail-panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
-}
-
-.mci-app .list-header,
-.mci-app .status-legend,
-.mci-app .reports-header,
-.mci-app .meeting-control-container {
-    background: var(--panel-header);
-    padding: 18px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 65px
-}
-
-.mci-app .reports-header h2 {
-    font-size: 1rem;
-    font-weight: 900;
-}
-
-.mci-app .list-header > span {
-    font-size: 1.1rem;
-    font-weight: 700;
-}
-
-.mci-app .status-label {
-    font-size: 11px;
-    font-weight: normal;
-    color: var(--muted);
-}
-
-.mci-app .empty-list-message {
-    font-size: 11px;
-    font-weight: normal;
-    color: var(--muted);
-    text-align: center;
-    padding: 40px 20px;
-}
-
-#detailPanelName {
-    font-weight: 700;
-    font-size: 1.1rem;
-}
-
-.mci-app .status-legend {
-    justify-content: flex-end;
-    gap: 16px;
-}
-
-.mci-app .list-content {
-    overflow: auto;
-    flex: 1
-}
-
-.member-item {
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: .2s;
-    border-left: 5px solid transparent
-}
-
-.member-item:hover {
-    background: var(--panel-header)
-}
-
-.member-item.selected {
-    background: rgba(0, 163, 255, .08);
-    border-left-color: var(--accentB)
-}
-
-.member-name {
-    font-weight: 700
-}
-
-.status-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 2px solid var(--muted);
-    display: inline-block
-}
-
-.status-dot.complete {
-    background: var(--accentA);
-    border-color: var(--accentA)
-}
-
-.attendance-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 8px
-}
-
-.meet-btn {
-    position: relative;
-    padding: 8px 0;
-    font-weight: 700;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, .06);
-    color: var(--ink);
-    cursor: pointer
-}
-
-.meet-btn.attended {
-    background: var(--accentA);
-    color: #111;
-    border-color: var(--accentA)
-}
-
-.meet-btn.zoom {
-    background: var(--accentB);
-    color: #111;
-    border-color: var(--accentB)
-}
-
-.meet-btn.zoom::after {
-    content: "Z";
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    right: 6px;
-    font-size: 10px;
-    font-weight: 900;
-    background-image: linear-gradient(to bottom right, #4dabf7, var(--accentB));
-    color: var(--bg);
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    animation: pulse-glow 2s infinite ease-in-out;
-}
-
-.inline-status {
-    display: flex;
-    gap: 14px;
-    align-items: baseline;
-    flex-wrap: wrap
-}
-
-.amount-paid {
-    color: var(--accentA);
-    font-weight: 900
-}
-
-.amount-due {
-    color: var(--accentD);
-    font-weight: 900
-}
-
-.mci-app .detail-panel {
-    overflow: hidden
-}
-
-#detailContent {
-    height: 100%;
-    overflow-y: auto;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-}
-
-.fee-card {
-    display: flex;
-    flex-direction: column;
-    padding: 16px;
-}
-
-.fee-card .inline-status {
-    margin-top: auto;
-    padding-top: 10px;
-}
-
-.payment-options-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-}
-
-.meeting-dots-container {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    align-items: center;
-}
-
-.meeting-status-dot {
-    width: 21px;
-    height: 21px;
-    border-radius: 50%;
-    border: 2px solid var(--muted);
-    background-color: transparent;
-    transition: all 0.2s;
-}
-
-.meeting-status-dot.attended {
-    background-color: var(--accentA);
-    border-color: var(--accentA);
-}
-
-/* ====================================================== */
-/* ============== END: MCI CSS ========================== */
-/* ====================================================== */
-
-/* ====================================================== */
-/* ========== TEAM LIST REMOVE ANIMATION =============== */
-/* ====================================================== */
-
-.unified-member-item.removing,
-.rector-badge.removing {
-  animation: slideOutRight 0.5s ease-in-out forwards;
-}
-
-@keyframes slideOutRight {
-  0% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(100px);
-  }
-}
-
-/* Disable button during animation */
-.unified-member-item.removing .remove-teammate-btn,
-.rector-badge.removing {
-  pointer-events: none;
-  opacity: 0.5;
-}
-
-/* Profile View Layout - Enable Scrolling */
-#team-viewer-app .profile-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-#team-viewer-app .navigation {
-  flex-shrink: 0; /* Navigation stays fixed at top */
-}
-
-#team-viewer-app .profile-container {
-  flex: 1;
-  overflow-y: auto; /* Enable scrolling for profile content */
-  min-height: 0;
-  padding-right: 8px; /* Space for scrollbar */
-}
-
-#team-viewer-app .refresh-section {
-  flex-shrink: 0; /* Buttons stay fixed at bottom */
-  margin-top: 16px;
-}
-
-/* Make profile info and rector cards equal height */
-#team-viewer-app .profile-container > div:first-child {
-    display: grid;
-    grid-template-columns: 40% 60%;
-    gap: 16px;
-}
-
-#team-viewer-app .profile-container > div:first-child > .card {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Reduce padding on profile cards for more compact layout */
-#team-viewer-app .profile-container > div:first-child .card.pad {
-    padding: 16px; /* Reduced from 24px */
-}
-
-/* Reduce padding on Rector qualification card */
-#team-viewer-app .profile-container > div:first-child .card.pad {
-    padding: 16px; /* Match the profile card padding */
-}
-
-/* Team Viewer - Role Selector Slide Animation */
-.role-selector-slide-in {
-  animation: slideInRight 0.3s ease-out;
+/* ===============================================
+   21. ANIMATIONS
+   =============================================== */
+
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 6px rgba(0, 163, 255, 0.8), 0 0 12px rgba(0, 163, 255, 0.6), 0 0 3px #fff;
+    }
+    50% {
+        box-shadow: 0 0 14px rgba(0, 163, 255, 1), 0 0 22px rgba(0, 163, 255, 0.9), 0 0 5px #fff;
+    }
+    100% {
+        box-shadow: 0 0 6px rgba(0, 163, 255, 0.8), 0 0 12px rgba(0, 163, 255, 0.6), 0 0 3px #fff;
+    }
+}
+
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+    }
+}
+
+@keyframes sweep-right {
+    to {
+        left: 150%;
+    }
+}
+
+@keyframes explode {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) translate(var(--x-end), var(--y-end)) scale(1);
+        opacity: 0;
+    }
+}
+
+@keyframes flash-border {
+    0%,
+    100% {
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    }
+    50% {
+        box-shadow: 0 8px 30px rgba(255, 193, 7, 0.6);
+    }
 }
 
 @keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+
+/* ===============================================
+   22. UTILITY CLASSES
+   =============================================== */
+
+#addRecipientBtn,
+#quickAddContainer > .btn {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.skeleton-loader-container {
+    animation: fade-in 0.3s ease-in;
+}
+
+
+/* ===============================================
+   23. PRINT STYLES
+   =============================================== */
+
+@media print {
+    .sidebar,
+    .main-header,
+    .btn,
+    button {
+        display: none !important;
+    }
+
+    .app-panel-container {
+        padding: 0 !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
 }
