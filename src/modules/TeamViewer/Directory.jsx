@@ -679,16 +679,16 @@ export default function Directory() {
                 </div>
               </div>
               {(() => {
-                const rowsNeeded = Math.ceil(filteredPescadores.length / 5);
+                /*const rowsNeeded = Math.ceil(filteredPescadores.length / 5);*/
                 
                 return (
                   <div 
                     className="names-grid" 
                     id="namesGrid"
-                    style={{ 
+                    /*style={{ 
                       gridTemplateRows: `repeat(${rowsNeeded}, auto)`,
                       gridAutoFlow: 'column'
-                    }}
+                    }}*/
                   >
                     {filteredPescadores.length === 0 ? (
                       <div className="loading">No results found.</div>
