@@ -1144,14 +1144,14 @@ body.light-theme .toggle .opt.active {
     color: #333;
     margin: 0;
     padding: 0;
-    height: 100%;
-    overflow: hidden;
+    min-height: 100vh;  /* ← CHANGED */
+    overflow: visible;  /* ← CHANGED */
 }
 
 #team-viewer-app .container {
     max-width: none;
     margin: 0;
-    height: 100%;
+    min-height: 100vh;  /* ← CHANGED */
     display: flex;
     flex-direction: column;
 }
@@ -1568,8 +1568,9 @@ body.light-theme .toggle .opt.active {
 #team-viewer-app .profile-view {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    overflow: hidden;
+    min-height: 100vh;  /* ← CHANGED */
+    overflow: visible;  /* ← CHANGED */
+    padding-bottom: 40px;  /* ← ADD SOME BREATHING ROOM */
 }
 
 #team-viewer-app .navigation {
