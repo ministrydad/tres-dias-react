@@ -1494,12 +1494,12 @@ body.light-theme .toggle .opt.active {
 #team-viewer-app .names-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    grid-auto-flow: column;
+    grid-auto-flow: column; /* ← Fill column-by-column */
     gap: 6px;
     padding: 6px;
     overflow-y: auto;
     min-height: 0;
-    align-content: start; /* CRITICAL FIX: Prevents vertical stretching of grid items */
+    align-content: start; /* ← Prevent stretching */
 }
 
 #team-viewer-app .name-box {
