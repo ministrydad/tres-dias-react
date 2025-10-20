@@ -823,12 +823,14 @@ function ProfileView({
         alignItems: 'flex-start'
       }}>
         <div 
-          style={{ 
-            width: roleSelectorOpen ? '70%' : '100%',
-            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            minWidth: 0
-          }}
-        >
+  style={{ 
+    width: roleSelectorOpen ? '70%' : '100%',
+    transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+    minWidth: 0,
+    overflowY: 'auto',
+    maxHeight: 'calc(100vh - 200px)'
+  }}
+>
           <div id="profileContainer" className="profile-container">
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
               <div className="card pad profile-main-info">
