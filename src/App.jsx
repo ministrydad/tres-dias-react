@@ -164,7 +164,7 @@ function AppContent() {
         alignItems: 'center', 
         height: '100vh',
         fontSize: '24px',
-        fontFamily: 'Source Sans Pro', sans-serif'
+        fontFamily: 'Source Sans Pro, sans-serif'
       }}>
         <div className="progress-bar-container">
           <div className="progress-bar-label">Loading...</div>
