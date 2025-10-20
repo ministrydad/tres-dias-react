@@ -5,6 +5,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 
+// TEMPORARY: For testing in console
+if (typeof window !== 'undefined') {
+  window.testSupabase = supabase;
+}
+
 export default function NewApplication({ editingAppId, onNavigate }) {
   const { orgId } = useAuth();
   
