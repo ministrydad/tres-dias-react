@@ -1,4 +1,5 @@
 // src/App.jsx
+// FIXED: Moved PescadoresProvider to top level to prevent loading issues
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PescadoresProvider } from './context/PescadoresContext';
@@ -128,28 +129,26 @@ function Dashboard() {
   };
 
   return (
-    <PescadoresProvider> 
-      <div className="app-container" style={{ display: 'flex' }}>
-        <Sidebar 
-          currentView={currentView} 
-          onNavigate={handleNavigate}
-          permissions={permissions}
-        />
-        
-        <main className="main-content">
-          <MainStatusBar />
-          <ConfirmModal />
-         
-          <div className="main-header">
-            <h1 id="app-title">{getViewTitle()}</h1>
-          </div>
+    <div className="app-container" style={{ display: 'flex' }}>
+      <Sidebar 
+        currentView={currentView} 
+        onNavigate={handleNavigate}
+        permissions={permissions}
+      />
+      
+      <main className="main-content">
+        <MainStatusBar />
+        <ConfirmModal />
+       
+        <div className="main-header">
+          <h1 id="app-title">{getViewTitle()}</h1>
+        </div>
 
-          <div className="app-panel-container">
-            {renderView()}
-          </div>
-        </main>
-      </div>
-    </PescadoresProvider>
+        <div className="app-panel-container">
+          {renderView()}
+        </div>
+      </main>
+    </div>
   );
 }
 
@@ -182,7 +181,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <PescadoresProvider>
+        <AppContent />
+      </PescadoresProvider>
     </AuthProvider>
   );
 }
