@@ -1,4 +1,3 @@
-// src/App.jsx
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PescadoresProvider } from './context/PescadoresContext';
@@ -26,7 +25,6 @@ import './styles/globals.css';
 function Dashboard() {
   const { user, orgId, permissions } = useAuth();
   const [currentView, setCurrentView] = useState('directory');
-  const [editingAppId, setEditingAppId] = useState(null); // NEW: Track editing application ID
 
   // Handle MCI Check-In initialization (matching original script.js behavior)
   useEffect(() => {
@@ -48,23 +46,6 @@ function Dashboard() {
     }
   }, [currentView]);
 
-  // NEW: Clear editingAppId when switching away from new-application view
-  useEffect(() => {
-    if (currentView !== 'cra-new-application') {
-      setEditingAppId(null);
-    }
-  }, [currentView]);
-
-  // NEW: Enhanced navigation handler that accepts options
-  const handleNavigate = (view, options = {}) => {
-    setCurrentView(view);
-    
-    // Handle edit navigation with application ID
-    if (options.editingAppId) {
-      setEditingAppId(options.editingAppId);
-    }
-  };
-
   const getViewTitle = () => {
     switch(currentView) {
       case 'directory': return 'Directory';
@@ -76,7 +57,7 @@ function Dashboard() {
       case 'cra-followup': return 'Candidate Registration - Follow-up Calls';
       case 'cra-checkin': return 'Candidate Registration - Live Check-in';
       case 'cra-reports': return 'Candidate Registration - Reports';
-      case 'cra-new-application': return editingAppId ? 'Candidate Registration - Edit Application' : 'Candidate Registration - New Application'; // NEW: Dynamic title
+      case 'cra-new-application': return 'Candidate Registration - New Application';
       case 'cra-email': return 'Candidate Registration - Email Reports';
       case 'account': return 'Account Settings';
       case 'secretariat': return 'Secretariat';
@@ -87,14 +68,14 @@ function Dashboard() {
   };
 
   const renderView = () => {
-    console.log('🔍 Current view:', currentView, 'Editing ID:', editingAppId); // NEW: Enhanced logging
+    console.log('🔍 Current view:', currentView);
     switch(currentView) {
       case 'directory':
         return <Directory />;
       case 'team-list':
         return <TeamList />;
       case 'cra-view-roster':
-        return <ViewRoster onNavigate={handleNavigate} />; // NEW: Pass navigation handler
+        return <ViewRoster />;
       case 'cra-followup':
         return <FollowUpCalls />;
       case 'cra-checkin':
@@ -102,7 +83,7 @@ function Dashboard() {
       case 'cra-reports':
         return <Reports />;
       case 'cra-new-application':
-        return <NewApplication editingAppId={editingAppId} onNavigate={handleNavigate} />; // NEW: Pass editing ID and navigation
+        return <NewApplication />;
       case 'cra-email':
         return <EmailReports />;
       case 'account':
@@ -136,7 +117,7 @@ function Dashboard() {
       <div className="app-container" style={{ display: 'flex' }}>
         <Sidebar 
           currentView={currentView} 
-          onNavigate={handleNavigate} // CHANGED: Now uses handleNavigate instead of setCurrentView
+          onNavigate={setCurrentView}
           permissions={permissions}
         />
         
