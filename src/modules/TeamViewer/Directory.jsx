@@ -782,7 +782,12 @@ function ProfileView({
   const legalName = profile.First !== profile.Preferred && profile.Preferred ? profile.First : null;
 
   return (
-    <div id="profileView" className="profile-view" style={{ display: 'block' }}>
+    <div id="profileView" className="profile-view" style={{ 
+    display: 'block',
+    overflowY: 'auto',
+    maxHeight: 'calc(100vh - 100px)',
+    paddingRight: '8px'
+  }}>
       <div className="navigation" style={{ marginTop: 0, marginBottom: '16px' }}>
         <button className="back-button" onClick={onBack}>← Back to Directory</button>
         <div className="nav-controls">
@@ -823,14 +828,12 @@ function ProfileView({
         alignItems: 'flex-start'
       }}>
         <div 
-  style={{ 
-    width: roleSelectorOpen ? '70%' : '100%',
-    transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-    minWidth: 0,
-    overflowY: 'auto',
-    maxHeight: 'calc(100vh - 200px)'
-  }}
->
+          style={{ 
+            width: roleSelectorOpen ? '70%' : '100%',
+            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            minWidth: 0
+          }}
+        >
           <div id="profileContainer" className="profile-container">
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
               <div className="card pad profile-main-info">
