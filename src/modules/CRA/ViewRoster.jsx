@@ -15,25 +15,31 @@ export default function ViewRoster({ onNavigate }) {
     }
   }, [orgId]);
 
-  const loadApplications = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('cra_applications')
-        .select('*')
-        .eq('org_id', orgId)
-        .order('created_at', { ascending: false });
+ const loadApplications = async () => {
+  console.log('🔍 ViewRoster: loadApplications called');
+  console.log('📍 orgId:', orgId);
+  
+  setLoading(true);
+  try {
+    const { data, error } = await supabase
+      .from('cra_applications')
+      .select('*')
+      .eq('org_id', orgId)
+      .order('created_at', { ascending: false });
 
-      if (error) throw error;
+    console.log('📊 Query result - Data count:', data?.length, 'Error:', error);
 
-      setApplications(data || []);
-    } catch (error) {
-      console.error('Error loading CRA applications:', error);
-      setApplications([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (error) throw error;
+
+    setApplications(data || []);
+  } catch (error) {
+    console.error('❌ Error loading CRA applications:', error);
+    console.error('❌ Error details:', error.message, error.code);
+    setApplications([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleFilterChange = (filter) => {
     setCurrentFilter(filter);
