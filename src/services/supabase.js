@@ -26,67 +26,9 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
-// Connection keepalive - ping every 2 minutes
-let keepaliveInterval = null;
-
-export function startKeepalive() {
-  if (keepaliveInterval) return;
-  
-  console.log('🏓 Starting connection keepalive');
-  
-  // DON'T ping immediately - wait 2 minutes before first ping
-  keepaliveInterval = setInterval(() => {
-    pingDatabase();
-  }, 120000); // 2 minutes
-}
-
-export function stopKeepalive() {
-  if (keepaliveInterval) {
-    clearInterval(keepaliveInterval);
-    keepaliveInterval = null;
-    console.log('🛑 Stopped keepalive');
-  }
-}
-
-async function pingDatabase() {
-  try {
-    console.log('🏓 Ping...');
-    
-    // Add timeout to ping itself
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    const { error } = await supabase
-      .from('cra_applications')
-      .select('id')
-      .limit(1)
-      .abortSignal(controller.signal);
-    
-    clearTimeout(timeoutId);
-    
-    if (error) {
-      console.warn('⚠️ Ping failed:', error.message);
-    } else {
-      console.log('✅ Pong!');
-    }
-  } catch (err) {
-    console.error('❌ Ping error:', err.message);
-  }
-}
-
-// ✅ FIXED: Removed auto-start from auth events
-// Keepalive is now manually started in App.jsx Dashboard after mount
+// Simple auth event logging
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('🔐 Auth event:', event);
-  
-  // ✅ REMOVED: Auto-start moved to Dashboard component
-  // if (event === 'SIGNED_IN') {
-  //   startKeepalive();
-  // }
-  
-  if (event === 'SIGNED_OUT') {
-    stopKeepalive();
-  }
   if (event === 'TOKEN_REFRESHED') {
     console.log('🔄 Token refreshed');
   }

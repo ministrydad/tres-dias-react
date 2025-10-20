@@ -28,28 +28,6 @@ function Dashboard() {
   const [currentView, setCurrentView] = useState('directory');
   const [editingAppId, setEditingAppId] = useState(null);
 
-  // ✅ NEW: Start keepalive AFTER Dashboard mounts (prevents zombie freeze)
-  useEffect(() => {
-    let cleanupFn;
-    
-    // Dynamically import to avoid circular dependency issues
-    import('./services/supabase').then(({ startKeepalive, stopKeepalive }) => {
-      console.log('📍 Dashboard mounted - starting keepalive');
-      startKeepalive();
-      
-      // Store cleanup function
-      cleanupFn = stopKeepalive;
-    });
-
-    // Cleanup on unmount
-    return () => {
-      if (cleanupFn) {
-        console.log('📍 Dashboard unmounting - stopping keepalive');
-        cleanupFn();
-      }
-    };
-  }, []); // Empty dependency array - run once on mount
-
   // Handle MCI Check-In initialization (matching original script.js behavior)
   useEffect(() => {
     if (currentView === 'mci-checkin') {
