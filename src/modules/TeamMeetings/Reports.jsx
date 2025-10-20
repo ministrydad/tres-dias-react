@@ -1,3 +1,4 @@
+// src/modules/TeamMeetings/Reports.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
@@ -12,13 +13,50 @@ export default function Reports() {
   const [noAttendanceMembers, setNoAttendanceMembers] = useState([]);
   const [showNoAttendanceModal, setShowNoAttendanceModal] = useState(false);
 
+  // Fee settings loaded from database
+  const [weekendFee, setWeekendFee] = useState(265); // Default fallback
+  const [teamFee, setTeamFee] = useState(30); // Default fallback
+  const [feesLoaded, setFeesLoaded] = useState(false);
+
   // Constants
-  const WEEKEND_FEE = 265;
-  const TEAM_FEE = 30;
   const MEETING_COUNT = 6;
   const feeExemptRoles = ['Rector', 'Head Spiritual Director', 'Spiritual Director'];
 
   const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
+
+  // Load fee settings from database
+  useEffect(() => {
+    async function loadFeeSettings() {
+      if (!orgId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('weekend_fee, team_fee')
+          .eq('org_id', orgId)
+          .single();
+
+        if (error) {
+          console.warn('Error loading fee settings, using defaults:', error);
+          setFeesLoaded(true);
+          return;
+        }
+
+        if (data) {
+          setWeekendFee(parseFloat(data.weekend_fee) || 265);
+          setTeamFee(parseFloat(data.team_fee) || 30);
+          console.log('Loaded fee settings:', data);
+        }
+        
+        setFeesLoaded(true);
+      } catch (error) {
+        console.error('Failed to load fee settings:', error);
+        setFeesLoaded(true);
+      }
+    }
+
+    loadFeeSettings();
+  }, [orgId]);
 
   const handleGenderToggle = async (gender) => {
     setCurrentGender(gender);
@@ -118,18 +156,18 @@ export default function Reports() {
         const row = (saved || []).find(x => String(x.member_id) === String(id));
         const savedData = row?.checkin_details || {};
         
-        let weekendFee = savedData.weekendFee || [];
-        if (!Array.isArray(weekendFee)) {
-          if (weekendFee.amount) {
-            weekendFee = [{ method: 'cash', amount: weekendFee.amount }];
+        let weekendFeeData = savedData.weekendFee || [];
+        if (!Array.isArray(weekendFeeData)) {
+          if (weekendFeeData.amount) {
+            weekendFeeData = [{ method: 'cash', amount: weekendFeeData.amount }];
           } else {
-            weekendFee = [];
+            weekendFeeData = [];
           }
         }
         
         checkins[id] = {
           attendance: savedData.attendance || {},
-          weekendFee: weekendFee,
+          weekendFee: weekendFeeData,
           teamFee: savedData.teamFee || {},
           palancaLetter: savedData.palancaLetter || false
         };
@@ -174,8 +212,8 @@ export default function Reports() {
 
       const isFeeWaived = feeExemptRoles.includes(m.role);
 
-      const wkExp = isFeeWaived ? 0 : WEEKEND_FEE;
-      const tmExp = TEAM_FEE;
+      const wkExp = isFeeWaived ? 0 : weekendFee;
+      const tmExp = teamFee;
 
       const wkColl = isFeeWaived ? 0 : (chk.weekendFee || []).reduce((sum, p) => sum + (p.amount || 0), 0);
       const tmColl = chk.teamFee?.paid ? tmExp : 0;
@@ -248,10 +286,10 @@ export default function Reports() {
   };
 
   useEffect(() => {
-    if (orgId) {
+    if (orgId && feesLoaded) {
       handleGenderToggle('men');
     }
-  }, [orgId]);
+  }, [orgId, feesLoaded]);
 
   const renderMeetingDots = (chk) => {
     const dots = [];
@@ -277,8 +315,8 @@ export default function Reports() {
 
   const renderOverallStatus = (chk, member) => {
     const isFeeWaived = feeExemptRoles.includes(member.role);
-    const wkPaid = isFeeWaived ? WEEKEND_FEE : (chk.weekendFee || []).reduce((sum, p) => sum + (p.amount || 0), 0);
-    const wkDue = isFeeWaived ? 0 : Math.max(0, WEEKEND_FEE - wkPaid);
+    const wkPaid = isFeeWaived ? weekendFee : (chk.weekendFee || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+    const wkDue = isFeeWaived ? 0 : Math.max(0, weekendFee - wkPaid);
     
     const meetingsAttended = Object.values(chk.attendance || {}).filter(Boolean).length;
     const overall = (meetingsAttended >= 3 && wkDue < 0.01 && chk.teamFee?.paid && chk.palancaLetter) 
@@ -575,8 +613,8 @@ export default function Reports() {
                         const chk = checkinData[id];
                         
                         const isFeeWaived = feeExemptRoles.includes(m.role);
-                        const wkPaid = isFeeWaived ? WEEKEND_FEE : (chk.weekendFee || []).reduce((sum, p) => sum + (p.amount || 0), 0);
-                        const wkDue = isFeeWaived ? 0 : Math.max(0, WEEKEND_FEE - wkPaid);
+                        const wkPaid = isFeeWaived ? weekendFee : (chk.weekendFee || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+                        const wkDue = isFeeWaived ? 0 : Math.max(0, weekendFee - wkPaid);
                         let weekendStatus = 'DUE';
                         let weekendDetail = '';
                         
@@ -592,11 +630,11 @@ export default function Reports() {
                           const methods = [...new Set((chk.weekendFee || []).map(p => p.method).filter(Boolean))];
                           weekendDetail = `${methods.join(' + ')} · ${fmt(wkDue)} due`;
                         } else {
-                          weekendDetail = `${fmt(WEEKEND_FEE)} due`;
+                          weekendDetail = `${fmt(weekendFee)} due`;
                         }
                         
-                        const tmPaid = chk.teamFee?.paid ? TEAM_FEE : 0;
-                        const tmDue = TEAM_FEE - tmPaid;
+                        const tmPaid = chk.teamFee?.paid ? teamFee : 0;
+                        const tmDue = teamFee - tmPaid;
                         let teamStatus = 'DUE';
                         let teamDetail = '';
                         
@@ -604,7 +642,7 @@ export default function Reports() {
                           teamStatus = 'PAID';
                           teamDetail = 'cash';
                         } else {
-                          teamDetail = `${fmt(TEAM_FEE)} due`;
+                          teamDetail = `${fmt(teamFee)} due`;
                         }
                         
                         return (

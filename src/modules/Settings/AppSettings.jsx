@@ -78,7 +78,7 @@ export default function AppSettings() {
       console.log('Loading App Settings data for org:', orgId);
       
       const [settingsResult, budgetResult, rosterResult, menResult, womenResult, usersResult, orgResult] = await Promise.all([
-        supabase.from('app_settings').select('*').eq('id', 1).single(),
+        supabase.from('app_settings').select('*').eq('org_id', orgId).single(),
         supabase.from('app_budgets').select('*').eq('id', 1).single(),
         supabase.from('secretariat_roster').select('*').eq('org_id', orgId),
         supabase.from('men_raw').select('PescadoreKey, First, Last, Preferred, Email').eq('org_id', orgId),
@@ -174,7 +174,7 @@ export default function AppSettings() {
   async function saveGeneralSettings() {
     try {
       const payload = {
-        id: 1,
+        org_id: orgId,
         community_name: communityName,
         weekend_fee: parseFloat(weekendFee) || 0,
         team_fee: parseFloat(teamFee) || 0,
@@ -183,7 +183,7 @@ export default function AppSettings() {
 
       const { error } = await supabase
         .from('app_settings')
-        .upsert(payload);
+        .upsert(payload, { onConflict: 'org_id' });
 
       if (error) throw error;
       
