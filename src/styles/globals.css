@@ -74,7 +74,7 @@ body {
     background: var(--bg);
     color: var(--ink);
     font-family: 'Source Sans Pro', sans-serif;
-    overflow: hidden;
+    overflow: visible;
 }
 
 
@@ -329,7 +329,7 @@ body.light-theme .submenu-item a.active {
     position: relative;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     border-left: 1px solid var(--border);
 }
 
