@@ -14,10 +14,37 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    autoRefreshToken: false,
-    persistSession: false,
+    autoRefreshToken: true,      // ✅ ENABLE auto-refresh
+    persistSession: true,         // ✅ ENABLE session persistence
     detectSessionInUrl: true,
   },
+  global: {
+    headers: {
+      'x-client-info': 'tres-dias-team-tools',
+    },
+  },
+  db: {
+    schema: 'public',
+  },
+  // Add fetch options for better timeout handling
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+});
+
+// Listen for auth state changes and log them
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'TOKEN_REFRESHED') {
+    console.log('🔄 Auth token refreshed successfully');
+  }
+  if (event === 'SIGNED_OUT') {
+    console.log('👋 User signed out');
+  }
+  if (event === 'SIGNED_IN') {
+    console.log('✅ User signed in');
+  }
 });
 
 export async function logErrorToSupabase(error, module, orgId = null) {
@@ -31,7 +58,6 @@ export async function logErrorToSupabase(error, module, orgId = null) {
     const logData = {
       org_id: orgId,
       user_id: user?.id || null,
-      
       user_email: user?.email || 'unknown',
       module: module,
       error_message: error.message,
