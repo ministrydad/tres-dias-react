@@ -26,13 +26,8 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
-// Simple auth event logging
-supabase.auth.onAuthStateChange((event, session) => {
-  console.log('🔐 Auth event:', event);
-  if (event === 'TOKEN_REFRESHED') {
-    console.log('🔄 Token refreshed');
-  }
-});
+// ❌ REMOVED: Auth event listener - this is handled in AuthContext.jsx
+// Only AuthContext should listen to auth events to avoid duplicates
 
 export async function logErrorToSupabase(error, module, orgId = null) {
   if (!supabase || !orgId) {
