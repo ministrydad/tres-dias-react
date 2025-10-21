@@ -362,7 +362,7 @@ body.light-theme .main-header h1 {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 0;
+    padding: 24;
 }
 
 .app-panel {
