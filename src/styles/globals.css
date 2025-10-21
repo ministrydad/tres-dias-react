@@ -1169,10 +1169,10 @@ body.light-theme .toggle .opt.active {
 
 /* Directory View - Fixed height container, no page scroll */
 #team-viewer-app .directory-container {
-    height: calc(100vh - 48px); /* Full height minus padding */
     display: flex;
     flex-direction: column;
     gap: 16px;
+    height: calc(100vh - 48px); /* ← Fit exactly in viewport minus padding */
     overflow: hidden;
 }
 
