@@ -40,15 +40,15 @@ export function AuthProvider({ children }) {
             console.log('⏭️ Already initialized - skipping duplicate init');
           }
         } 
-       else if (event === 'SIGNED_OUT') {
-  console.log('👋 User signed out');
-  setUser(null);
-  setOrgId(null);
-  setPermissions(null);
-  setIsSuperAdmin(false);
-  setLoading(false); // ✅ CRITICAL: Stop loading spinner
-  isInitializedRef.current = false; // ✅ Reset flag on logout
-}
+        else if (event === 'SIGNED_OUT') {
+          console.log('👋 User signed out');
+          setUser(null);
+          setOrgId(null);
+          setPermissions(null);
+          setIsSuperAdmin(false);
+          setLoading(false); // ✅ CRITICAL: Stop loading spinner
+          isInitializedRef.current = false; // ✅ Reset flag on logout
+        }
         else if (event === 'TOKEN_REFRESHED') {
           // ✅ CRITICAL: Just log it, DON'T re-query database
           console.log('🔄 Token refreshed - keeping existing user/org/permissions');
@@ -90,10 +90,10 @@ export function AuthProvider({ children }) {
       if (error) {
         console.error('❌ Failed to fetch membership:', error);
         
-        // ✅ CRITICAL: If query fails, sign out user to force re-login
-        console.log('🔄 Signing out user due to initialization failure...');
-        await supabase.auth.signOut();
+        // ✅ CRITICAL: Set loading false FIRST, then sign out
+        console.log('🔄 Stopping loading and signing out user...');
         setLoading(false);
+        await supabase.auth.signOut();
         return;
       }
 
@@ -129,12 +129,12 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('❌ Failed to initialize user:', error);
       
-      // ✅ CRITICAL: If initialization fails, sign out to force re-login
-      console.log('🔄 Signing out user due to initialization error...');
-      await supabase.auth.signOut();
-      
-      setIsSuperAdmin(false);
+      // ✅ CRITICAL: Set loading false FIRST, then sign out
+      console.log('🔄 Stopping loading and signing out user...');
       setLoading(false);
+      setIsSuperAdmin(false);
+      
+      await supabase.auth.signOut();
     }
   };
 
