@@ -1140,7 +1140,7 @@ body.light-theme .toggle .opt.active {
    =============================================== */
 
 #team-viewer-app {
-     background-color: #f8f9fa;
+    background-color: #f8f9fa;
     color: #333;
     margin: 0;
     padding: 0;
@@ -1149,8 +1149,7 @@ body.light-theme .toggle .opt.active {
 #team-viewer-app .container {
     max-width: none;
     margin: 0;
-    padding: 24px;
-}
+    }
 
 #team-viewer-app button {
     font-family: 'Source Sans Pro', sans-serif;
@@ -1161,6 +1160,15 @@ body.light-theme .toggle .opt.active {
     max-width: none;
     margin: 0;
     padding: 24px;
+}
+
+#team-viewer-app .directory-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    overflow: hidden;
 }
 
 /* Top card stays at natural height */
