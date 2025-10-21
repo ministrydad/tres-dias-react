@@ -61,10 +61,21 @@ export function AuthProvider({ children }) {
       console.log('🔍 Step 2: authUser object:', authUser);
       
       console.log('🔍 Step 3: About to query memberships table...');
-      const startTime = Date.now();
-      
-      const { data, error } = await supabase
-        .from('memberships')
+
+// Force session refresh before querying
+console.log('🔍 Step 3.5: Refreshing session token...');
+const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+
+if (refreshError) {
+  console.log('❌ Step 3.6: Failed to refresh session:', refreshError);
+} else {
+  console.log('✅ Step 3.7: Session refreshed successfully');
+}
+
+const startTime = Date.now();
+
+const { data, error } = await supabase
+  .from('memberships')
         .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
         .eq('user_id', authUser.id)
         .single();
