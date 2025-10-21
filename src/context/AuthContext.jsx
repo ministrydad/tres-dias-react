@@ -15,12 +15,11 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        initializeUser(session.user);
-      } else {
-        setLoading(false);
-      }
-    });
+  if (session?.user) {
+    initializeUser(session.user);
+  }
+  setLoading(false);  // ← ALWAYS set loading false after checking session
+});
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
