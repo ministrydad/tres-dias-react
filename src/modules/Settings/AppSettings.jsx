@@ -309,24 +309,33 @@ export default function AppSettings() {
     }));
   }
 
-  async function handleInviteUser() {
-    if (!inviteFormData.email || !inviteFormData.firstName || !inviteFormData.lastName) {
-      window.showMainStatus('Please fill in all required fields.', true);
-      return;
-    }
+ async function handleInviteUser() {
+  if (!inviteFormData.email || !inviteFormData.firstName || !inviteFormData.lastName) {
+    window.showMainStatus('Please fill in all required fields.', true);
+    return;
+  }
 
-    try {
-      const { data, error } = await supabase.functions.invoke('invite-user', {
-        body: {
-          email: inviteFormData.email,
-          full_name: `${inviteFormData.firstName} ${inviteFormData.lastName}`,
-          role: inviteFormData.role,
-          permissions: inviteFormData.permissions,
-          org_id: orgId
-        }
-      });
+  try {
+    // ✅ Get the current session token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw new Error("Could not get user session.");
+    if (!session) throw new Error("User not authenticated.");
 
-      if (error) throw error;
+    // ✅ Call Edge Function with Authorization header
+    const { data, error } = await supabase.functions.invoke('invite-user', {
+      body: {
+        email: inviteFormData.email,
+        full_name: `${inviteFormData.firstName} ${inviteFormData.lastName}`,
+        role: inviteFormData.role,
+        permissions: inviteFormData.permissions,
+        org_id: orgId
+      },
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    });
+
+    if (error) throw error;
 
       window.showMainStatus('Invitation sent successfully! User will receive an email to set up their account.');
       closeInviteForm();
