@@ -360,7 +360,7 @@ body.light-theme .main-header h1 {
 .app-panel-container {
     flex: 1;
     overflow: hidden;
-    padding: 24px;
+    padding: 0;
 }
 
 .app-panel {
