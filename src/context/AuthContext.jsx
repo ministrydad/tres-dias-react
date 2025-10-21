@@ -72,15 +72,28 @@ export function AuthProvider({ children }) {
     try {
       console.log('🔍 Initializing user:', authUser.email);
       
-      const { data, error } = await supabase
+      // ✅ Add timeout to prevent infinite hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Database query timeout')), 10000)
+      );
+      
+      const queryPromise = supabase
         .from('memberships')
         .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
         .eq('user_id', authUser.id)
         .single();
+      
+      // Race between query and timeout
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
       if (error) {
         console.error('❌ Failed to fetch membership:', error);
-        throw error;
+        
+        // ✅ CRITICAL: If query fails, sign out user to force re-login
+        console.log('🔄 Signing out user due to initialization failure...');
+        await supabase.auth.signOut();
+        setLoading(false);
+        return;
       }
 
       console.log('✅ User initialized - Org ID:', data.org_id);
@@ -108,11 +121,17 @@ export function AuthProvider({ children }) {
       // ✅ Mark as initialized
       isInitializedRef.current = true;
       
+      console.log('🎉 LOADING SET TO FALSE - User fully initialized');
       // ✅ Stop loading spinner after everything is set
       setLoading(false);
 
     } catch (error) {
       console.error('❌ Failed to initialize user:', error);
+      
+      // ✅ CRITICAL: If initialization fails, sign out to force re-login
+      console.log('🔄 Signing out user due to initialization error...');
+      await supabase.auth.signOut();
+      
       setIsSuperAdmin(false);
       setLoading(false);
     }
