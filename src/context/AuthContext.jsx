@@ -11,11 +11,9 @@ export function AuthProvider({ children }) {
   const [permissions, setPermissions] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   
-  // ✅ Track if we've already initialized to prevent duplicate queries
   const isInitializedRef = useRef(false);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         initializeUser(session.user);
@@ -24,16 +22,12 @@ export function AuthProvider({ children }) {
       }
     });
 
-    // Listen for auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔐 Auth event:', event);
         
         if (event === 'SIGNED_IN') {
           console.log('✅ User signed in');
-          
-          // ✅ FIXED: Only initialize if not already initialized
-          // Wait for initializeUser to complete before setting user with profile data
           if (session?.user && !isInitializedRef.current) {
             await initializeUser(session.user);
           } else if (isInitializedRef.current) {
@@ -46,22 +40,11 @@ export function AuthProvider({ children }) {
           setOrgId(null);
           setPermissions(null);
           setIsSuperAdmin(false);
-          setLoading(false); // ✅ CRITICAL: Stop loading spinner
-          isInitializedRef.current = false; // ✅ Reset flag on logout
+          setLoading(false);
+          isInitializedRef.current = false;
         }
         else if (event === 'TOKEN_REFRESHED') {
-          // ✅ CRITICAL: Just log it, DON'T re-query database
           console.log('🔄 Token refreshed - keeping existing user/org/permissions');
-          // Keep existing user object with profile data intact
-          // No need to call initializeUser() - we already have everything!
-        }
-        else if (event === 'USER_UPDATED') {
-          console.log('📝 User updated');
-          // Keep existing user object with profile data intact
-        }
-        else if (event === 'INITIAL_SESSION') {
-          console.log('🎬 Initial session detected');
-          // This fires on page load - handled by getSession above
         }
       }
     );
@@ -69,32 +52,23 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
- const initializeUser = async (authUser) => {
-  try {
-    console.log('🔍 Initializing user:', authUser.email);
-    
-    // Just run the query without timeout
-    const { data, error } = await supabase
-      .from('memberships')
-      .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
-      .eq('user_id', authUser.id)
-      .single();
-      if (error) {
-        console.error('❌ Failed to fetch membership:', error);
-        
-        // ✅ CRITICAL: Set loading false FIRST, then sign out
-        console.log('🔄 Stopping loading and signing out user...');
-        setLoading(false);
-        await supabase.auth.signOut();
-        return;
-      }
+  const initializeUser = async (authUser) => {
+    try {
+      console.log('🔍 Initializing user:', authUser.email);
+      
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
+        .eq('user_id', authUser.id)
+        .single();
+
+      if (error) throw error;
 
       console.log('✅ User initialized - Org ID:', data.org_id);
       
       setOrgId(data.org_id);
       setPermissions(data.permissions);
 
-      // Check if user is Super Admin
       const profile = data.profiles;
       if (profile?.full_name === 'Super Admin') {
         setIsSuperAdmin(true);
@@ -103,7 +77,6 @@ export function AuthProvider({ children }) {
         setIsSuperAdmin(false);
       }
 
-      // ✅ CRITICAL: Set user with profile data for sidebar display
       setUser({
         id: authUser.id,
         email: authUser.email,
@@ -111,22 +84,13 @@ export function AuthProvider({ children }) {
         display_name: profile?.display_name,
       });
 
-      // ✅ Mark as initialized
       isInitializedRef.current = true;
-      
-      console.log('🎉 LOADING SET TO FALSE - User fully initialized');
-      // ✅ Stop loading spinner after everything is set
       setLoading(false);
 
     } catch (error) {
       console.error('❌ Failed to initialize user:', error);
-      
-      // ✅ CRITICAL: Set loading false FIRST, then sign out
-      console.log('🔄 Stopping loading and signing out user...');
-      setLoading(false);
       setIsSuperAdmin(false);
-      
-      await supabase.auth.signOut();
+      setLoading(false);
     }
   };
 
@@ -170,7 +134,7 @@ export function AuthProvider({ children }) {
     setOrgId(null);
     setPermissions(null);
     setIsSuperAdmin(false);
-    isInitializedRef.current = false; // ✅ Reset on manual logout too
+    isInitializedRef.current = false;
   };
 
   const value = {
