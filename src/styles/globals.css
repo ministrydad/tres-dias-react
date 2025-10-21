@@ -1563,6 +1563,8 @@ body.light-theme .toggle .opt.active {
 #team-viewer-app .profile-view {
     display: block;
     padding-bottom: 40px;
+    overflow: visible !important;  /* ← ADD THIS */
+    min-height: auto !important;  /* ← ADD THIS */
 }
 
 #team-viewer-app .navigation {
