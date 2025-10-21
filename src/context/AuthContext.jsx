@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 
 const AuthContext = createContext();
@@ -10,40 +10,27 @@ export function AuthProvider({ children }) {
   const [orgId, setOrgId] = useState(null);
   const [permissions, setPermissions] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  
-  const isInitializedRef = useRef(false);
 
   useEffect(() => {
+    // Check for existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
-  if (session?.user) {
-    initializeUser(session.user);
-  }
-  setLoading(false);  // ← ALWAYS set loading false after checking session
-});
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        initializeUser(session.user);
+      }
+      setLoading(false);
+    });
 
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔐 Auth event:', event);
-        
-        if (event === 'SIGNED_IN') {
-          console.log('✅ User signed in');
-          if (session?.user && !isInitializedRef.current) {
-            await initializeUser(session.user);
-          } else if (isInitializedRef.current) {
-            console.log('⏭️ Already initialized - skipping duplicate init');
-          }
-        } 
-        else if (event === 'SIGNED_OUT') {
-          console.log('👋 User signed out');
-          setUser(null);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await initializeUser(session.user);
+        } else {
           setOrgId(null);
           setPermissions(null);
           setIsSuperAdmin(false);
-          setLoading(false);
-          isInitializedRef.current = false;
-        }
-        else if (event === 'TOKEN_REFRESHED') {
-          console.log('🔄 Token refreshed - keeping existing user/org/permissions');
         }
       }
     );
@@ -52,29 +39,21 @@ export function AuthProvider({ children }) {
   }, []);
 
   const initializeUser = async (authUser) => {
-  try {
-    console.log('🔍 Initializing user:', authUser.email);
-    
-    // Force a fresh session token before querying
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    const { data, error } = await supabase
-      .from('memberships')
-      .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
-      .eq('user_id', authUser.id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
+        .eq('user_id', authUser.id)
+        .single();
 
-    if (error) throw error;
+      if (error) throw error;
 
-      console.log('✅ User initialized - Org ID:', data.org_id);
-      
       setOrgId(data.org_id);
       setPermissions(data.permissions);
 
       const profile = data.profiles;
       if (profile?.full_name === 'Super Admin') {
         setIsSuperAdmin(true);
-        console.log('👑 Super Admin detected');
       } else {
         setIsSuperAdmin(false);
       }
@@ -86,13 +65,9 @@ export function AuthProvider({ children }) {
         display_name: profile?.display_name,
       });
 
-      isInitializedRef.current = true;
-      setLoading(false);
-
     } catch (error) {
-      console.error('❌ Failed to initialize user:', error);
+      console.error('Failed to initialize user:', error);
       setIsSuperAdmin(false);
-      setLoading(false);
     }
   };
 
@@ -136,7 +111,6 @@ export function AuthProvider({ children }) {
     setOrgId(null);
     setPermissions(null);
     setIsSuperAdmin(false);
-    isInitializedRef.current = false;
   };
 
   const value = {
