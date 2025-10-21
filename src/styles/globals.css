@@ -68,13 +68,13 @@ body.light-theme {
 html,
 body {
     height: 100%;
+    overflow: hidden;
 }
 
 body {
     background: var(--bg);
     color: var(--ink);
     font-family: 'Source Sans Pro', sans-serif;
-    overflow: visible;
 }
 
 
