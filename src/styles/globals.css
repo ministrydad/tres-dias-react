@@ -71,12 +71,6 @@ body {
     overflow: visible; /* Default: allow scrolling during loading */
 }
 
-/* Lock scrolling after app loads */
-body.app-loaded,
-body.app-loaded html {
-    overflow: hidden;
-}
-
 body {
     background: var(--bg);
     color: var(--ink);
