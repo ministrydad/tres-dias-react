@@ -330,7 +330,7 @@ body.light-theme .submenu-item a.active {
     position: relative;
     display: flex;
     flex-direction: column;
-    overflow: visible;
+    overflow: hidden;
     border-left: 1px solid var(--border);
 }
 
