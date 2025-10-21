@@ -1007,7 +1007,7 @@ body.light-theme .toggle .opt.active {
 .modal .box .body {
     padding: 22px;
     max-height: 70vh;
-    overflow: auto;
+    overflow: hidden;
 }
 
 .modal .box .foot {
@@ -1570,9 +1570,11 @@ body.light-theme .toggle .opt.active {
 
 /* Profile View - Natural height, page scrolls */
 #team-viewer-app .profile-view {
-    display: block;
+     display: block;
     padding-bottom: 40px;
     min-height: calc(100vh - 48px);
+    overflow-y: auto; /* ← Add this */
+    max-height: calc(100vh - 48px); /* ← Add this */
 }
 
 #team-viewer-app .navigation {
