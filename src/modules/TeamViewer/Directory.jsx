@@ -504,20 +504,40 @@ export default function Directory() {
   }
 
   if (loading) {
-    return (
-      <section id="team-viewer-app" className="app-panel" style={{ display: 'block' }}>
-        <div className="container">
-          <SkeletonLoader />
-        </div>
-      </section>
-    );
-  }
+  return (
+    <section id="team-viewer-app" className="app-panel" style={{ 
+      display: 'block',
+      height: '100vh',
+      overflow: 'hidden'
+    }}>
+      <div className="container" style={{
+        height: '100%',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '24px'
+      }}>
+        <SkeletonLoader />
+      </div>
+    </section>
+  );
+}
 
   return (
-    <section id="team-viewer-app" className="app-panel" style={{ display: 'block' }}>
-      <div className="container">
-        
-        {currentView === 'directory' && (
+  <section id="team-viewer-app" className="app-panel" style={{ 
+    display: 'block',
+    height: '100vh',
+    overflow: 'hidden'
+  }}>
+    <div className="container" style={{
+      height: '100%',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '24px'
+    }}>
+      
+      {currentView === 'directory' && (
           <div id="directoryView" className="directory-container">
             <div className="card pad">
               <div className="controls-main-grid">
