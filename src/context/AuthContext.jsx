@@ -52,16 +52,19 @@ export function AuthProvider({ children }) {
   }, []);
 
   const initializeUser = async (authUser) => {
-    try {
-      console.log('🔍 Initializing user:', authUser.email);
-      
-      const { data, error } = await supabase
-        .from('memberships')
-        .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
-        .eq('user_id', authUser.id)
-        .single();
+  try {
+    console.log('🔍 Initializing user:', authUser.email);
+    
+    // Force a fresh session token before querying
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    const { data, error } = await supabase
+      .from('memberships')
+      .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
+      .eq('user_id', authUser.id)
+      .single();
 
-      if (error) throw error;
+    if (error) throw error;
 
       console.log('✅ User initialized - Org ID:', data.org_id);
       
