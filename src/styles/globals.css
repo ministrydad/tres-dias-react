@@ -1172,7 +1172,7 @@ body.light-theme .toggle .opt.active {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    height: calc(100vh - 48px); /* ← Fit exactly in viewport minus padding */
+    height: calc(100vh - 120px); /* ← Changed from 48px to 120px */
     overflow: hidden;
 }
 
