@@ -40,14 +40,15 @@ export function AuthProvider({ children }) {
             console.log('⏭️ Already initialized - skipping duplicate init');
           }
         } 
-        else if (event === 'SIGNED_OUT') {
-          console.log('👋 User signed out');
-          setUser(null);
-          setOrgId(null);
-          setPermissions(null);
-          setIsSuperAdmin(false);
-          isInitializedRef.current = false; // ✅ Reset flag on logout
-        } 
+       else if (event === 'SIGNED_OUT') {
+  console.log('👋 User signed out');
+  setUser(null);
+  setOrgId(null);
+  setPermissions(null);
+  setIsSuperAdmin(false);
+  setLoading(false); // ✅ CRITICAL: Stop loading spinner
+  isInitializedRef.current = false; // ✅ Reset flag on logout
+}
         else if (event === 'TOKEN_REFRESHED') {
           // ✅ CRITICAL: Just log it, DON'T re-query database
           console.log('🔄 Token refreshed - keeping existing user/org/permissions');
