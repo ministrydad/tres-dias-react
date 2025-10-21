@@ -506,17 +506,17 @@ export default function Directory() {
   if (loading) {
   return (
     <section id="team-viewer-app" className="app-panel" style={{ 
-      display: 'block',
-      height: '100vh',
-      overflow: 'hidden'
-    }}>
-      <div className="container" style={{
-        height: '100%',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '24px'
-      }}>
+  display: 'block',
+  height: '100%',
+  overflow: 'hidden'
+}}>
+  <div className="container" style={{
+    height: '100%',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '24px'
+  }}>
         <SkeletonLoader />
       </div>
     </section>
