@@ -804,9 +804,9 @@ function ProfileView({
   return (
     <div id="profileView" className="profile-view" style={{ 
     display: 'block',
-    overflowY: 'auto',
-    maxHeight: 'calc(100vh - 100px)',
-    paddingRight: '8px'
+    height: 'calc(100vh - 48px)', /* ← Full height minus padding */
+    overflowY: 'auto', /* ← Make THIS the scroll container */
+    paddingBottom: '40px'
   }}>
       <div className="navigation" style={{ marginTop: 0, marginBottom: '16px' }}>
         <button className="back-button" onClick={onBack}>← Back to Directory</button>
