@@ -69,24 +69,16 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const initializeUser = async (authUser) => {
-    try {
-      console.log('🔍 Initializing user:', authUser.email);
-      
-      // ✅ Add timeout to prevent infinite hanging
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Database query timeout')), 10000)
-      );
-      
-      const queryPromise = supabase
-        .from('memberships')
-        .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
-        .eq('user_id', authUser.id)
-        .single();
-      
-      // Race between query and timeout
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
-
+ const initializeUser = async (authUser) => {
+  try {
+    console.log('🔍 Initializing user:', authUser.email);
+    
+    // Just run the query without timeout
+    const { data, error } = await supabase
+      .from('memberships')
+      .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
+      .eq('user_id', authUser.id)
+      .single();
       if (error) {
         console.error('❌ Failed to fetch membership:', error);
         
