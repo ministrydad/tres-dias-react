@@ -1149,7 +1149,8 @@ body.light-theme .toggle .opt.active {
 #team-viewer-app .container {
     max-width: none;
     margin: 0;
-    }
+    padding: 24px;
+}
 
 #team-viewer-app button {
     font-family: 'Source Sans Pro', sans-serif;
@@ -1164,12 +1165,12 @@ body.light-theme .toggle .opt.active {
     padding: 24px;
 }
 
+/* Directory View - Fixed height container, no page scroll */
 #team-viewer-app .directory-container {
-    flex: 1;
+    height: calc(100vh - 48px); /* Full height minus padding */
     display: flex;
     flex-direction: column;
     gap: 16px;
-    min-height: 0;
     overflow: hidden;
 }
 
@@ -1567,10 +1568,11 @@ body.light-theme .toggle .opt.active {
     color: white;
 }
 
-/* Profile View */
+/* Profile View - Natural height, page scrolls */
 #team-viewer-app .profile-view {
     display: block;
     padding-bottom: 40px;
+    min-height: calc(100vh - 48px);
 }
 
 #team-viewer-app .navigation {
