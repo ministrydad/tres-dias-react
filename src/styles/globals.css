@@ -1186,6 +1186,7 @@ body.light-theme .toggle .opt.active {
 #team-viewer-app .directory-container > .card:last-child {
     flex: 1;
     min-height: 0;
+    max-height: calc(100vh - 300px); /* ← ADD THIS - adjust the 300px value */
     display: flex;
     flex-direction: column;
     overflow: hidden;
