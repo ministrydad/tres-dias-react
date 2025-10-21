@@ -1144,6 +1144,8 @@ body.light-theme .toggle .opt.active {
     color: #333;
     margin: 0;
     padding: 0;
+    height: 100vh;  /* ← ADD THIS */
+    overflow: hidden;  /* ← ADD THIS */
 }
 
 #team-viewer-app .container {
