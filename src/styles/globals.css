@@ -1155,10 +1155,12 @@ body.light-theme .toggle .opt.active {
     font-family: 'Source Sans Pro', sans-serif;
 }
 
-/* Directory Layout */
 #team-viewer-app .container {
     max-width: none;
     margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
     padding: 24px;
 }
 
@@ -1569,7 +1571,6 @@ body.light-theme .toggle .opt.active {
 #team-viewer-app .profile-view {
     display: block;
     padding-bottom: 40px;
-    overflow: visible;
 }
 
 #team-viewer-app .navigation {
