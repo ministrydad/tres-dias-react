@@ -50,7 +50,7 @@ export default function AppSettings() {
     firstName: '',
     lastName: '',
     email: '',
-    role: 'User',
+    role: 'user',
     permissions: {
       'team-viewer-app': true,
       'team-book': true,
@@ -326,7 +326,7 @@ export default function AppSettings() {
       body: {
         email: inviteFormData.email,
         full_name: `${inviteFormData.firstName} ${inviteFormData.lastName}`,
-        role: inviteFormData.role,
+        role: inviteFormData.role.toLowerCase(),
         permissions: inviteFormData.permissions,
         org_id: orgId
       },
@@ -593,17 +593,17 @@ export default function AppSettings() {
                 />
               </div>
               <div className="field">
-                <label className="label">Role</label>
-                <select 
-                  className="input"
-                  value={inviteFormData.role}
-                  onChange={(e) => setInviteFormData(prev => ({ ...prev, role: e.target.value }))}
-                >
-                  <option value="User">User</option>
-                  <option value="Admin">Admin</option>
-                  <option value="SuperAdmin">Super Admin</option>
-                </select>
-              </div>
+  <label className="label">Role</label>
+  <select 
+    className="input"
+    value={inviteFormData.role}
+    onChange={(e) => setInviteFormData(prev => ({ ...prev, role: e.target.value }))}
+  >
+    <option value="user">User</option>
+    <option value="admin">Admin</option>
+    <option value="owner">Owner</option>
+  </select>
+</div>
             </div>
 
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
