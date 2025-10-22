@@ -12,6 +12,20 @@ export function AuthProvider({ children }) {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const isInitializedRef = useRef(false);  // Use ref for instant synchronous checking
 
+  // Detect browser refresh and force logout
+  useEffect(() => {
+    const navigationEntries = performance.getEntriesByType('navigation');
+    const isPageRefresh = navigationEntries.length > 0 && 
+                          navigationEntries[0].type === 'reload';
+    
+    if (isPageRefresh) {
+      console.log('🔄 Browser refresh detected - logging out');
+      supabase.auth.signOut();
+      setLoading(false); // Stop loading immediately
+      return; // Exit early, don't try to restore session
+    }
+  }, []);
+
   useEffect(() => {
     // Check for existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
