@@ -366,7 +366,7 @@ body.light-theme .main-header h1 {
 }
 
 .app-panel {
-    display: none;
+    display: block;
     width: 100%;
 }
 
