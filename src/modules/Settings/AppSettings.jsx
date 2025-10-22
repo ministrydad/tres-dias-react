@@ -338,7 +338,13 @@ export default function AppSettings() {
       }
     });
 
-    if (error) throw error;
+    if (error) {
+  console.error('🔴 Full Edge Function Error:', error);
+  console.error('🔴 Error message:', error.message);
+  console.error('🔴 Error context:', error.context);
+  console.error('🔴 Error stringified:', JSON.stringify(error, null, 2));
+  throw error;
+}
 
     window.showMainStatus('Invitation sent successfully! User will receive an email to set up their account.');
     closeInviteForm();
