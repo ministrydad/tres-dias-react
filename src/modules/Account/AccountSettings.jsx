@@ -52,7 +52,7 @@ export default function AccountSettings() {
     console.log('🔵 Step 4: Response received', { error });
 
     if (error) {
-      console.error('❌ Supabase returned error:', error);
+      console.error('❌ - Supabase returned error:', error);
       throw error;
     }
 
