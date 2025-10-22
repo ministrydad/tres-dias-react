@@ -36,10 +36,10 @@ export function AuthProvider({ children }) {
       async (event, session) => {
         console.log('🔔 Auth event:', event);
         
-        // Ignore USER_UPDATED events (password changes, metadata updates)
+        // Ignore USER_UPDATED and TOKEN_REFRESHED events
         // These don't require re-initialization since user is already authenticated
-        if (event === 'USER_UPDATED') {
-          console.log('⏭️ Ignoring USER_UPDATED event - no re-initialization needed');
+        if (event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
+          console.log('⏭️ Ignoring', event, 'event - no re-initialization needed');
           return;
         }
         
