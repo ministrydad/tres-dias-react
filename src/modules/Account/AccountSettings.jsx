@@ -41,39 +41,28 @@ export default function AccountSettings() {
   setIsUpdating(true);
   const passwordToUpdate = newPassword;
   
-  console.log('🔵 Step 3: Clearing fields and showing message');
+  console.log('🔵 Step 3: Clearing fields');
   // Clear fields immediately
   setNewPassword('');
   setConfirmPassword('');
-  
-  // Show success message BEFORE API call (optimistic update)
-  window.showMainStatus('Updating password...');
 
-  console.log('🔵 Step 4: Calling updateUser API (non-blocking)');
-  
-  // Call API without await - let it complete in background
-  supabase.auth.updateUser({ password: passwordToUpdate })
-    .then(({ error }) => {
-      console.log('🔵 Step 5: API completed', { error });
-      if (error) {
-        console.error('❌ Error from API:', error);
-        window.showMainStatus(`Password update failed: ${error.message}`, true);
-      } else {
-        console.log('🔵 Step 6: Success! Logging out in 1 second');
-        window.showMainStatus('✓ Password updated! Logging out...');
-        setTimeout(() => {
-          console.log('🔵 Step 7: Signing out');
-          supabase.auth.signOut();
-        }, 1000);
-      }
-    })
-    .catch((err) => {
-      console.error('❌ Catch block error:', err);
-      window.showMainStatus(`Error: ${err.message}`, true);
-    });
+  try {
+    console.log('🔵 Step 4: Calling updateUser API');
+    
+    // Fire the password update (don't await)
+    supabase.auth.updateUser({ password: passwordToUpdate });
+    
+    // Show success message
+    console.log('🔵 Step 5: Showing success message');
+    window.showMainStatus('✓ Password updated successfully!');
 
-  console.log('🔵 Step 8: Resetting button immediately');
-  setIsUpdating(false);
+  } catch (error) {
+    console.error('❌ Error:', error);
+    window.showMainStatus(`Error: ${error.message}`, true);
+  } finally {
+    console.log('🔵 Step 6: Resetting button');
+    setIsUpdating(false);
+  }
 };
 
   return (
@@ -81,7 +70,7 @@ export default function AccountSettings() {
       <div className="card pad" style={{ maxWidth: '600px', margin: '0 auto' }}>
         <div className="section-title">Change Your Password</div>
         <p style={{ color: 'var(--muted)', marginTop: '-10px', marginBottom: '20px' }}>
-          Enter your new password below. For security, you will be logged out after a successful password change.
+          Enter your new password below to update your account security.
         </p>
         
         {statusMessage && (
