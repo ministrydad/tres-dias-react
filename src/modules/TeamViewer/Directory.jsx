@@ -539,7 +539,7 @@ export default function Directory() {
       
       {currentView === 'directory' && (
           <div id="directoryView" className="directory-container">
-            <div className="card pad">
+            <div className="card">
               <div className="controls-main-grid">
                 <div className="controls-left-panel">
                   <div className="search-group">
