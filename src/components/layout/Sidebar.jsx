@@ -11,6 +11,7 @@ export default function Sidebar({ currentView, onNavigate, permissions, onOpenCh
   useEffect(() => {
     const fetchLatestVersion = async () => {
       try {
+        console.log('🔍 Fetching latest version from changelog...');
         const { data, error } = await supabase
           .from('changelog')
           .select('version')
@@ -20,11 +21,14 @@ export default function Sidebar({ currentView, onNavigate, permissions, onOpenCh
         
         if (error) throw error;
         
+        console.log('✅ Fetched version data:', data);
+        
         if (data?.version) {
           setCurrentVersion(data.version);
+          console.log('✅ Version set to:', data.version);
         }
       } catch (error) {
-        console.error('Failed to fetch version:', error);
+        console.error('❌ Failed to fetch version:', error);
         // Keep default version on error
       }
     };
