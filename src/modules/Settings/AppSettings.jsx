@@ -338,6 +338,9 @@ export default function AppSettings() {
       }
     });
 
+    console.log('✅ Edge Function Response - data:', data);
+    console.log('✅ Edge Function Response - error:', error);
+
     if (error) {
   console.error('🔴 Full Edge Function Error:', error);
   console.error('🔴 Error message:', error.message);
