@@ -75,13 +75,25 @@ export function AuthProvider({ children }) {
         setIsSuperAdmin(true);
       }
       
+      // Fetch organization details
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('id', membership.org_id)
+        .single();
+      
+      if (orgError) {
+        console.error('Failed to fetch organization:', orgError);
+      }
+      
       setUser({
         ...authUser,
         full_name: membership.profiles?.full_name,
         display_name: membership.profiles?.display_name,
         email: membership.profiles?.email || authUser.email,
         organization: {
-          id: membership.org_id
+          id: membership.org_id,
+          name: orgData?.name || 'Team Tools Pro'
         }
       });
       
