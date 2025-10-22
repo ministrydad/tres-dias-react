@@ -1,9 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../services/supabase';
 
 export default function Sidebar({ currentView, onNavigate, permissions, onOpenChangelog }) {
   const { logout, user, isSuperAdmin } = useAuth();
   const [openSubmenu, setOpenSubmenu] = useState(null);
+  const [currentVersion, setCurrentVersion] = useState('2.0.0.18');
+
+  // Fetch latest version number from changelog
+  useEffect(() => {
+    const fetchLatestVersion = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('changelog')
+          .select('version')
+          .order('date', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data?.version) {
+          setCurrentVersion(data.version);
+        }
+      } catch (error) {
+        console.error('Failed to fetch version:', error);
+        // Keep default version on error
+      }
+    };
+    
+    fetchLatestVersion();
+  }, []);
 
   const hasPermission = (key) => {
     if (!permissions) return true;
@@ -346,7 +373,7 @@ export default function Sidebar({ currentView, onNavigate, permissions, onOpenCh
               e.target.style.color = 'var(--muted)';
             }}
           >
-            Version <span>2.0.0.17</span>
+            Version <span>{currentVersion}</span>
           </div>
         </div>
       </nav>
