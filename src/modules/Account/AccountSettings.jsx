@@ -52,29 +52,31 @@ export default function AccountSettings() {
     
     // Use Promise with immediate resolution to avoid component unmount issues
     supabase.auth.updateUser({
-      password: passwordToUpdate
-    }).then(({ data, error }) => {
-      console.log('🔵 Step 4: Response received', { data, error });
-      
-      if (error) {
-        console.error('❌ Supabase returned error:', error);
-        window.showMainStatus(`Error: ${error.message}`, true);
-        return;
-      }
+  password: passwordToUpdate
+}).then(({ data, error }) => {
+  console.log('🔵 Step 4: Response received', { data, error });
+  
+  if (error) {
+    console.error('❌ Supabase returned error:', error);
+    window.showMainStatus(`Error: ${error.message}`, true);
+    return;
+  }
 
-      console.log('🔵 Step 5: Password updated successfully!');
-      window.showMainStatus('Password updated! Logging out in 2 seconds...');
-      
-      console.log('🔵 Step 6: Starting logout timer');
-      setTimeout(async () => {
-        console.log('🔵 Step 7: Signing out...');
-        await supabase.auth.signOut();
-        console.log('🔵 Step 8: Sign out complete');
-      }, 2000);
-    }).catch((error) => {
-      console.error('❌ Promise catch:', error);
-      window.showMainStatus(`Error: ${error.message}`, true);
-    });
+  console.log('🔵 Step 5: Password updated successfully!');
+  
+  // Show success message immediately
+  window.showMainStatus('✓ Password updated! Logging out in 2 seconds...');
+  
+  console.log('🔵 Step 6: Starting logout timer');
+  setTimeout(async () => {
+    console.log('🔵 Step 7: Signing out...');
+    await supabase.auth.signOut();
+    console.log('🔵 Step 8: Sign out complete');
+  }, 2000);
+}).catch((error) => {
+  console.error('❌ Promise catch:', error);
+  window.showMainStatus(`Error: ${error.message}`, true);
+});
     
     // Immediately reset button state (don't wait for promise)
     setIsUpdating(false);
