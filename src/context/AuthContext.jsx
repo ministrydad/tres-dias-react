@@ -33,22 +33,22 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    // Skip session restoration if we just logged out from refresh
-    if (isRefreshLogoutRef.current) {
-      console.log('⏭️ Skipping session restoration after refresh logout');
-      return;
+    // Only skip the INITIAL session check if we just logged out from refresh
+    // But ALWAYS set up the auth listener and interval
+    if (!isRefreshLogoutRef.current) {
+      // Check for existing session on mount (only if not a refresh logout)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        console.log('📋 Session check result:', session ? 'Session found' : 'No session');
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          initializeUser(session.user);
+        } else {
+          setLoading(false);
+        }
+      });
+    } else {
+      console.log('⏭️ Skipping initial session check after refresh logout (listener still active)');
     }
-
-    // Check for existing session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('📋 Session check result:', session ? 'Session found' : 'No session');
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        initializeUser(session.user);
-      } else {
-        setLoading(false);
-      }
-    });
 
     // TEMPORARY WORKAROUND: Manually refresh session every 90 seconds
     const refreshInterval = setInterval(async () => {
@@ -61,6 +61,7 @@ export function AuthProvider({ children }) {
       }
     }, 90000);
 
+    // ALWAYS set up auth state change listener (even after refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔔 Auth event:', event);
@@ -209,13 +210,16 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (email, password) => {
+    console.log('🔑 Login attempt - resetting refresh flag');
     isRefreshLogoutRef.current = false;
+    isInitializedRef.current = false; // Also reset initialization flag
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
 
   const signup = async (email, password, fullName, orgName) => {
     isRefreshLogoutRef.current = false;
+    isInitializedRef.current = false;
     const { data: authData, error: authError } = await supabase.auth.signUp({ 
       email, 
       password 
