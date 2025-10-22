@@ -1,6 +1,6 @@
 // src/App.jsx
 // FIXED: Moved PescadoresProvider to top level to prevent loading issues
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PescadoresProvider } from './context/PescadoresContext';
 import LoginPage from './components/auth/LoginPage';
@@ -55,14 +55,19 @@ function Dashboard() {
     }
   }, [currentView]);
 
-  // Enhanced navigation handler that accepts options
-  const handleNavigate = (view, options = {}) => {
+  // Enhanced navigation handler that accepts options - memoized to prevent re-renders
+  const handleNavigate = useCallback((view, options = {}) => {
     setCurrentView(view);
     
     if (options.editingAppId) {
       setEditingAppId(options.editingAppId);
     }
-  };
+  }, []);
+
+  // Changelog modal handler - memoized to prevent Sidebar re-renders
+  const handleOpenChangelog = useCallback(() => {
+    setShowChangelog(true);
+  }, []);
 
   const getViewTitle = () => {
     switch(currentView) {
@@ -136,7 +141,7 @@ function Dashboard() {
         currentView={currentView} 
         onNavigate={handleNavigate}
         permissions={permissions}
-        onOpenChangelog={() => setShowChangelog(true)}
+        onOpenChangelog={handleOpenChangelog}
       />
       
       <main className="main-content">
