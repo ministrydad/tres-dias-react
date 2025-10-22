@@ -61,19 +61,20 @@ export default function LoginPage() {
 
   return (
     <div id="auth-container">
-      {error && (
-        <div id="authStatusBar" className="auth-status-bar error visible">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div id="authStatusBar" className="auth-status-bar success visible">
-          {success}
-        </div>
-      )}
-
       <div className="auth-card">
-       <div className="auth-image-panel"></div>
+        {/* Error and success messages now inside the card for proper positioning */}
+        {error && (
+          <div className="auth-status-bar error visible">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="auth-status-bar success visible">
+            {success}
+          </div>
+        )}
+
+        <div className="auth-image-panel"></div>
         <div className="auth-form-panel">
           {view === 'login' && (
             <div id="login-view">
