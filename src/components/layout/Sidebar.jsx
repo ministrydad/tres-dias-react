@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 
-export default function Sidebar({ currentView, onNavigate, permissions, onOpenChangelog }) {
+const Sidebar = memo(function Sidebar({ currentView, onNavigate, permissions, onOpenChangelog }) {
   const { logout, user, isSuperAdmin } = useAuth();
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [currentVersion, setCurrentVersion] = useState('2.0.0.18');
@@ -383,4 +383,6 @@ export default function Sidebar({ currentView, onNavigate, permissions, onOpenCh
       </nav>
     </aside>
   );
-}
+});
+
+export default Sidebar;

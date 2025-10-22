@@ -1,6 +1,6 @@
 // src/App.jsx
 // FIXED: Moved PescadoresProvider to top level to prevent loading issues
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PescadoresProvider } from './context/PescadoresContext';
 import LoginPage from './components/auth/LoginPage';
@@ -30,6 +30,9 @@ function Dashboard() {
   const [currentView, setCurrentView] = useState('directory');
   const [editingAppId, setEditingAppId] = useState(null);
   const [showChangelog, setShowChangelog] = useState(false);
+
+  // Memoize permissions to prevent Sidebar re-renders
+  const memoizedPermissions = useMemo(() => permissions, [permissions]);
 
   // Handle MCI Check-In initialization (matching original script.js behavior)
   useEffect(() => {
@@ -140,7 +143,7 @@ function Dashboard() {
       <Sidebar 
         currentView={currentView} 
         onNavigate={handleNavigate}
-        permissions={permissions}
+        permissions={memoizedPermissions}
         onOpenChangelog={handleOpenChangelog}
       />
       
