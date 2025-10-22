@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
   const [orgId, setOrgId] = useState(null);
   const [permissions, setPermissions] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);  // Track if user is already initialized
 
   useEffect(() => {
     // Check for existing session on mount
@@ -43,6 +44,12 @@ export function AuthProvider({ children }) {
           return;
         }
         
+        // If user is already initialized and this is a SIGNED_IN event, ignore it
+        if (event === 'SIGNED_IN' && isInitialized) {
+          console.log('⏭️ User already initialized, ignoring duplicate SIGNED_IN event');
+          return;
+        }
+        
         setUser(session?.user ?? null);
         if (session?.user) {
           await initializeUser(session.user);
@@ -51,6 +58,7 @@ export function AuthProvider({ children }) {
           setOrgId(null);
           setPermissions(null);
           setIsSuperAdmin(false);
+          setIsInitialized(false);  // Reset flag on logout
         }
       }
     );
@@ -112,9 +120,12 @@ export function AuthProvider({ children }) {
         }
       });
       
+      setIsInitialized(true);  // Mark as initialized
+      
     } catch (error) {
       console.error('Failed to initialize user:', error);
       setIsSuperAdmin(false);
+      setIsInitialized(false);
       // Sign out the user if initialization fails
       await supabase.auth.signOut();
       throw error;
