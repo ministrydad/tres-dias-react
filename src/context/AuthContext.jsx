@@ -20,12 +20,13 @@ export function AuthProvider({ children }) {
                           navigationEntries[0].type === 'reload';
     
     if (isPageRefresh) {
-      console.log('🔄 Browser refresh detected - logging out');
+      console.log('🔄 Browser refresh detected - logging out and clearing session');
       isRefreshLogoutRef.current = true;
       setUser(null);
       setOrgId(null);
       setPermissions(null);
       setIsSuperAdmin(false);
+      localStorage.clear();  // Clear ALL localStorage including stale session
       supabase.auth.signOut();
       setLoading(false);
       return;
