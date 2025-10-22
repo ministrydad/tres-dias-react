@@ -12,9 +12,12 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    autoRefreshToken: false,       // ⚠️ Back to original working config
-    persistSession: false,          // ⚠️ This prevents the hang
-    detectSessionInUrl: true,
+    autoRefreshToken: true,         // ✅ Enable auto-refresh
+    persistSession: true,            // ✅ Enable persistence
+    detectSessionInUrl: false,       // ✅ Prevent URL detection issues
+    storage: window.localStorage,
+    storageKey: 'tres-dias-auth',
+    flowType: 'implicit'             // ✅ USE IMPLICIT FLOW instead of PKCE!
   },
   global: {
     headers: {
