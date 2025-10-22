@@ -20,6 +20,8 @@ export function AuthProvider({ children }) {
     
     if (isPageRefresh) {
       console.log('🔄 Browser refresh detected - logging out');
+      setUser(null);
+      setOrgId(null);
       supabase.auth.signOut();
       setLoading(false); // Stop loading immediately
       return; // Exit early, don't try to restore session
