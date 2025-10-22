@@ -17,51 +17,68 @@ export default function AccountSettings() {
   };
 
   const handlePasswordUpdate = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  
+  console.log('🔵 Step 1: Password update started');
 
-    // Validation
-    if (!newPassword || !confirmPassword) {
-      showStatus('Please fill out both new password fields.', true);
-      return;
+  // Validation
+  if (!newPassword || !confirmPassword) {
+    console.log('❌ Validation failed: Empty fields');
+    showStatus('Please fill out both new password fields.', true);
+    return;
+  }
+  
+  if (newPassword.length < 6) {
+    console.log('❌ Validation failed: Password too short');
+    showStatus('New password must be at least 6 characters long.', true);
+    return;
+  }
+  
+  if (newPassword !== confirmPassword) {
+    console.log('❌ Validation failed: Passwords do not match');
+    showStatus('New passwords do not match.', true);
+    return;
+  }
+
+  console.log('🔵 Step 2: Validation passed, setting isUpdating to true');
+  setIsUpdating(true);
+
+  try {
+    console.log('🔵 Step 3: Calling supabase.auth.updateUser...');
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    console.log('🔵 Step 4: Response received', { error });
+
+    if (error) {
+      console.error('❌ Supabase returned error:', error);
+      throw error;
     }
+
+    console.log('🔵 Step 5: Password updated successfully!');
+    showStatus('Password updated successfully. You will be logged out now.');
     
-    if (newPassword.length < 6) {
-      showStatus('New password must be at least 6 characters long.', true);
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      showStatus('New passwords do not match.', true);
-      return;
-    }
+    // Clear fields
+    setNewPassword('');
+    setConfirmPassword('');
 
-    setIsUpdating(true);
+    console.log('🔵 Step 6: Starting 2-second timeout before logout');
+    // Wait 2 seconds before logging out
+    setTimeout(async () => {
+      console.log('🔵 Step 7: Timeout complete, signing out...');
+      await supabase.auth.signOut();
+      console.log('🔵 Step 8: Sign out complete');
+    }, 2000);
 
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) throw error;
-
-      showStatus('Password updated successfully. You will be logged out now.');
-      
-      // Clear fields
-      setNewPassword('');
-      setConfirmPassword('');
-
-      // Wait 2 seconds before logging out
-      setTimeout(async () => {
-        await supabase.auth.signOut();
-      }, 2000);
-
-    } catch (error) {
-      console.error('Password update error:', error);
-      showStatus(`Error: ${error.message}`, true);
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+  } catch (error) {
+    console.error('❌ Catch block - Password update error:', error);
+    showStatus(`Error: ${error.message}`, true);
+  } finally {
+    console.log('🔵 Step 9: Finally block - setting isUpdating to false');
+    setIsUpdating(false);
+  }
+};
 
   return (
     <section id="account-settings" className="app-panel" style={{ display: 'block' }}>
