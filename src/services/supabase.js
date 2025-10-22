@@ -13,7 +13,7 @@ if (!supabaseUrl || !supabaseKey) {
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: true,
+    persistSession: false,     // ⬅️ CHANGED: Match original behavior
     detectSessionInUrl: true,
   },
   global: {
@@ -25,9 +25,6 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     schema: 'public',
   },
 });
-
-// ❌ REMOVED: Auth event listener - this is handled in AuthContext.jsx
-// Only AuthContext should listen to auth events to avoid duplicates
 
 export async function logErrorToSupabase(error, module, orgId = null) {
   if (!supabase || !orgId) {
