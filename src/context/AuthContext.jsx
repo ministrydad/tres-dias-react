@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
   const [permissions, setPermissions] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const isInitializedRef = useRef(false);
-  const isRefreshLogoutRef = useRef(false);  // Track if we logged out due to refresh
+  const isRefreshLogoutRef = useRef(false);
 
   // Detect browser refresh and force logout
   useEffect(() => {
@@ -21,7 +21,7 @@ export function AuthProvider({ children }) {
     
     if (isPageRefresh) {
       console.log('🔄 Browser refresh detected - logging out');
-      isRefreshLogoutRef.current = true;  // Set flag to prevent session restoration
+      isRefreshLogoutRef.current = true;
       setUser(null);
       setOrgId(null);
       setPermissions(null);
@@ -41,11 +41,13 @@ export function AuthProvider({ children }) {
 
     // Check for existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('📋 Session check result:', session ? 'Session found' : 'No session');
       setUser(session?.user ?? null);
       if (session?.user) {
         initializeUser(session.user);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     // TEMPORARY WORKAROUND: Manually refresh session every 90 seconds
@@ -57,7 +59,7 @@ export function AuthProvider({ children }) {
       } else {
         console.log('✅ Session refreshed successfully');
       }
-    }, 90000); // 90 seconds
+    }, 90000);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -90,6 +92,7 @@ export function AuthProvider({ children }) {
           setPermissions(null);
           setIsSuperAdmin(false);
           isInitializedRef.current = false;
+          setLoading(false);
         }
       }
     );
@@ -108,44 +111,70 @@ export function AuthProvider({ children }) {
     }
     isInitializedRef.current = true;
     
+    console.log('🔧 Starting user initialization for:', authUser.email);
+    
+    // Create timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Initialization timeout after 10 seconds')), 10000);
+    });
+    
     try {
-      console.log('Initializing user session for:', authUser.email);
+      console.log('🔍 Step 1: Fetching memberships...');
       
-      // Fetch ALL memberships for this user (not just .single())
-      const { data, error } = await supabase
-        .from('memberships')
-        .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
-        .eq('user_id', authUser.id);
+      // Race between actual query and timeout
+      const { data, error } = await Promise.race([
+        supabase
+          .from('memberships')
+          .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
+          .eq('user_id', authUser.id),
+        timeoutPromise
+      ]);
       
-      if (error) throw error;
+      console.log('📦 Step 1 result:', data ? `Found ${data.length} membership(s)` : 'No data');
+      
+      if (error) {
+        console.error('❌ Memberships query error:', error);
+        throw error;
+      }
       
       // If no memberships found
       if (!data || data.length === 0) {
+        console.error('❌ No memberships found for user');
         throw new Error('No organization membership found for this user.');
       }
       
-      // If multiple memberships, use the first one (or implement org selection logic)
+      // If multiple memberships, use the first one
       const membership = data[0];
+      console.log('✅ Using membership for org_id:', membership.org_id);
       
       setOrgId(membership.org_id);
       setPermissions(membership.permissions || {});
       
       // Check for Super Admin
       if (membership.profiles?.full_name === 'Super Admin') {
-        console.log('Super Admin detected. Enabling admin panel.');
+        console.log('👑 Super Admin detected. Enabling admin panel.');
         setIsSuperAdmin(true);
       }
       
-      // Fetch organization details
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('id, name')
-        .eq('id', membership.org_id)
-        .single();
+      console.log('🔍 Step 2: Fetching organization details...');
+      
+      // Fetch organization details with timeout
+      const { data: orgData, error: orgError } = await Promise.race([
+        supabase
+          .from('organizations')
+          .select('id, name')
+          .eq('id', membership.org_id)
+          .single(),
+        timeoutPromise
+      ]);
+      
+      console.log('📦 Step 2 result:', orgData ? `Org: ${orgData.name}` : 'No org data');
       
       if (orgError) {
-        console.error('Failed to fetch organization:', orgError);
+        console.warn('⚠️ Failed to fetch organization (continuing anyway):', orgError);
       }
+      
+      console.log('🔧 Step 3: Setting user state...');
       
       setUser({
         ...authUser,
@@ -159,25 +188,34 @@ export function AuthProvider({ children }) {
       });
       
       console.log('✅ User initialization complete');
+      setLoading(false);
       
     } catch (error) {
-      console.error('Failed to initialize user:', error);
+      console.error('❌ Failed to initialize user:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
       setIsSuperAdmin(false);
       isInitializedRef.current = false;
+      setLoading(false); // CRITICAL: Stop loading even on error
+      
       // Sign out the user if initialization fails
+      console.log('🚪 Signing out due to initialization failure...');
       await supabase.auth.signOut();
-      throw error;
     }
   };
 
   const login = async (email, password) => {
-    isRefreshLogoutRef.current = false;  // Reset flag to allow auth flow to work
+    isRefreshLogoutRef.current = false;
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
 
   const signup = async (email, password, fullName, orgName) => {
-    isRefreshLogoutRef.current = false;  // Reset flag for signup too
+    isRefreshLogoutRef.current = false;
     const { data: authData, error: authError } = await supabase.auth.signUp({ 
       email, 
       password 
