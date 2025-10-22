@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
-export default function Sidebar({ currentView, onNavigate, permissions }) {
+export default function Sidebar({ currentView, onNavigate, permissions, onOpenChangelog }) {
   const { logout, user, isSuperAdmin } = useAuth();
   const [openSubmenu, setOpenSubmenu] = useState(null);
 
@@ -328,12 +328,24 @@ export default function Sidebar({ currentView, onNavigate, permissions }) {
             </button>
           </div>
           
-          <div style={{ 
-            textAlign: 'center', 
-            fontSize: '0.75rem', 
-            color: 'var(--muted)', 
-            paddingTop: '8px'
-          }}>
+          {/* Clickable Version Number - Opens Changelog Modal */}
+          <div 
+            style={{ 
+              textAlign: 'center', 
+              fontSize: '0.75rem', 
+              color: 'var(--muted)', 
+              paddingTop: '8px',
+              cursor: 'pointer',
+              transition: 'color 0.2s'
+            }}
+            onClick={onOpenChangelog}
+            onMouseEnter={(e) => {
+              e.target.style.color = 'var(--ink)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = 'var(--muted)';
+            }}
+          >
             Version <span>2.0.0.17</span>
           </div>
         </div>

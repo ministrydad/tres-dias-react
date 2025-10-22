@@ -21,6 +21,7 @@ import CheckIn from './modules/TeamMeetings/CheckIn';
 import MCIReports from './modules/TeamMeetings/Reports';
 import Budget from './modules/TeamMeetings/Budget';
 import ConfirmModal from './components/common/ConfirmModal';
+import ChangelogModal from './components/common/ChangelogModal';
 import { MainStatusBar } from './components/common/StatusBar';
 import './styles/globals.css';
 
@@ -28,6 +29,7 @@ function Dashboard() {
   const { user, orgId, permissions } = useAuth();
   const [currentView, setCurrentView] = useState('directory');
   const [editingAppId, setEditingAppId] = useState(null);
+  const [showChangelog, setShowChangelog] = useState(false);
 
   // Handle MCI Check-In initialization (matching original script.js behavior)
   useEffect(() => {
@@ -134,11 +136,16 @@ function Dashboard() {
         currentView={currentView} 
         onNavigate={handleNavigate}
         permissions={permissions}
+        onOpenChangelog={() => setShowChangelog(true)}
       />
       
       <main className="main-content">
         <MainStatusBar />
         <ConfirmModal />
+        <ChangelogModal 
+          isOpen={showChangelog}
+          onClose={() => setShowChangelog(false)}
+        />
        
         <div className="main-header">
           <h1 id="app-title">{getViewTitle()}</h1>
