@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabase';
 
 const AuthContext = createContext();
@@ -10,7 +10,7 @@ export function AuthProvider({ children }) {
   const [orgId, setOrgId] = useState(null);
   const [permissions, setPermissions] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);  // Track if user is already initialized
+  const isInitializedRef = useRef(false);  // Use ref for instant synchronous checking
 
   useEffect(() => {
     // Check for existing session on mount
@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
         }
         
         // If user is already initialized and this is a SIGNED_IN event, ignore it
-        if (event === 'SIGNED_IN' && isInitialized) {
+        if (event === 'SIGNED_IN' && isInitializedRef.current) {
           console.log('⏭️ User already initialized, ignoring duplicate SIGNED_IN event');
           return;
         }
@@ -58,7 +58,7 @@ export function AuthProvider({ children }) {
           setOrgId(null);
           setPermissions(null);
           setIsSuperAdmin(false);
-          setIsInitialized(false);  // Reset flag on logout
+          isInitializedRef.current = false;  // Reset flag on logout
         }
       }
     );
@@ -70,6 +70,13 @@ export function AuthProvider({ children }) {
   }, []);
 
   const initializeUser = async (authUser) => {
+    // Set flag IMMEDIATELY to prevent duplicate calls during async work
+    if (isInitializedRef.current) {
+      console.log('⏭️ Already initializing/initialized, skipping...');
+      return;
+    }
+    isInitializedRef.current = true;
+    
     try {
       console.log('Initializing user session for:', authUser.email);
       
@@ -120,12 +127,12 @@ export function AuthProvider({ children }) {
         }
       });
       
-      setIsInitialized(true);  // Mark as initialized
+      console.log('✅ User initialization complete');
       
     } catch (error) {
       console.error('Failed to initialize user:', error);
       setIsSuperAdmin(false);
-      setIsInitialized(false);
+      isInitializedRef.current = false;  // Reset flag on error
       // Sign out the user if initialization fails
       await supabase.auth.signOut();
       throw error;
