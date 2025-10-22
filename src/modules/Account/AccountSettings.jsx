@@ -18,53 +18,66 @@ export default function AccountSettings() {
 
   const handlePasswordUpdate = async (e) => {
   e.preventDefault();
+  
+  console.log('🔵 Step 1: Starting password update');
 
   // Validation
   if (!newPassword || !confirmPassword) {
+    console.log('❌ Validation failed: empty fields');
     window.showMainStatus('Please fill out both new password fields.', true);
     return;
   }
   
   if (newPassword.length < 6) {
+    console.log('❌ Validation failed: password too short');
     window.showMainStatus('New password must be at least 6 characters long.', true);
     return;
   }
   
   if (newPassword !== confirmPassword) {
+    console.log('❌ Validation failed: passwords do not match');
     window.showMainStatus('New passwords do not match.', true);
     return;
   }
 
+  console.log('🔵 Step 2: Validation passed');
   setIsUpdating(true);
   const passwordToUpdate = newPassword;
   
+  console.log('🔵 Step 3: Clearing fields');
   // Clear fields immediately
   setNewPassword('');
   setConfirmPassword('');
 
   try {
+    console.log('🔵 Step 4: Calling updateUser API');
     // Call with proper await to catch errors
     const { error } = await supabase.auth.updateUser({ 
       password: passwordToUpdate 
     });
 
+    console.log('🔵 Step 5: API response received', { error });
+
     if (error) {
       throw error;
     }
 
+    console.log('🔵 Step 6: Success! Showing message');
     // Success - show message and schedule logout
     window.showMainStatus('✓ Password updated successfully! Logging out...');
     
+    console.log('🔵 Step 7: Scheduling logout');
     // Short timeout (500ms) to logout quickly
     setTimeout(async () => {
+      console.log('🔵 Step 8: Logging out now');
       await supabase.auth.signOut();
     }, 500);
 
   } catch (error) {
-    console.error('Password update error:', error);
+    console.error('❌ Password update error:', error);
     window.showMainStatus(`Failed to update password: ${error.message}`, true);
-    // Don't logout on error - let user try again
   } finally {
+    console.log('🔵 Step 9: Resetting button state');
     setIsUpdating(false);
   }
 };
