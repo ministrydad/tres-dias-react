@@ -12,6 +12,7 @@ export function AuthProvider({ children }) {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
+    // Check for existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -19,6 +20,17 @@ export function AuthProvider({ children }) {
       }
       setLoading(false);
     });
+
+    // TEMPORARY WORKAROUND: Manually refresh session every 90 seconds
+    const refreshInterval = setInterval(async () => {
+      console.log('⏰ Manually refreshing session...');
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) {
+        console.error('❌ Session refresh failed:', error);
+      } else {
+        console.log('✅ Session refreshed successfully');
+      }
+    }, 90000); // 90 seconds
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -43,7 +55,10 @@ export function AuthProvider({ children }) {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(refreshInterval);
+    };
   }, []);
 
   const initializeUser = async (authUser) => {
