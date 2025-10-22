@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
   const [permissions, setPermissions] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const isInitializedRef = useRef(false);
-  const isRefreshLogoutRef = useRef(false);  // NEW: Track if we logged out due to refresh
+  const isRefreshLogoutRef = useRef(false);  // Track if we logged out due to refresh
 
   // Detect browser refresh and force logout
   useEffect(() => {
@@ -21,7 +21,7 @@ export function AuthProvider({ children }) {
     
     if (isPageRefresh) {
       console.log('🔄 Browser refresh detected - logging out');
-      isRefreshLogoutRef.current = true;  // NEW: Set flag to prevent session restoration
+      isRefreshLogoutRef.current = true;  // Set flag to prevent session restoration
       setUser(null);
       setOrgId(null);
       setPermissions(null);
@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    // NEW: Skip session restoration if we just logged out from refresh
+    // Skip session restoration if we just logged out from refresh
     if (isRefreshLogoutRef.current) {
       console.log('⏭️ Skipping session restoration after refresh logout');
       return;
@@ -63,7 +63,7 @@ export function AuthProvider({ children }) {
       async (event, session) => {
         console.log('🔔 Auth event:', event);
         
-        // NEW: Ignore SIGNED_OUT event if it's from our refresh logout
+        // Ignore SIGNED_OUT event if it's from our refresh logout
         if (event === 'SIGNED_OUT' && isRefreshLogoutRef.current) {
           console.log('⏭️ Ignoring SIGNED_OUT from refresh logout');
           return;
@@ -171,11 +171,13 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (email, password) => {
+    isRefreshLogoutRef.current = false;  // Reset flag to allow auth flow to work
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   };
 
   const signup = async (email, password, fullName, orgName) => {
+    isRefreshLogoutRef.current = false;  // Reset flag for signup too
     const { data: authData, error: authError } = await supabase.auth.signUp({ 
       email, 
       password 
