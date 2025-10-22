@@ -23,19 +23,16 @@ export default function AccountSettings() {
 
   // Validation
   if (!newPassword || !confirmPassword) {
-    console.log('❌ Validation failed: Empty fields');
     showStatus('Please fill out both new password fields.', true);
     return;
   }
   
   if (newPassword.length < 6) {
-    console.log('❌ Validation failed: Password too short');
     showStatus('New password must be at least 6 characters long.', true);
     return;
   }
   
   if (newPassword !== confirmPassword) {
-    console.log('❌ Validation failed: Passwords do not match');
     showStatus('New passwords do not match.', true);
     return;
   }
@@ -52,16 +49,19 @@ export default function AccountSettings() {
     console.log('🔵 Step 4: Response received', { error });
 
     if (error) {
-      console.error('❌ - Supabase returned error:', error);
+      console.error('❌ Supabase returned error:', error);
       throw error;
     }
 
     console.log('🔵 Step 5: Password updated successfully!');
-    showStatus('Password updated successfully. You will be logged out now.');
     
-    // Clear fields
+    // Use window.showMainStatus instead of local status
+    window.showMainStatus('Password updated successfully! Logging out in 2 seconds...');
+    
+    // Clear fields immediately
     setNewPassword('');
     setConfirmPassword('');
+    setIsUpdating(false); // Reset button state immediately
 
     console.log('🔵 Step 6: Starting 2-second timeout before logout');
     // Wait 2 seconds before logging out
@@ -73,9 +73,7 @@ export default function AccountSettings() {
 
   } catch (error) {
     console.error('❌ Catch block - Password update error:', error);
-    showStatus(`Error: ${error.message}`, true);
-  } finally {
-    console.log('🔵 Step 9: Finally block - setting isUpdating to false');
+    window.showMainStatus(`Error: ${error.message}`, true);
     setIsUpdating(false);
   }
 };
