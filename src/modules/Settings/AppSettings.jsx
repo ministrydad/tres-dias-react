@@ -325,7 +325,7 @@ export default function AppSettings() {
     if (!session) throw new Error("User not authenticated.");
 
     // ✅ Call Edge Function with Authorization header
-    const { data, error } = await supabase.functions.invoke('create-user', {
+    const { data, error } = await supabase.functions.invoke('invite-user', {
       body: {
         email: inviteFormData.email,
         full_name: `${inviteFormData.firstName} ${inviteFormData.lastName}`,
