@@ -65,7 +65,7 @@ export default function AccountSettings() {
   console.log('🔵 Step 5: Password updated successfully!');
   
   // Show success message immediately
-  window.showMainStatus('✓ Password updated! Logging out in 2 seconds...');
+  window.showMainStatus('Password updated! Logging out in 2 seconds...');
   
   console.log('🔵 Step 6: Starting logout timer');
   setTimeout(async () => {
