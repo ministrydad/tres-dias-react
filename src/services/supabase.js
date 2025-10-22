@@ -12,11 +12,9 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    autoRefreshToken: true,        // ✅ Auto-refresh tokens
-    persistSession: true,           // ✅ Persist to localStorage
-    storage: window.localStorage,   // ✅ Use localStorage (industry standard)
-    storageKey: 'tres-dias-auth',
-    detectSessionInUrl: false       // ✅ Prevent URL-based session issues
+    autoRefreshToken: false,       // ⚠️ Back to original working config
+    persistSession: false,          // ⚠️ This prevents the hang
+    detectSessionInUrl: true,
   },
   global: {
     headers: {
