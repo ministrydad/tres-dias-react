@@ -12,9 +12,11 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    autoRefreshToken: false,
-    persistSession: false,     // ⬅️ CHANGED: Match original behavior
-    detectSessionInUrl: true,
+    autoRefreshToken: true,        // ✅ Auto-refresh tokens
+    persistSession: true,           // ✅ Persist to localStorage
+    storage: window.localStorage,   // ✅ Use localStorage (industry standard)
+    storageKey: 'tres-dias-auth',
+    detectSessionInUrl: false       // ✅ Prevent URL-based session issues
   },
   global: {
     headers: {
@@ -24,6 +26,13 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   db: {
     schema: 'public',
   },
+});
+
+// Log token refreshes for debugging
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'TOKEN_REFRESHED') {
+    console.log('🔄 Token refreshed successfully');
+  }
 });
 
 export async function logErrorToSupabase(error, module, orgId = null) {
