@@ -329,7 +329,7 @@ export default function AppSettings() {
       body: {
         email: inviteFormData.email,
         full_name: `${inviteFormData.firstName} ${inviteFormData.lastName}`,
-        role: inviteFormData.role,
+        role: inviteFormData.role.tolowercase(),
         permissions: inviteFormData.permissions,
         org_id: orgId
       },
