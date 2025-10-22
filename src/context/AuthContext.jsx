@@ -10,7 +10,8 @@ export function AuthProvider({ children }) {
   const [orgId, setOrgId] = useState(null);
   const [permissions, setPermissions] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const isInitializedRef = useRef(false);  // Use ref for instant synchronous checking
+  const isInitializedRef = useRef(false);
+  const isRefreshLogoutRef = useRef(false);  // NEW: Track if we logged out due to refresh
 
   // Detect browser refresh and force logout
   useEffect(() => {
@@ -20,15 +21,24 @@ export function AuthProvider({ children }) {
     
     if (isPageRefresh) {
       console.log('🔄 Browser refresh detected - logging out');
+      isRefreshLogoutRef.current = true;  // NEW: Set flag to prevent session restoration
       setUser(null);
       setOrgId(null);
+      setPermissions(null);
+      setIsSuperAdmin(false);
       supabase.auth.signOut();
-      setLoading(false); // Stop loading immediately
-      return; // Exit early, don't try to restore session
+      setLoading(false);
+      return;
     }
   }, []);
 
   useEffect(() => {
+    // NEW: Skip session restoration if we just logged out from refresh
+    if (isRefreshLogoutRef.current) {
+      console.log('⏭️ Skipping session restoration after refresh logout');
+      return;
+    }
+
     // Check for existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -53,8 +63,13 @@ export function AuthProvider({ children }) {
       async (event, session) => {
         console.log('🔔 Auth event:', event);
         
+        // NEW: Ignore SIGNED_OUT event if it's from our refresh logout
+        if (event === 'SIGNED_OUT' && isRefreshLogoutRef.current) {
+          console.log('⏭️ Ignoring SIGNED_OUT from refresh logout');
+          return;
+        }
+        
         // Ignore USER_UPDATED and TOKEN_REFRESHED events
-        // These don't require re-initialization since user is already authenticated
         if (event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
           console.log('⏭️ Ignoring', event, 'event - no re-initialization needed');
           return;
@@ -74,7 +89,7 @@ export function AuthProvider({ children }) {
           setOrgId(null);
           setPermissions(null);
           setIsSuperAdmin(false);
-          isInitializedRef.current = false;  // Reset flag on logout
+          isInitializedRef.current = false;
         }
       }
     );
@@ -148,7 +163,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('Failed to initialize user:', error);
       setIsSuperAdmin(false);
-      isInitializedRef.current = false;  // Reset flag on error
+      isInitializedRef.current = false;
       // Sign out the user if initialization fails
       await supabase.auth.signOut();
       throw error;
