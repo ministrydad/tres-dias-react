@@ -41,12 +41,22 @@ export default function AccountSettings() {
   setIsUpdating(true);
 
   try {
-    console.log('🔵 Step 3: Calling supabase.auth.updateUser...');
-    const { error } = await supabase.auth.updateUser({
+    // Get fresh session first
+    console.log('🔵 Step 3A: Getting current session...');
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    console.log('🔵 Step 3B: Session retrieved', { hasSession: !!session, sessionError });
+    
+    if (sessionError || !session) {
+      throw new Error('Could not get current session. Please log in again.');
+    }
+
+    console.log('🔵 Step 3C: Calling supabase.auth.updateUser...');
+    const { data, error } = await supabase.auth.updateUser({
       password: newPassword
     });
 
-    console.log('🔵 Step 4: Response received', { error });
+    console.log('🔵 Step 4: Response received', { data, error });
 
     if (error) {
       console.error('❌ Supabase returned error:', error);
@@ -55,29 +65,26 @@ export default function AccountSettings() {
 
     console.log('🔵 Step 5: Password updated successfully!');
     
-    // Use window.showMainStatus instead of local status
     window.showMainStatus('Password updated successfully! Logging out in 2 seconds...');
     
-    // Clear fields immediately
+    // Clear fields
     setNewPassword('');
     setConfirmPassword('');
-    setIsUpdating(false); // Reset button state immediately
+    setIsUpdating(false);
 
     console.log('🔵 Step 6: Starting 2-second timeout before logout');
-    // Wait 2 seconds before logging out
     setTimeout(async () => {
-      console.log('🔵 Step 7: Timeout complete, signing out...');
+      console.log('🔵 Step 7: Signing out...');
       await supabase.auth.signOut();
       console.log('🔵 Step 8: Sign out complete');
     }, 2000);
 
   } catch (error) {
-    console.error('❌ Catch block - Password update error:', error);
+    console.error('❌ Password update error:', error);
     window.showMainStatus(`Error: ${error.message}`, true);
     setIsUpdating(false);
   }
 };
-
   return (
     <section id="account-settings" className="app-panel" style={{ display: 'block' }}>
       <div className="card pad" style={{ maxWidth: '600px', margin: '0 auto' }}>
