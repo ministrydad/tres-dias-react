@@ -64,12 +64,12 @@ export default function LoginPage() {
       <div className="auth-card">
         {/* Error and success messages now inside the card for proper positioning */}
         {error && (
-          <div className="auth-status-bar error visible">
+          <div className="auth-status-bar error visible" style={{ gridColumn: '1 / -1' }}>
             {error}
           </div>
         )}
         {success && (
-          <div className="auth-status-bar success visible">
+          <div className="auth-status-bar success visible" style={{ gridColumn: '1 / -1' }}>
             {success}
           </div>
         )}
