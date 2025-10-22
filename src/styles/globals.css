@@ -2925,6 +2925,90 @@ body.light-theme .mci-app .detail-panel {
     border-color: var(--accentA);
 }
 
+/* ===============================================
+   BUDGET MODULE STYLES - ADD TO globals.css
+   =============================================== */
+
+.budget-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.budget-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.budget-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.budget-item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.budget-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: var(--panel-header);
+    border-bottom: 1px solid var(--border);
+}
+
+.budget-item-body {
+    padding: 12px 16px;
+}
+
+.budget-item .role {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.budget-item .financial-summary {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.disbursement-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.disbursement-entry {
+    display: grid;
+    grid-template-columns: 100px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.disbursement-entry:last-child {
+    margin-bottom: 0;
+}
+
+.balance-positive {
+    color: var(--accentA);
+}
+
+.balance-negative {
+    color: var(--accentD);
+}
+
 
 /* ===============================================
    19. SECRETARIAT MODULE
