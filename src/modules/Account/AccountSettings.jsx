@@ -18,8 +18,6 @@ export default function AccountSettings() {
 
   const handlePasswordUpdate = async (e) => {
   e.preventDefault();
-  
-  console.log('🔵 Step 1: Password update started');
 
   // Validation
   if (!newPassword || !confirmPassword) {
@@ -37,56 +35,40 @@ export default function AccountSettings() {
     return;
   }
 
-  console.log('🔵 Step 2: Validation passed, setting isUpdating to true');
   setIsUpdating(true);
-
-  // IMPORTANT: Store values before async operation
   const passwordToUpdate = newPassword;
   
-  // Clear fields and reset button IMMEDIATELY before auth call
+  // Clear fields immediately
   setNewPassword('');
   setConfirmPassword('');
-  
-  try {
-    console.log('🔵 Step 3: Calling supabase.auth.updateUser...');
-    
-    // Use Promise with immediate resolution to avoid component unmount issues
-    supabase.auth.updateUser({
-  password: passwordToUpdate
-}).then(({ data, error }) => {
-  console.log('🔵 Step 4: Response received', { data, error });
-  
-  if (error) {
-    console.error('❌ Supabase returned error:', error);
-    window.showMainStatus(`Error: ${error.message}`, true);
-    return;
-  }
 
-  console.log('🔵 Step 5: Password updated successfully!');
-  
-  // Show success message immediately
-  window.showMainStatus('Password updated! Logging out in 2 seconds...');
-  
-  console.log('🔵 Step 6: Starting logout timer');
-  setTimeout(async () => {
-    console.log('🔵 Step 7: Signing out...');
-    await supabase.auth.signOut();
-    console.log('🔵 Step 8: Sign out complete');
-  }, 2000);
-}).catch((error) => {
-  console.error('❌ Promise catch:', error);
-  window.showMainStatus(`Error: ${error.message}`, true);
-});
+  try {
+    // Call with proper await to catch errors
+    const { error } = await supabase.auth.updateUser({ 
+      password: passwordToUpdate 
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    // Success - show message and schedule logout
+    window.showMainStatus('✓ Password updated successfully! Logging out...');
     
-    // Immediately reset button state (don't wait for promise)
-    setIsUpdating(false);
+    // Short timeout (500ms) to logout quickly
+    setTimeout(async () => {
+      await supabase.auth.signOut();
+    }, 500);
 
   } catch (error) {
-    console.error('❌ Outer catch:', error);
-    window.showMainStatus(`Error: ${error.message}`, true);
+    console.error('Password update error:', error);
+    window.showMainStatus(`Failed to update password: ${error.message}`, true);
+    // Don't logout on error - let user try again
+  } finally {
     setIsUpdating(false);
   }
 };
+
   return (
     <section id="account-settings" className="app-panel" style={{ display: 'block' }}>
       <div className="card pad" style={{ maxWidth: '600px', margin: '0 auto' }}>
