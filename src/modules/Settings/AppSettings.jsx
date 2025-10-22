@@ -65,6 +65,7 @@ export default function AppSettings() {
   const [subscriptionStatus, setSubscriptionStatus] = useState('trial');
   const [trialExpiresAt, setTrialExpiresAt] = useState(null);
   const [subscriptionText, setSubscriptionText] = useState('Loading subscription status...');
+  const [inviteLoading, setInviteLoading] = useState(false);
 
   useEffect(() => {
     if (orgId && !hasLoaded) {
@@ -315,6 +316,8 @@ export default function AppSettings() {
     return;
   }
 
+  setInviteLoading(true);  // ⬅️ ADD THIS
+  
   try {
     // ✅ Get the current session token
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -322,11 +325,11 @@ export default function AppSettings() {
     if (!session) throw new Error("User not authenticated.");
 
     // ✅ Call Edge Function with Authorization header
-    const { data, error } = await supabase.functions.invoke('invite-user', {
+    const { data, error } = await supabase.functions.invoke('create-user', {
       body: {
         email: inviteFormData.email,
         full_name: `${inviteFormData.firstName} ${inviteFormData.lastName}`,
-        role: inviteFormData.role.toLowerCase(),
+        role: inviteFormData.role,
         permissions: inviteFormData.permissions,
         org_id: orgId
       },
@@ -337,15 +340,17 @@ export default function AppSettings() {
 
     if (error) throw error;
 
-      window.showMainStatus('Invitation sent successfully! User will receive an email to set up their account.');
-      closeInviteForm();
-      setHasLoaded(false);
-      await loadAllData();
-    } catch (error) {
-      console.error('Error inviting user:', error);
-      window.showMainStatus(`Failed to invite user: ${error.message}`, true);
-    }
+    window.showMainStatus('Invitation sent successfully! User will receive an email to set up their account.');
+    closeInviteForm();
+    setHasLoaded(false);
+    await loadAllData();
+  } catch (error) {
+    console.error('Error inviting user:', error);
+    window.showMainStatus(`Failed to invite user: ${error.message}`, true);
+  } finally {
+    setInviteLoading(false);
   }
+}
 
   if (loading) {
     return (
@@ -687,12 +692,13 @@ export default function AppSettings() {
                 Cancel
               </button>
               <button 
-                className="btn btn-primary" 
-                onClick={handleInviteUser}
-                style={{ flex: 1 }}
-              >
-                Send Invitation
-              </button>
+  className="btn btn-primary"
+  onClick={handleInviteUser}
+  disabled={inviteLoading}
+  style={{ flex: 1 }}
+>
+  {inviteLoading ? 'Sending...' : 'Send Invitation'}
+</button>
             </div>
           </div>
         )}
