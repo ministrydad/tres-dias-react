@@ -351,9 +351,22 @@ export default function AppSettings() {
     setHasLoaded(false);
     await loadAllData();
   } catch (error) {
-    console.error('Error inviting user:', error);
-    window.showMainStatus(`Failed to invite user: ${error.message}`, true);
-  } finally {
+  console.error('❌ Full catch error:', error);
+  console.error('❌ Error name:', error.name);
+  console.error('❌ Error message:', error.message);
+  console.error('❌ Error context:', error.context);
+  
+  // Try to get detailed error from Edge Function
+  let detailedMessage = error.message;
+  if (error.context?.json?.error) {
+    detailedMessage = error.context.json.error;
+  } else if (error.context?.body) {
+    detailedMessage = error.context.body;
+  }
+  
+  console.error('❌ Detailed message:', detailedMessage);
+  window.showMainStatus(`Failed to invite user: ${detailedMessage}`, true);
+} finally {
     setInviteLoading(false);
   }
 }
