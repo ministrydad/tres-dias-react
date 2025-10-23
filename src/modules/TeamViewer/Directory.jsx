@@ -856,7 +856,7 @@ function ProfileView({
         >
           <div id="profileContainer" className="profile-container">
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
-              <div className="card pad profile-main-info">
+              <div className="card pad profile-main-info" style={{ position: 'relative' }}>
                 <div className="profile-header">
                   <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                     <h2 className="profile-name">{fullName}</h2>
@@ -897,22 +897,32 @@ function ProfileView({
                   <span className="main-info-value">{profile.Phone1 || 'N/A'}</span>
                 </div>
                 
+                {/* Floating status badge - matches Rector badge style */}
                 {(isDeceased || isDoNotCall || isSpiritualDirector) && (
                   <div style={{
-                    marginTop: '0px',
-                    marginLeft: '-24px',
-                    marginRight: '-24px',
-                    marginBottom: '-24px',
+                    position: 'absolute',
+                    top: '24px',
+                    right: '24px',
+                    bottom: '24px',
+                    width: '122px',
                     padding: '8px',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
+                    borderRadius: '4px',
                     fontSize: '12px',
+                    fontWeight: '500',
                     textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                    color: 'white',
-                    backgroundColor: isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745',
-                    borderBottomLeftRadius: '16px',
-                    borderBottomRightRadius: '16px'
+                    letterSpacing: '0.5px',
+                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: `1px solid ${isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745'}`,
+                    backgroundColor: 'transparent',
+                    color: '#333',
+                    boxShadow: isDeceased ? '0 0 10px rgba(0, 0, 0, 0.4)' : isDoNotCall ? '0 0 10px rgba(220, 53, 69, 0.4)' : '0 0 10px rgba(40, 167, 69, 0.4)',
+                    cursor: 'default',
+                    transition: 'all 0.2s ease',
+                    zIndex: 10,
+                    lineHeight: '1.3'
                   }}>
                     {isDeceased ? 'DECEASED' : isDoNotCall ? 'DO NOT CALL' : 'SPIRITUAL DIRECTOR'}
                   </div>
@@ -1161,9 +1171,11 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
   const hasChaRequirement = hasTwoChaRoles && hasCoreChaRole;
 
   return (
-    <div className="card pad" style={{ margin: 0, height: '100%' }}>
+    <div className="card pad" style={{ margin: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="roles-section">
         <div className="roles-title" style={{ marginBottom: '12px' }}>Rector Qualification</div>
+      </div>
+      <div style={{ marginTop: 'auto' }}>
         <div className="rector-qualification-grid">
           <div className="qualification-labels">
             <div className="qualification-label">Head / Asst Head</div>
