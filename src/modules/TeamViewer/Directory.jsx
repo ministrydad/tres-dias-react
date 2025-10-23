@@ -925,6 +925,9 @@ function ProfileView({
             <ProfessorRolesCard profile={profile} />
           </div>
 
+          <div style={{ marginTop: '16px', textAlign: 'center' }}>
+            <button id="editButton" className="edit-button">Edit Profile</button>
+          </div>
         </div>
 
         {roleSelectorOpen && (
