@@ -856,7 +856,7 @@ function ProfileView({
         >
           <div id="profileContainer" className="profile-container">
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
-              <div className="card pad profile-main-info">
+              <div className="card pad profile-main-info" style={{ position: 'relative' }}>
                 <div className="profile-header">
                   <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                     <h2 className="profile-name">{fullName}</h2>
@@ -897,22 +897,23 @@ function ProfileView({
                   <span className="main-info-value">{profile.Phone1 || 'N/A'}</span>
                 </div>
                 
+                {/* Floating status badge - top right */}
                 {(isDeceased || isDoNotCall || isSpiritualDirector) && (
                   <div style={{
-                    marginTop: '0px',
-                    marginLeft: '-24px',
-                    marginRight: '-24px',
-                    marginBottom: '-24px',
-                    padding: '8px',
-                    textAlign: 'center',
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    fontSize: '11px',
                     fontWeight: 'bold',
-                    fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '1px',
-                    color: 'white',
-                    backgroundColor: isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745',
-                    borderBottomLeftRadius: '16px',
-                    borderBottomRightRadius: '16px'
+                    border: `1px solid ${isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745'}`,
+                    backgroundColor: isDeceased ? 'rgba(0, 0, 0, 0.15)' : isDoNotCall ? 'rgba(220, 53, 69, 0.15)' : 'rgba(40, 167, 69, 0.15)',
+                    color: isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745',
+                    zIndex: 10,
+                    whiteSpace: 'nowrap'
                   }}>
                     {isDeceased ? 'DECEASED' : isDoNotCall ? 'DO NOT CALL' : 'SPIRITUAL DIRECTOR'}
                   </div>
