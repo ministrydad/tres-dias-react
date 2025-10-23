@@ -1,407 +1,567 @@
-import { useState, useEffect, memo } from 'react';
-import { useAuth } from '../../context/AuthContext';
+// src/modules/Secretariat/SecretariatDashboard.jsx
+import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
+import { useAuth } from '../../context/AuthContext';
 
-const Sidebar = memo(function Sidebar({ currentView, onNavigate, permissions, onOpenChangelog }) {
-  const { logout, user, isSuperAdmin } = useAuth();
-  const [openSubmenu, setOpenSubmenu] = useState(null);
-  const [currentVersion, setCurrentVersion] = useState('2.0.0.18');
+// Configuration constant from original
+const MEETING_COUNT = 6; // Number of meetings per team (matches CONFIG.MEETING_COUNT in original)
 
-  // Fetch latest version number from changelog
+export default function SecretariatDashboard() {
+  const { orgId } = useAuth();
+  
+  // State for secretariat data
+  const [loading, setLoading] = useState(true);
+  const [secretariatRoster, setSecretariatRoster] = useState([]);
+  const [allMembers, setAllMembers] = useState([]);
+  
+  // State for weekend history
+  const [weekendHistoryData, setWeekendHistoryData] = useState([]);
+  const [menRoster, setMenRoster] = useState([]);
+  const [womenRoster, setWomenRoster] = useState([]);
+  const [craApps, setCraApps] = useState([]);
+  const [mciData, setMciData] = useState([]);
+  const [expandedRows, setExpandedRows] = useState(new Set());
+
+  // Positions array from original
+  const POSITIONS = [
+    { key: 'chairman', name: 'Chairman', type: 'single', defaultTerm: 3 },
+    { key: 'spiritual_director', name: 'Spiritual Director', type: 'couple', defaultTerm: 3 },
+    { key: 'mens_leader', name: 'Mens Leader', type: 'single', defaultTerm: 3 },
+    { key: 'womens_leader', name: 'Womens Leader', type: 'single', defaultTerm: 3 },
+    { key: 'secretary', name: 'Secretary', type: 'single', defaultTerm: 3 },
+    { key: 'treasurer', name: 'Treasurer', type: 'single', defaultTerm: 3 },
+    { key: 'pre_weekend_couple', name: 'Pre-Weekend Couple', type: 'couple', defaultTerm: 3 },
+    { key: 'fourth_day_couple', name: 'Fourth Day', type: 'couple', defaultTerm: 3 },
+    { key: 'database_website', name: 'Database/Website', type: 'single', defaultTerm: 3 },
+    { key: 'weekend_couple', name: 'Weekend Couple', type: 'couple', defaultTerm: 3 },
+    { key: 'palanca_couple', name: 'Palanca Couple', type: 'couple', defaultTerm: 3 },
+    { key: 'newsletter', name: 'Newsletter', type: 'single', defaultTerm: 3 }
+  ];
+
   useEffect(() => {
-    const fetchLatestVersion = async () => {
-      try {
-        console.log('🔍 Fetching latest version from changelog...');
-        const { data, error } = await supabase
-          .from('changelog')
-          .select('version, date')
-          .order('date', { ascending: false })
-          .order('version', { ascending: false });
-        
-        if (error) throw error;
-        
-        console.log('✅ Fetched version data:', data);
-        
-        // Get the first result (most recent by date, then by version)
-        if (data && data.length > 0 && data[0]?.version) {
-          setCurrentVersion(data[0].version);
-          console.log('✅ Version set to:', data[0].version);
-        }
-      } catch (error) {
-        console.error('❌ Failed to fetch version:', error);
-        // Keep default version on error
-      }
-    };
-    
-    fetchLatestVersion();
-  }, []);
+    if (orgId) {
+      loadAllData();
+    }
+  }, [orgId]);
 
-  const hasPermission = (key) => {
-    if (!permissions) return true;
-    return permissions[key] === true;
-  };
+  async function loadAllData() {
+    try {
+      setLoading(true);
 
-  const toggleSubmenu = (menuKey) => {
-    setOpenSubmenu(openSubmenu === menuKey ? null : menuKey);
-  };
+      const [
+        rosterResult,
+        menResult,
+        womenResult,
+        historyResult,
+        menRosterResult,
+        womenRosterResult,
+        craAppsResult,
+        mciDataResult
+      ] = await Promise.all([
+        supabase.from('secretariat_roster').select('*').eq('org_id', orgId),
+        supabase.from('men_raw').select('PescadoreKey, First, Last, Preferred').eq('org_id', orgId),
+        supabase.from('women_raw').select('PescadoreKey, First, Last, Preferred').eq('org_id', orgId),
+        supabase.from('weekend_history').select('*').eq('org_id', orgId),
+        supabase.from('men_team_rosters').select('*').eq('org_id', orgId),
+        supabase.from('women_team_rosters').select('*').eq('org_id', orgId),
+        supabase.from('cra_applications').select('m_first, f_first').eq('org_id', orgId),
+        supabase.from('mci_checkin_data').select('team_id, member_id, checkin_details').eq('org_id', orgId)
+      ]);
 
-  const handleRefresh = () => {
-    // Trigger a page reload to refresh current view
-    window.location.reload();
-  };
+      if (rosterResult.error) throw rosterResult.error;
+      if (menResult.error) throw menResult.error;
+      if (womenResult.error) throw womenResult.error;
+      if (historyResult.error) throw historyResult.error;
+      if (menRosterResult.error) throw menRosterResult.error;
+      if (womenRosterResult.error) throw womenRosterResult.error;
+      if (craAppsResult.error) throw craAppsResult.error;
+      if (mciDataResult.error) throw mciDataResult.error;
 
-  return (
-    <aside className="sidebar">
-      <div className="sidebar-header" style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '8px',
-        marginBottom: '16px'
-      }}>
-        <img 
-          className="logo-icon" 
-          src="/rooster_head_v1.svg" 
-          alt="Logo"
-          style={{
-            width: '72px',
-            height: '72px'
-          }}
-        />
-        <span className="company-name" style={{
-          fontSize: '0.9rem',
-          fontWeight: '700',
-          color: 'var(--ink)',
-          textAlign: 'center'
-        }}>{user?.organization?.name || 'Tres Dias'}</span>
-      </div>
+      setSecretariatRoster(rosterResult.data || []);
       
-      <nav style={{ display: 'flex', flexDirection: 'column', flex: '1 0 auto' }}>
-        <ul className="sidebar-nav">
-          {hasPermission('team-viewer-app') && (
-            <li className={`nav-item has-submenu ${openSubmenu === 'directory' ? 'open' : ''}`}>
-              <a 
-                href="#" 
-                className={currentView === 'directory' || currentView === 'team-list' ? 'active' : ''}
-                onClick={(e) => { 
-                  e.preventDefault(); 
-                  toggleSubmenu('directory');
-                  onNavigate('directory'); 
-                }}
-              >
-                <span className="nav-text">Directory</span>
-              </a>
-              <ul className="submenu">
-                <li className="submenu-item">
-                  <a 
-                    href="#" 
-                    className={currentView === 'team-list' ? 'active' : ''}
-                    onClick={(e) => { 
-                      e.preventDefault(); 
-                      onNavigate('team-list'); 
-                    }}
-                  >
-                    Team List
-                  </a>
-                </li>
-              </ul>
-            </li>
-          )}
+      // Combine men and women for member lookup
+      const allPeople = [
+        ...(menResult.data || []),
+        ...(womenResult.data || [])
+      ];
+      setAllMembers(allPeople);
 
-          {/* Team Meetings Menu */}
-          {hasPermission('meeting-check-in-app') && (
-            <li className={`nav-item has-submenu ${openSubmenu === 'mci' ? 'open' : ''}`} id="mci-nav-parent">
-              <a 
-                href="#" 
-                className={currentView.startsWith('mci-') ? 'active' : ''}
-                onClick={(e) => { 
-                  e.preventDefault(); 
-                  toggleSubmenu('mci');
-                }}
-              >
-                <span className="nav-text">Team Meetings</span>
-              </a>
-              <ul className="submenu">
-                <li className="submenu-item">
-                  <a 
-                    href="#" 
-                    className={currentView === 'mci-checkin' ? 'active' : ''}
-                    onClick={(e) => { 
-                      e.preventDefault(); 
-                      onNavigate('mci-checkin'); 
-                    }}
-                  >
-                    Check-In
-                  </a>
-                </li>
-                <li className="submenu-item">
-                  <a 
-                    href="#" 
-                    className={currentView === 'mci-reports' ? 'active' : ''}
-                    onClick={(e) => { 
-                      e.preventDefault(); 
-                      onNavigate('mci-reports'); 
-                    }}
-                  >
-                    Reports
-                  </a>
-                </li>
-                <li className="submenu-item">
-                  <a 
-                    href="#" 
-                    className={currentView === 'mci-budget' ? 'active' : ''}
-                    onClick={(e) => { 
-                      e.preventDefault(); 
-                      onNavigate('mci-budget'); 
-                    }}
-                  >
-                    Budget
-                  </a>
-                </li>
-              </ul>
-            </li>
-          )}
+      setWeekendHistoryData(historyResult.data || []);
+      setMenRoster(menRosterResult.data || []);
+      setWomenRoster(womenRosterResult.data || []);
+      setCraApps(craAppsResult.data || []);
+      setMciData(mciDataResult.data || []);
 
-          {hasPermission('candidate-registration') && (
-            <li className={`nav-item has-submenu ${openSubmenu === 'cra' ? 'open' : ''}`}>
-              <a 
-                href="#" 
-                className={currentView.startsWith('cra-') ? 'active' : ''}
-                onClick={(e) => { 
-                  e.preventDefault(); 
-                  toggleSubmenu('cra');
-                }}
-              >
-                <span className="nav-text">Candidate Registration</span>
-              </a>
-              <ul className="submenu">
-                <li className="submenu-item">
-                  <a 
-                    href="#" 
-                    className={currentView === 'cra-new-application' ? 'active' : ''}
-                    onClick={(e) => { 
-                      e.preventDefault(); 
-                      onNavigate('cra-new-application'); 
-                    }}
-                  >
-                    New Application
-                  </a>
-                </li>
-                <li className="submenu-item">
-                  <a 
-                    href="#" 
-                    className={currentView === 'cra-followup' ? 'active' : ''}
-                    onClick={(e) => { 
-                      e.preventDefault(); 
-                      onNavigate('cra-followup'); 
-                    }}
-                  >
-                    Follow-up Calls
-                  </a>
-                </li>
-                <li className="submenu-item">
-                  <a 
-                    href="#" 
-                    className={currentView === 'cra-view-roster' ? 'active' : ''}
-                    onClick={(e) => { 
-                      e.preventDefault(); 
-                      onNavigate('cra-view-roster'); 
-                    }}
-                  >
-                    View Roster
-                  </a>
-                </li>
-                <li className="submenu-item">
-                  <a 
-                    href="#" 
-                    className={currentView === 'cra-checkin' ? 'active' : ''}
-                    onClick={(e) => { 
-                      e.preventDefault(); 
-                      onNavigate('cra-checkin'); 
-                    }}
-                  >
-                    Live Check-in
-                  </a>
-                </li>
-                <li className="submenu-item">
-                  <a 
-                    href="#" 
-                    className={currentView === 'cra-reports' ? 'active' : ''}
-                    onClick={(e) => { 
-                      e.preventDefault(); 
-                      onNavigate('cra-reports'); 
-                    }}
-                  >
-                    Reports
-                  </a>
-                </li>
-                <li className="submenu-item">
-                  <a 
-                    href="#" 
-                    className={currentView === 'cra-email' ? 'active' : ''}
-                    onClick={(e) => { 
-                      e.preventDefault(); 
-                      onNavigate('cra-email'); 
-                    }}
-                  >
-                    Email Reports
-                  </a>
-                </li>
-              </ul>
-            </li>
-          )}
+    } catch (error) {
+      console.error('Error loading secretariat data:', error);
+      window.showMainStatus(`Error loading data: ${error.message}`, true);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-          {hasPermission('secretariat-app') && (
-            <li className="nav-item">
-              <a 
-                href="#" 
-                className={currentView === 'secretariat' ? 'active' : ''}
-                onClick={(e) => { 
-                  e.preventDefault(); 
-                  onNavigate('secretariat'); 
-                }}
-              >
-                <span className="nav-text">Secretariat</span>
-              </a>
-            </li>
-          )}
-        </ul>
+  function findMemberName(memberId) {
+    if (!memberId) return null;
+    const member = allMembers.find(m => String(m.PescadoreKey) === String(memberId));
+    if (!member) return `Unknown (ID: ${memberId})`;
+    return `${member.Preferred || member.First} ${member.Last}`.trim();
+  }
+
+  function calculateActiveWeekend() {
+    if (menRoster.length === 0 && womenRoster.length === 0) return null;
+
+    const menWeekendId = menRoster.length > 0 ? menRoster[0].weekend_identifier : null;
+    const womenWeekendId = womenRoster.length > 0 ? womenRoster[0].weekend_identifier : null;
+    
+    const activeWeekendNum = Math.max(
+      parseInt(menWeekendId?.match(/\d+$/)?.[0] || '0'),
+      parseInt(womenWeekendId?.match(/\d+$/)?.[0] || '0')
+    );
+
+    if (activeWeekendNum === 0) return null;
+
+    const activeWeekend = { num: activeWeekendNum, men: null, women: null };
+
+    // Process Men's Active Data
+    if (menRoster.length > 0) {
+      const rector = menRoster.find(m => m.role === 'Rector');
+      const teamCount = menRoster.length;
+      const candidateCount = craApps.filter(app => app.m_first && app.m_first.trim() !== '').length;
+
+      // Calculate avg meeting attendance for men
+      const menMciForTeam = mciData.filter(d => d.team_id === menWeekendId);
+      let totalMeetingsAttended = 0;
+      menMciForTeam.forEach(memberData => {
+        const attendance = memberData.checkin_details?.attendance || {};
+        totalMeetingsAttended += Object.values(attendance).filter(att => att === true || att === 'zoom').length;
+      });
+      const totalPossibleMeetings = teamCount * MEETING_COUNT;
+      const avgMeetingAttd = totalPossibleMeetings > 0 ? (totalMeetingsAttended / totalPossibleMeetings) * 100 : 0;
+
+      activeWeekend.men = {
+        rector_pescadore_key: rector ? rector.pescadore_key : null,
+        team_member_count: teamCount,
+        candidate_count: candidateCount,
+        avg_meeting_attd: avgMeetingAttd
+      };
+    }
+
+    // Process Women's Active Data
+    if (womenRoster.length > 0) {
+      const rector = womenRoster.find(m => m.role === 'Rector');
+      const teamCount = womenRoster.length;
+      const candidateCount = craApps.filter(app => app.f_first && app.f_first.trim() !== '').length;
+
+      // Calculate avg meeting attendance for women
+      const womenMciForTeam = mciData.filter(d => d.team_id === womenWeekendId);
+      let totalMeetingsAttended = 0;
+      womenMciForTeam.forEach(memberData => {
+        const attendance = memberData.checkin_details?.attendance || {};
+        totalMeetingsAttended += Object.values(attendance).filter(att => att === true || att === 'zoom').length;
+      });
+      const totalPossibleMeetings = teamCount * MEETING_COUNT;
+      const avgMeetingAttd = totalPossibleMeetings > 0 ? (totalMeetingsAttended / totalPossibleMeetings) * 100 : 0;
+
+      activeWeekend.women = {
+        rector_pescadore_key: rector ? rector.pescadore_key : null,
+        team_member_count: teamCount,
+        candidate_count: candidateCount,
+        avg_meeting_attd: avgMeetingAttd
+      };
+    }
+
+    return activeWeekend;
+  }
+
+  function toggleRow(weekendId) {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(weekendId)) {
+        newSet.delete(weekendId);
+      } else {
+        newSet.add(weekendId);
+      }
+      return newSet;
+    });
+  }
+
+  function renderDetailRow(gender, data, isActive) {
+    if (!data) {
+      return (
+        <tr key={gender}>
+          <td><strong>{gender}</strong></td>
+          <td colSpan="5" style={{ color: 'var(--muted)', fontStyle: 'italic' }}>
+            No data for this weekend
+          </td>
+        </tr>
+      );
+    }
+
+    const rectorName = findMemberName(data.rector_pescadore_key) || 'N/A';
+    const meetingAttdDisplay = data.avg_meeting_attd !== undefined
+      ? <strong style={{ color: 'var(--accentA)' }}>{data.avg_meeting_attd.toFixed(1)}%</strong>
+      : 'N/A';
+
+    const editButton = isActive
+      ? <button className="btn btn-small" disabled title="Active weekend data cannot be edited here.">Edit</button>
+      : <button className="btn btn-small" onClick={() => handleEditHistory(data.id)}>Edit</button>;
+
+    return (
+      <tr key={gender}>
+        <td><strong>{gender}</strong></td>
+        <td>{rectorName}</td>
+        <td>{data.team_member_count || 0}</td>
+        <td>{data.candidate_count || 0}</td>
+        <td>{meetingAttdDisplay}</td>
+        <td>{editButton}</td>
+      </tr>
+    );
+  }
+
+  function handleEditHistory(recordId) {
+    // TODO: Implement edit history modal
+    window.showMainStatus('Edit history functionality coming soon!', false);
+  }
+
+  function renderDashboardCards() {
+    // Calculate term progress for each position
+    const cards = POSITIONS.map(position => {
+      const rosterEntry = secretariatRoster.find(r => r.position_key === position.key);
+      
+      if (!rosterEntry) {
+        return (
+          <div key={position.key} className="secretariat-card">
+            <div className="secretariat-card-header">
+              <div className="position-title">{position.name}</div>
+            </div>
+            <div className="secretariat-card-body">
+              <div className="member-name unfilled">Unfilled Position</div>
+              <div className="term-info-footer">
+                <div className="term-dates">—</div>
+                <div className="time-remaining" style={{ color: 'var(--muted)' }}>No Active Term</div>
+              </div>
+              <div className="timeline-container">
+                <div className="timeline-segment">
+                  <div className="timeline-fill" style={{ width: '0%', backgroundColor: 'var(--border)' }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Calculate term progress - start_date and term_length_years are used
+      const startDate = rosterEntry.start_date ? new Date(rosterEntry.start_date) : null;
+      const termLengthYears = rosterEntry.term_length_years || position.defaultTerm;
+      const isInterim = rosterEntry.is_interim || false;
+
+      let endDate = null;
+      if (startDate) {
+        endDate = new Date(startDate);
+        endDate.setFullYear(endDate.getFullYear() + termLengthYears);
+      }
+
+      let progressPercent = 0;
+      let timeRemainingText = '';
+      let segmentColor = 'green';
+
+      if (startDate && endDate) {
+        const today = new Date();
+        const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+        const elapsedDays = (today - startDate) / (1000 * 60 * 60 * 24);
+        progressPercent = Math.min(100, Math.max(0, (elapsedDays / totalDays) * 100));
+
+        const remainingDays = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+        const remainingMonths = Math.floor(remainingDays / 30);
+
+        if (remainingDays < 0) {
+          timeRemainingText = 'Term Expired';
+          segmentColor = 'red';
+        } else if (remainingMonths < 6) {
+          timeRemainingText = `${remainingMonths} mo. remaining`;
+          segmentColor = 'yellow';
+        } else {
+          timeRemainingText = `${remainingMonths} mo. remaining`;
+          segmentColor = 'green';
+        }
+      }
+
+      // Build member name - handle couples
+      let memberName = 'Unknown';
+      if (position.type === 'couple') {
+        const member1 = findMemberName(rosterEntry.member1_id);
+        const member2 = findMemberName(rosterEntry.member2_id);
         
-        <div className="sidebar-footer">
-          <div 
-            id="userProfileWidget" 
-            style={{ 
-              display: user ? 'block' : 'none', 
-              paddingBottom: '12px', 
-              marginBottom: '12px', 
-              borderBottom: '1px solid var(--border)', 
-              textAlign: 'center' 
-            }}
-          >
-            <span 
-              id="loggedInUserName" 
-              style={{ 
-                fontWeight: 700, 
-                fontSize: '1rem', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center' 
-              }}
-            >
-              {isSuperAdmin ? (
-                <>
-                  Welcome,&nbsp;<span className="super-admin-glow">
-                    {user?.display_name || (user?.full_name ? user.full_name.split(' ')[0] : 'Admin')}
-                  </span>
-                </>
-              ) : (
-                `Welcome, ${user?.display_name || (user?.full_name ? user.full_name.split(' ')[0] : 'User')}`
-              )}
-            </span>
-          </div>
+        if (member1 && member2) {
+          // Check if they have the same last name
+          const member1Obj = allMembers.find(m => String(m.PescadoreKey) === String(rosterEntry.member1_id));
+          const member2Obj = allMembers.find(m => String(m.PescadoreKey) === String(rosterEntry.member2_id));
           
-          <ul className="sidebar-nav">
-            <li className="nav-item">
-              <a 
-                href="#" 
-                className={currentView === 'account' ? 'active' : ''}
-                onClick={(e) => { e.preventDefault(); onNavigate('account'); }}
-              >
-                <span className="nav-text">Account</span>
-              </a>
-            </li>
-            
-            <li className="nav-item">
-              <a 
-                href="#" 
-                className={currentView === 'app-settings' ? 'active' : ''}
-                onClick={(e) => { e.preventDefault(); onNavigate('app-settings'); }}
-              >
-                <span className="nav-text">Settings</span>
-              </a>
-            </li>
+          if (member1Obj && member2Obj && member1Obj.Last === member2Obj.Last) {
+            // Same last name: "First1 & First2 Last"
+            const first1 = member1Obj.Preferred || member1Obj.First;
+            const first2 = member2Obj.Preferred || member2Obj.First;
+            memberName = `${first1} & ${first2} ${member1Obj.Last}`;
+          } else {
+            // Different last names: "Full1 & Full2"
+            memberName = `${member1} & ${member2}`;
+          }
+        } else if (member1) {
+          memberName = member1;
+        } else if (member2) {
+          memberName = member2;
+        }
+      } else {
+        // Single position
+        memberName = findMemberName(rosterEntry.member1_id) || 'Unknown';
+      }
 
-            {/* Super Admin Link - Only shows if user is Super Admin */}
-            {isSuperAdmin && (
-              <li className="nav-item" id="superAdminLink">
-                <a 
-                  href="#" 
-                  className={currentView === 'super-admin' ? 'active' : ''}
-                  onClick={(e) => { e.preventDefault(); onNavigate('super-admin'); }}
-                >
-                  <span className="nav-text">Super Admin</span>
-                </a>
-              </li>
-            )}
-            
-            <li className="nav-item">
-              <a 
-                href="#" 
-                onClick={(e) => { e.preventDefault(); logout(); }}
-              >
-                <span className="nav-text" style={{ color: 'var(--accentD)' }}>Log Out</span>
-              </a>
-            </li>
-          </ul>
-          
-          {/* Universal Refresh Button - Unassuming, refreshes current view */}
-          <div 
-            style={{ 
-              textAlign: 'center', 
-              paddingTop: '12px', 
-              marginTop: '12px', 
-              borderTop: '1px solid var(--border)' 
-            }}
-          >
-            <button
-              onClick={handleRefresh}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--muted)',
-                fontSize: '0.75rem',
-                cursor: 'pointer',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                transition: 'color 0.2s, background-color 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = 'var(--ink)';
-                e.target.style.backgroundColor = 'var(--bg)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = 'var(--muted)';
-                e.target.style.backgroundColor = 'transparent';
-              }}
-            >
-              Refresh
-            </button>
+      // Build intern info - handle couples
+      let internInfo = null;
+      if (position.type === 'couple' && (rosterEntry.intern1_id || rosterEntry.intern2_id)) {
+        const intern1 = findMemberName(rosterEntry.intern1_id);
+        const intern2 = findMemberName(rosterEntry.intern2_id);
+        
+        if (intern1 && intern2) {
+          internInfo = `Interns: ${intern1} & ${intern2}`;
+        } else if (intern1) {
+          internInfo = `Intern: ${intern1}`;
+        } else if (intern2) {
+          internInfo = `Intern: ${intern2}`;
+        }
+      } else if (rosterEntry.intern1_id) {
+        internInfo = `Intern: ${findMemberName(rosterEntry.intern1_id)}`;
+      }
+
+      return (
+        <div key={position.key} className={`secretariat-card ${isInterim ? 'is-interim' : ''}`}>
+          <div className="secretariat-card-header">
+            <div className="position-title">{position.name}</div>
+            <div className="member-name" style={{ minHeight: 'auto', fontSize: '0.85rem', fontWeight: '600' }}>
+              {memberName}
+            </div>
           </div>
-          
-          {/* Clickable Version Number - Opens Changelog Modal */}
-          <div 
-            style={{ 
-              textAlign: 'center', 
-              fontSize: '0.75rem', 
-              color: 'var(--muted)', 
-              paddingTop: '8px',
-              cursor: 'pointer',
-              transition: 'color 0.2s'
-            }}
-            onClick={onOpenChangelog}
-            onMouseEnter={(e) => {
-              e.target.style.color = 'var(--ink)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.color = 'var(--muted)';
-            }}
-          >
-            Version <span>{currentVersion}</span>
+          <div className="secretariat-card-body">
+            {/* Reserved space for intern - always takes up space even when empty */}
+            <div style={{ minHeight: '20px', marginBottom: '8px' }}>
+              {internInfo && <div className="intern-info" style={{ margin: 0 }}>{internInfo}</div>}
+            </div>
+            <div className="term-info-footer">
+              <div className="term-dates">
+                {startDate && endDate
+                  ? `${startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
+                  : '—'}
+              </div>
+              <div className="time-remaining" style={{ color: segmentColor === 'red' ? 'var(--accentD)' : segmentColor === 'yellow' ? 'var(--accentC)' : 'var(--accentA)' }}>
+                {timeRemainingText}
+              </div>
+            </div>
+            <div className="timeline-container">
+              <div className="timeline-segment">
+                <div 
+                  className={`timeline-fill ${segmentColor}`}
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
-      </nav>
-    </aside>
-  );
-});
+      );
+    });
 
-export default Sidebar;
+    return cards;
+  }
+
+  function renderWeekendHistoryTable() {
+    const activeWeekend = calculateActiveWeekend();
+
+    if (weekendHistoryData.length === 0 && !activeWeekend) {
+      return (
+        <tr>
+          <td colSpan="3" style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
+            No weekend history data found.
+          </td>
+        </tr>
+      );
+    }
+
+    const rows = [];
+
+    // Render Active Weekend Row First
+    if (activeWeekend) {
+      const menData = activeWeekend.men;
+      const womenData = activeWeekend.women;
+      const totalParticipants = 
+        (menData?.team_member_count || 0) + 
+        (menData?.candidate_count || 0) + 
+        (womenData?.team_member_count || 0) + 
+        (womenData?.candidate_count || 0);
+
+      const weekendId = `active-${activeWeekend.num}`;
+      const isExpanded = expandedRows.has(weekendId);
+
+      rows.push(
+        <tr 
+          key={weekendId}
+          className="history-parent-row active"
+          onClick={() => toggleRow(weekendId)}
+        >
+          <td>
+            <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>›</span>
+          </td>
+          <td><strong>Weekend #{activeWeekend.num} (Active)</strong></td>
+          <td style={{ textAlign: 'right', fontWeight: '600' }}>{totalParticipants}</td>
+        </tr>
+      );
+
+      if (isExpanded) {
+        rows.push(
+          <tr key={`${weekendId}-detail`} className="history-detail-row">
+            <td colSpan="3" style={{ padding: 0 }}>
+              <div className="detail-container">
+                <table className="detail-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '80px' }}>Gender</th>
+                      <th>Rector</th>
+                      <th style={{ width: '100px' }}>Team</th>
+                      <th style={{ width: '120px' }}>Candidates</th>
+                      <th style={{ width: '150px' }}>Avg. Meeting Attd.</th>
+                      <th style={{ width: '100px' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderDetailRow('Men', menData, true)}
+                    {renderDetailRow('Women', womenData, true)}
+                  </tbody>
+                </table>
+              </div>
+            </td>
+          </tr>
+        );
+      }
+    }
+
+    // Render Historical Rows
+    const groupedByWeekend = weekendHistoryData.reduce((acc, record) => {
+      const num = record.weekend_number;
+      if (!acc[num]) {
+        acc[num] = { men: null, women: null };
+      }
+      acc[num][record.gender] = record;
+      return acc;
+    }, {});
+
+    const sortedWeekendNumbers = Object.keys(groupedByWeekend).sort((a, b) => b - a);
+
+    sortedWeekendNumbers.forEach(num => {
+      // Don't show historical record if it matches the active weekend number
+      if (activeWeekend && parseInt(num, 10) === activeWeekend.num) return;
+
+      const weekend = groupedByWeekend[num];
+      const menData = weekend.men;
+      const womenData = weekend.women;
+      const totalParticipants = 
+        (menData?.team_member_count || 0) + 
+        (menData?.candidate_count || 0) + 
+        (womenData?.team_member_count || 0) + 
+        (womenData?.candidate_count || 0);
+
+      const weekendId = num;
+      const isExpanded = expandedRows.has(weekendId);
+
+      rows.push(
+        <tr 
+          key={weekendId}
+          className="history-parent-row"
+          onClick={() => toggleRow(weekendId)}
+        >
+          <td>
+            <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>›</span>
+          </td>
+          <td><strong>Weekend #{num}</strong></td>
+          <td style={{ textAlign: 'right', fontWeight: '600' }}>{totalParticipants}</td>
+        </tr>
+      );
+
+      if (isExpanded) {
+        rows.push(
+          <tr key={`${weekendId}-detail`} className="history-detail-row">
+            <td colSpan="3" style={{ padding: 0 }}>
+              <div className="detail-container">
+                <table className="detail-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '80px' }}>Gender</th>
+                      <th>Rector</th>
+                      <th style={{ width: '100px' }}>Team</th>
+                      <th style={{ width: '120px' }}>Candidates</th>
+                      <th style={{ width: '150px' }}>Avg. Meeting Attd.</th>
+                      <th style={{ width: '100px' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderDetailRow('Men', menData, false)}
+                    {renderDetailRow('Women', womenData, false)}
+                  </tbody>
+                </table>
+              </div>
+            </td>
+          </tr>
+        );
+      }
+    });
+
+    return rows;
+  }
+
+  if (loading) {
+    return (
+      <div className="app-panel" style={{ display: 'block' }}>
+        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--muted)' }}>
+          Loading Secretariat Dashboard...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="app-panel" id="secretariat-app" style={{ display: 'block' }}>
+      {/* Dashboard Cards */}
+      <div className="secretariat-dashboard-grid">
+        {renderDashboardCards()}
+      </div>
+
+      {/* Weekend History Section */}
+      <div className="card pad" style={{ marginTop: '24px' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          borderBottom: '2px solid var(--accentB)', 
+          paddingBottom: '10px', 
+          marginBottom: '14px' 
+        }}>
+          <div className="section-title" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
+            Weekend History
+          </div>
+        </div>
+        <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: 0, marginBottom: '20px' }}>
+          A historical record of past weekends. Click a row to expand and see details for the Men's and Women's weekends.
+        </p>
+        <table className="table" id="weekend-history-table">
+          <thead>
+            <tr>
+              <th style={{ width: '30px' }}></th>
+              <th>Weekend</th>
+              <th style={{ textAlign: 'right' }}>Total Participants</th>
+            </tr>
+          </thead>
+          <tbody id="weekend-history-tbody">
+            {renderWeekendHistoryTable()}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
