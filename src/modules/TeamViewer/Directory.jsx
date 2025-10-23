@@ -772,6 +772,7 @@ export default function Directory() {
             onCloseRoleSelector={closeRoleSelector}
             onAssignRole={assignRole}
             getRoleCount={getRoleCount}
+            currentGender={currentGender}
           />
         )}
 
@@ -780,8 +781,10 @@ export default function Directory() {
   );
 }
 
-// REPLACE THE ProfileView FUNCTION IN Directory.jsx WITH THIS VERSION
-// This includes all editable fields from Phase 2b
+// ============================================================
+// PHASE 2C: Complete ProfileView with Save Functionality
+// REPLACE the entire ProfileView function in Directory.jsx with this
+// ============================================================
 
 function ProfileView({ 
   profile, 
@@ -795,8 +798,13 @@ function ProfileView({
   onOpenRoleSelector,
   onCloseRoleSelector,
   onAssignRole,
-  getRoleCount
+  getRoleCount,
+  currentGender,      // ← ADDED: Need this for save
+  onProfileUpdate     // ← ADDED: Callback after save
 }) {
+  const { orgId } = useAuth();
+  const { refreshData } = usePescadores();
+  
   const isDeceased = profile.Deceased === true || (profile.Deceased || '').toLowerCase() === 'y' || (profile.Deceased || '').toLowerCase() === 'yes';
   const isDoNotCall = profile.Do_Not_Call === true || (profile.Do_Not_Call || '').toLowerCase() === 'y' || (profile.Do_Not_Call || '').toLowerCase() === 'yes';
   const isSpiritualDirector = (profile['Spiritual Director'] || 'N').toUpperCase() === 'E';
@@ -849,9 +857,107 @@ function ProfileView({
     }));
   };
   
-  const handleSaveChanges = () => {
-    window.showMainStatus('Save functionality coming in Phase 2c!');
-    setIsEditMode(false);
+  // ===== PHASE 2C: SAVE FUNCTIONALITY =====
+  const handleSaveChanges = async () => {
+    // Determine which table to update based on gender
+    const tableName = currentGender === 'men' ? 'men_raw' : 'women_raw';
+    
+    // Build the update object with only changed fields
+    const updateData = {};
+    
+    // Field mapping: editedProfile field → database field
+    const fieldsToCheck = {
+      'First': 'First',
+      'Preferred': 'Preferred',
+      'Last': 'Last',
+      'Address': 'Address',
+      'City': 'City',
+      'State': 'State',
+      'Zip': 'Zip',
+      'Church': 'Church',
+      'Email': 'Email',
+      'Phone1': 'Phone1'
+    };
+    
+    // Check each field for changes
+    for (const [fieldName, dbColumn] of Object.entries(fieldsToCheck)) {
+      const newValue = editedProfile?.[fieldName] || '';
+      const originalValue = profile[fieldName] || '';
+      
+      if (newValue !== originalValue) {
+        updateData[dbColumn] = newValue;
+      }
+    }
+    
+    // Handle boolean fields (Do_Not_Call, Deceased)
+    // These need special handling because the database might store 'y'/'yes'/true
+    const booleanFields = ['Do_Not_Call', 'Deceased'];
+    
+    for (const fieldName of booleanFields) {
+      const newValue = editedProfile?.[fieldName];
+      const originalValue = profile[fieldName];
+      
+      // Convert original value to boolean for comparison
+      const isOriginalTrue = originalValue === true || 
+                            (originalValue || '').toLowerCase() === 'y' || 
+                            (originalValue || '').toLowerCase() === 'yes';
+      
+      // Convert new value to boolean
+      const isNewTrue = newValue === true || 
+                        newValue === 'true' || 
+                        (newValue || '').toLowerCase() === 'y' || 
+                        (newValue || '').toLowerCase() === 'yes';
+      
+      if (isNewTrue !== isOriginalTrue) {
+        updateData[fieldName] = isNewTrue;
+      }
+    }
+    
+    // If no changes detected, exit early
+    if (Object.keys(updateData).length === 0) {
+      window.showMainStatus('No changes detected.', false);
+      setIsEditMode(false);
+      return;
+    }
+    
+    try {
+      // Update the database
+      const { data, error } = await supabase
+        .from(tableName)
+        .update(updateData)
+        .eq('PescadoreKey', profile.PescadoreKey)
+        .eq('org_id', orgId)
+        .select();
+      
+      if (error) {
+        console.error('Save error:', error);
+        window.showMainStatus(`Error saving changes: ${error.message}`, true);
+        return;
+      }
+      
+      // Success! Refresh the data from context
+      await refreshData();
+      
+      // Show success message
+      const changeCount = Object.keys(updateData).length;
+      window.showMainStatus(
+        `Successfully saved ${changeCount} change${changeCount > 1 ? 's' : ''}!`, 
+        false
+      );
+      
+      // Exit edit mode
+      setIsEditMode(false);
+      setEditedProfile(null);
+      
+      // Notify parent if callback provided
+      if (onProfileUpdate) {
+        onProfileUpdate();
+      }
+      
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      window.showMainStatus('An unexpected error occurred while saving.', true);
+    }
   };
   
   const handleKeyPress = (e) => {
@@ -864,8 +970,8 @@ function ProfileView({
   return (
     <div id="profileView" className="profile-view" style={{ 
     display: 'block',
-    height: 'calc(100vh - 48px)', /* ← Full height minus padding */
-    overflowY: 'auto', /* ← Make THIS the scroll container */
+    height: 'calc(100vh - 48px)',
+    overflowY: 'auto',
     paddingBottom: '40px'
   }}>
       <div className="navigation" style={{ marginTop: 0, marginBottom: '16px' }}>
