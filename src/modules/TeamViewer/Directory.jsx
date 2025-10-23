@@ -897,7 +897,7 @@ function ProfileView({
                   <span className="main-info-value">{profile.Phone1 || 'N/A'}</span>
                 </div>
                 
-                {/* Floating status badge - top right - taller and wider */}
+                {/* Floating status badge - top right with glow */}
                 {(isDeceased || isDoNotCall || isSpiritualDirector) && (
                   <div style={{
                     position: 'absolute',
@@ -905,7 +905,7 @@ function ProfileView({
                     right: '24px',
                     bottom: '24px',
                     width: '110px',
-                    padding: '16px 12px',
+                    padding: '8px',
                     borderRadius: '8px',
                     fontSize: '11px',
                     fontWeight: 'bold',
@@ -918,6 +918,7 @@ function ProfileView({
                     border: `2px solid ${isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745'}`,
                     backgroundColor: isDeceased ? 'rgba(0, 0, 0, 0.15)' : isDoNotCall ? 'rgba(220, 53, 69, 0.15)' : 'rgba(40, 167, 69, 0.15)',
                     color: isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745',
+                    boxShadow: isDeceased ? '0 0 12px rgba(0, 0, 0, 0.3)' : isDoNotCall ? '0 0 12px rgba(220, 53, 69, 0.4)' : '0 0 12px rgba(40, 167, 69, 0.4)',
                     zIndex: 10,
                     lineHeight: '1.3'
                   }}>
