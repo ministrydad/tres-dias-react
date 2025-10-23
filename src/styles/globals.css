@@ -3743,4 +3743,32 @@ body.light-theme .date-picker-dropdown {
         size: letter portrait;
         margin: 0.5in;
     }
+
+    /* Fix profile header layout for print - stack name and weekend info */
+    #team-viewer-app .profile-header > div {
+        display: block !important;
+        flex-wrap: nowrap !important;
+    }
+
+    #team-viewer-app .profile-name {
+        display: block !important;
+        margin-bottom: 8px !important;
+    }
+
+    #team-viewer-app .legal-name-badge {
+        display: inline-block !important;
+        margin-left: 8px !important;
+    }
+
+    #team-viewer-app .profile-weekend-info {
+        display: block !important;
+        margin-left: 0 !important;
+        margin-top: 4px !important;
+        font-size: 0.85em !important;
+    }
+
+    #team-viewer-app .name-separator {
+        display: none !important;
+    }
+
 }
