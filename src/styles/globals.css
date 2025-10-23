@@ -2062,6 +2062,33 @@ body.light-theme .toggle .opt.active {
     animation: slideInRight 0.3s ease-out;
 }
 
+#team-viewer-app .save-button,
+#team-viewer-app .cancel-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#team-viewer-app .save-button {
+    background-color: #28a745;
+    color: white;
+}
+
+#team-viewer-app .cancel-button {
+    background-color: #6c757d;
+    color: white;
+}
+
+#team-viewer-app .save-cancel-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
 
 /* ===============================================
    16. TEAM LIST MODULE
