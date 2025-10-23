@@ -797,9 +797,51 @@ function ProfileView({
   const isDeceased = profile.Deceased === true || (profile.Deceased || '').toLowerCase() === 'y' || (profile.Deceased || '').toLowerCase() === 'yes';
   const isDoNotCall = profile.Do_Not_Call === true || (profile.Do_Not_Call || '').toLowerCase() === 'y' || (profile.Do_Not_Call || '').toLowerCase() === 'yes';
   const isSpiritualDirector = (profile['Spiritual Director'] || 'N').toUpperCase() === 'E';
-
   const fullName = `${profile.Preferred || profile.First || ''} ${profile.Last || ''}`.trim();
   const legalName = profile.First !== profile.Preferred && profile.Preferred ? profile.First : null;
+  // ===== PHASE 1: Edit Mode State =====
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
+  
+  const EDIT_PASSWORD = 'edit';
+  
+  const handleRequestEdit = () => {
+    setShowPasswordModal(true);
+    setPasswordError(false);
+  };
+  
+  const handleClosePasswordModal = () => {
+    setShowPasswordModal(false);
+    setPasswordInput('');
+    setPasswordError(false);
+  };
+  
+  const handleCheckPassword = () => {
+    if (passwordInput === EDIT_PASSWORD) {
+      handleClosePasswordModal();
+      setIsEditMode(true);
+    } else {
+      setPasswordError(true);
+    }
+  };
+  
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+  };
+  
+  const handleSaveChanges = () => {
+    window.showMainStatus('Save functionality coming in Phase 2!');
+    setIsEditMode(false);
+  };
+  
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleCheckPassword();
+    }
+  };
+  
 
   return (
     <div id="profileView" className="profile-view" style={{ 
@@ -856,7 +898,7 @@ function ProfileView({
         >
           <div id="profileContainer" className="profile-container">
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
-              <div className="card pad profile-main-info" style={{ position: 'relative' }}>
+              <div className={`card pad profile-main-info${isEditMode ? ' edit-mode' : ''}`} style={{ position: 'relative' }}>
                 <div className="profile-header">
                   <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                     <h2 className="profile-name">{fullName}</h2>
@@ -935,9 +977,39 @@ function ProfileView({
             <ProfessorRolesCard profile={profile} />
           </div>
 
-          <div style={{ marginTop: '16px', textAlign: 'center' }}>
-            <button id="editButton" className="edit-button">Edit Profile</button>
-          </div>
+          {!isEditMode && (
+  <div style={{ marginTop: '16px', textAlign: 'center' }}>
+    <button 
+      id="editButton" 
+      className="edit-button"
+      onClick={handleRequestEdit}
+    >
+      Edit Profile
+    </button>
+  </div>
+)}
+
+{isEditMode && (
+  <div className="save-cancel-buttons" style={{ 
+    display: 'flex',
+    gap: '10px',
+    justifyContent: 'center',
+    marginTop: '20px'
+  }}>
+    <button 
+      className="cancel-button"
+      onClick={handleCancelEdit}
+    >
+      Cancel
+    </button>
+    <button 
+      className="save-button"
+      onClick={handleSaveChanges}
+    >
+      Save Changes
+    </button>
+  </div>
+)}
         </div>
 
         {roleSelectorOpen && (
@@ -960,6 +1032,102 @@ function ProfileView({
           </div>
         )}
       </div>
+      
+      {/* Password Modal */}
+      {showPasswordModal && (
+        <div className="password-modal" style={{
+          display: 'block',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 1000
+        }}>
+          <div className="password-modal-content" style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '16px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+            width: '95%',
+            maxWidth: '400px'
+          }}>
+            <h3 style={{ 
+              marginBottom: '20px',
+              color: '#333',
+              fontSize: '1.5rem'
+            }}>
+              Enter Password to Edit
+            </h3>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter password"
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: `2px solid ${passwordError ? '#dc3545' : '#ccc'}`,
+                borderRadius: '4px',
+                fontSize: '16px',
+                marginBottom: '10px'
+              }}
+            />
+            {passwordError && (
+              <p style={{
+                color: '#dc3545',
+                fontSize: '14px',
+                marginBottom: '15px'
+              }}>
+                Incorrect password. Please try again.
+              </p>
+            )}
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={handleClosePasswordModal}
+                style={{
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCheckPassword}
+                style={{
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold'
+                }}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
