@@ -899,11 +899,11 @@ function ProfileView({
                 
                 {(isDeceased || isDoNotCall || isSpiritualDirector) && (
                   <div style={{
-                    marginTop: '12px',
+                    marginTop: '0',
                     marginLeft: '-24px',
                     marginRight: '-24px',
                     marginBottom: '-24px',
-                    padding: '6px',
+                    padding: '8px',
                     textAlign: 'center',
                     fontWeight: 'bold',
                     fontSize: '12px',
@@ -911,8 +911,8 @@ function ProfileView({
                     letterSpacing: '1px',
                     color: 'white',
                     backgroundColor: isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745',
-                    borderBottomLeftRadius: '8px',
-                    borderBottomRightRadius: '8px'
+                    borderBottomLeftRadius: '16px',
+                    borderBottomRightRadius: '16px'
                   }}>
                     {isDeceased ? 'DECEASED' : isDoNotCall ? 'DO NOT CALL' : 'SPIRITUAL DIRECTOR'}
                   </div>
