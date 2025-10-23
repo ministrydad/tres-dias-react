@@ -52,9 +52,20 @@ const Sidebar = memo(function Sidebar({ currentView, onNavigate, permissions, on
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-header">
+      <div className="sidebar-header" style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '8px',
+        marginBottom: '16px'
+      }}>
         <img className="logo-icon" src="/rooster_head_v1.svg" alt="Logo" />
-        <span className="company-name">{user?.organization?.name || 'Tres Dias'}</span>
+        <span className="company-name" style={{
+          fontSize: '0.9rem',
+          fontWeight: '700',
+          color: 'var(--ink)',
+          textAlign: 'center'
+        }}>{user?.organization?.name || 'Tres Dias'}</span>
       </div>
       
       <nav style={{ display: 'flex', flexDirection: 'column', flex: '1 0 auto' }}>
