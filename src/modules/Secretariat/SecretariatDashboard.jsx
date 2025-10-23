@@ -337,12 +337,12 @@ export default function SecretariatDashboard() {
         <div key={position.key} className={`secretariat-card ${isInterim ? 'is-interim' : ''}`}>
           <div className="secretariat-card-header">
             <div className="position-title">{position.name}</div>
+            <div className="member-name" style={{ minHeight: 'auto', fontSize: '0.85rem', fontWeight: '600' }}>
+              {memberName}
+            </div>
           </div>
           <div className="secretariat-card-body">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', minHeight: '24px' }}>
-              <div className="member-name">{memberName}</div>
-              {internInfo && <div className="intern-info" style={{ marginTop: 0, paddingLeft: 0 }}>{internInfo}</div>}
-            </div>
+            {internInfo && <div className="intern-info">{internInfo}</div>}
             <div className="term-info-footer">
               <div className="term-dates">
                 {startDate && endDate
