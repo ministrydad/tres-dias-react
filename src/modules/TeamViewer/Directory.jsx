@@ -805,6 +805,9 @@ function ProfileView({
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
   
+  // ===== PHASE 2: Edited Profile State =====
+  const [editedProfile, setEditedProfile] = useState(null);
+  
   const EDIT_PASSWORD = 'edit';
   
   const handleRequestEdit = () => {
@@ -821,6 +824,8 @@ function ProfileView({
   const handleCheckPassword = () => {
     if (passwordInput === EDIT_PASSWORD) {
       handleClosePasswordModal();
+      // Clone profile into editedProfile when entering edit mode
+      setEditedProfile({ ...profile });
       setIsEditMode(true);
     } else {
       setPasswordError(true);
@@ -829,6 +834,15 @@ function ProfileView({
   
   const handleCancelEdit = () => {
     setIsEditMode(false);
+    setEditedProfile(null); // Discard all changes
+  };
+  
+  // ===== PHASE 2: Field Change Handler =====
+  const handleFieldChange = (fieldName, value) => {
+    setEditedProfile(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
   };
   
   const handleSaveChanges = () => {
@@ -900,24 +914,67 @@ function ProfileView({
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
               <div className={`card pad profile-main-info${isEditMode ? ' edit-mode' : ''}`} style={{ position: 'relative' }}>
                 <div className="profile-header">
-                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <h2 className="profile-name">{fullName}</h2>
-                    {legalName && (
-                      <span className="legal-name-badge">Legal: {legalName}</span>
-                    )}
-                    {(profile["Candidate Weekend"] || profile["Last weekend worked"]) && (
-                      <span className="name-separator"></span>
-                    )}
-                    {profile["Candidate Weekend"] && (
-                      <span className="profile-weekend-info">
-                        Candidate: <span className="last-served-highlight">{profile["Candidate Weekend"]}</span>
-                      </span>
-                    )}
-                    {profile["Last weekend worked"] && (
-                      <span className="profile-weekend-info">
-                        Last Served: <span className="last-served-highlight">{profile["Last weekend worked"]}</span>
-                      </span>
-                    )}
+                  {!isEditMode ? (
+                    // VIEW MODE: Display name as before
+                    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <h2 className="profile-name">{fullName}</h2>
+                      {legalName && (
+                        <span className="legal-name-badge">Legal: {legalName}</span>
+                      )}
+                      {(profile["Candidate Weekend"] || profile["Last weekend worked"]) && (
+                        <span className="name-separator"></span>
+                      )}
+                      {profile["Candidate Weekend"] && (
+                        <span className="profile-weekend-info">
+                          Candidate: <span className="last-served-highlight">{profile["Candidate Weekend"]}</span>
+                        </span>
+                      )}
+                      {profile["Last weekend worked"] && (
+                        <span className="profile-weekend-info">
+                          Last Served: <span className="last-served-highlight">{profile["Last weekend worked"]}</span>
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    // EDIT MODE: Show name input fields
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(3, 1fr)', 
+                      gap: '12px',
+                      marginBottom: '12px'
+                    }}>
+                      <div>
+                        <label className="main-info-label" style={{ display: 'block', marginBottom: '4px' }}>First Name:</label>
+                        <input
+                          type="text"
+                          className="editable-field"
+                          value={editedProfile?.First || ''}
+                          onChange={(e) => handleFieldChange('First', e.target.value)}
+                          placeholder="First Name"
+                        />
+                      </div>
+                      <div>
+                        <label className="main-info-label" style={{ display: 'block', marginBottom: '4px' }}>Preferred Name:</label>
+                        <input
+                          type="text"
+                          className="editable-field"
+                          value={editedProfile?.Preferred || ''}
+                          onChange={(e) => handleFieldChange('Preferred', e.target.value)}
+                          placeholder="Preferred Name"
+                        />
+                      </div>
+                      <div>
+                        <label className="main-info-label" style={{ display: 'block', marginBottom: '4px' }}>Last Name:</label>
+                        <input
+                          type="text"
+                          className="editable-field"
+                          value={editedProfile?.Last || ''}
+                          onChange={(e) => handleFieldChange('Last', e.target.value)}
+                          placeholder="Last Name"
+                        />
+                      </div>
+                    </div>
+                  )}
                   </div>
                 </div>
                 <div className="main-info-item">
