@@ -342,7 +342,10 @@ export default function SecretariatDashboard() {
             </div>
           </div>
           <div className="secretariat-card-body">
-            {internInfo && <div className="intern-info">{internInfo}</div>}
+            {/* Reserved space for intern - always takes up space even when empty */}
+            <div style={{ minHeight: '20px', marginBottom: '8px' }}>
+              {internInfo && <div className="intern-info" style={{ margin: 0 }}>{internInfo}</div>}
+            </div>
             <div className="term-info-footer">
               <div className="term-dates">
                 {startDate && endDate
