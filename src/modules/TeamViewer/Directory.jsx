@@ -1177,8 +1177,8 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
   const hasChaRequirement = hasTwoChaRoles && hasCoreChaRole;
 
   return (
-    <div className="card pad" style={{ margin: 0, height: '100%' }}>
-      <div className="roles-section">
+    <div className="card pad" style={{ margin: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div className="roles-section" style={{ marginTop: 'auto' }}>
         <div className="roles-title" style={{ marginBottom: '12px' }}>Rector Qualification</div>
         <div className="rector-qualification-grid">
           <div className="qualification-labels">
