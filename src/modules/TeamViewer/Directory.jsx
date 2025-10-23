@@ -976,7 +976,6 @@ function ProfileView({
                     </div>
                   )}
                   </div>
-                </div>
                 <div className="main-info-item">
                   <span className="main-info-label">Address:</span>
                   <span className="main-info-value">
@@ -1088,8 +1087,7 @@ function ProfileView({
             />
           </div>
         )}
-      </div>
-      
+
       {/* Password Modal */}
       {showPasswordModal && (
         <div className="password-modal" style={{
@@ -1185,6 +1183,9 @@ function ProfileView({
           </div>
         </div>
       )}
+
+      </div>
+      
     </div>
   );
 }
