@@ -780,6 +780,9 @@ export default function Directory() {
   );
 }
 
+// REPLACE THE ProfileView FUNCTION IN Directory.jsx WITH THIS VERSION
+// This includes all editable fields from Phase 2b
+
 function ProfileView({ 
   profile, 
   index, 
@@ -799,6 +802,7 @@ function ProfileView({
   const isSpiritualDirector = (profile['Spiritual Director'] || 'N').toUpperCase() === 'E';
   const fullName = `${profile.Preferred || profile.First || ''} ${profile.Last || ''}`.trim();
   const legalName = profile.First !== profile.Preferred && profile.Preferred ? profile.First : null;
+  
   // ===== PHASE 1: Edit Mode State =====
   const [isEditMode, setIsEditMode] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -846,7 +850,7 @@ function ProfileView({
   };
   
   const handleSaveChanges = () => {
-    window.showMainStatus('Save functionality coming in Phase 2!');
+    window.showMainStatus('Save functionality coming in Phase 2c!');
     setIsEditMode(false);
   };
   
@@ -936,7 +940,7 @@ function ProfileView({
                       )}
                     </div>
                   ) : (
-                    // EDIT MODE: Show name input fields
+                    // EDIT MODE: Show name input fields (3-column grid)
                     <div style={{ 
                       display: 'grid', 
                       gridTemplateColumns: 'repeat(3, 1fr)', 
@@ -975,28 +979,174 @@ function ProfileView({
                       </div>
                     </div>
                   )}
-                  </div>
-                <div className="main-info-item">
-                  <span className="main-info-label">Address:</span>
-                  <span className="main-info-value">
-                    {profile.Address || ''}, {profile.City || ''}, {profile.State || ''} {profile.Zip || ''}
-                  </span>
-                </div>
-                <div className="main-info-item">
-                  <span className="main-info-label">Church:</span>
-                  <span className="main-info-value">{profile.Church || 'N/A'}</span>
-                </div>
-                <div className="main-info-item">
-                  <span className="main-info-label">Email:</span>
-                  <span className="main-info-value">{profile.Email || 'N/A'}</span>
-                </div>
-                <div className="main-info-item">
-                  <span className="main-info-label">Phone:</span>
-                  <span className="main-info-value">{profile.Phone1 || 'N/A'}</span>
                 </div>
                 
+                {/* ADDRESS FIELD - Full width in edit mode */}
+                {!isEditMode ? (
+                  <div className="main-info-item">
+                    <span className="main-info-label">Address:</span>
+                    <span className="main-info-value">
+                      {profile.Address || ''}, {profile.City || ''}, {profile.State || ''} {profile.Zip || ''}
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="main-info-item" style={{ gridColumn: '1 / -1' }}>
+                      <span className="main-info-label">Address:</span>
+                      <span className="main-info-value">
+                        <input
+                          type="text"
+                          className="editable-field"
+                          value={editedProfile?.Address || ''}
+                          onChange={(e) => handleFieldChange('Address', e.target.value)}
+                          placeholder="Street Address"
+                        />
+                      </span>
+                    </div>
+                    <div className="main-info-item">
+                      <span className="main-info-label">City:</span>
+                      <span className="main-info-value">
+                        <input
+                          type="text"
+                          className="editable-field"
+                          value={editedProfile?.City || ''}
+                          onChange={(e) => handleFieldChange('City', e.target.value)}
+                          placeholder="City"
+                        />
+                      </span>
+                    </div>
+                    <div className="main-info-item">
+                      <span className="main-info-label">State:</span>
+                      <span className="main-info-value">
+                        <input
+                          type="text"
+                          className="editable-field"
+                          value={editedProfile?.State || ''}
+                          onChange={(e) => handleFieldChange('State', e.target.value)}
+                          placeholder="ST"
+                          maxLength={2}
+                        />
+                      </span>
+                    </div>
+                    <div className="main-info-item">
+                      <span className="main-info-label">Zip:</span>
+                      <span className="main-info-value">
+                        <input
+                          type="text"
+                          className="editable-field"
+                          value={editedProfile?.Zip || ''}
+                          onChange={(e) => handleFieldChange('Zip', e.target.value)}
+                          placeholder="Zip Code"
+                        />
+                      </span>
+                    </div>
+                  </>
+                )}
+                
+                {/* CHURCH FIELD */}
+                <div className="main-info-item" style={isEditMode ? { gridColumn: '1 / -1' } : {}}>
+                  <span className="main-info-label">Church:</span>
+                  <span className="main-info-value">
+                    {!isEditMode ? (
+                      profile.Church || 'N/A'
+                    ) : (
+                      <input
+                        type="text"
+                        className="editable-field"
+                        value={editedProfile?.Church || ''}
+                        onChange={(e) => handleFieldChange('Church', e.target.value)}
+                        placeholder="Church Name"
+                      />
+                    )}
+                  </span>
+                </div>
+                
+                {/* EMAIL FIELD */}
+                <div className="main-info-item" style={isEditMode ? { gridColumn: '1 / -1' } : {}}>
+                  <span className="main-info-label">Email:</span>
+                  <span className="main-info-value">
+                    {!isEditMode ? (
+                      profile.Email || 'N/A'
+                    ) : (
+                      <input
+                        type="email"
+                        className="editable-field"
+                        value={editedProfile?.Email || ''}
+                        onChange={(e) => handleFieldChange('Email', e.target.value)}
+                        placeholder="Email Address"
+                      />
+                    )}
+                  </span>
+                </div>
+                
+                {/* PHONE FIELD */}
+                <div className="main-info-item">
+                  <span className="main-info-label">Phone:</span>
+                  <span className="main-info-value">
+                    {!isEditMode ? (
+                      profile.Phone1 || 'N/A'
+                    ) : (
+                      <input
+                        type="tel"
+                        className="editable-field"
+                        value={editedProfile?.Phone1 || ''}
+                        onChange={(e) => handleFieldChange('Phone1', e.target.value)}
+                        placeholder="Phone Number"
+                      />
+                    )}
+                  </span>
+                </div>
+                
+                {/* DO NOT CALL FIELD - Only show in edit mode */}
+                {isEditMode && (
+                  <div className="main-info-item">
+                    <span className="main-info-label">Do Not Call:</span>
+                    <span className="main-info-value">
+                      <select
+                        className="editable-field"
+                        value={
+                          editedProfile?.Do_Not_Call === true || 
+                          (editedProfile?.Do_Not_Call || '').toLowerCase() === 'y' || 
+                          (editedProfile?.Do_Not_Call || '').toLowerCase() === 'yes' 
+                            ? 'true' 
+                            : 'false'
+                        }
+                        onChange={(e) => handleFieldChange('Do_Not_Call', e.target.value === 'true')}
+                        style={{ width: '100%', padding: '6px 10px' }}
+                      >
+                        <option value="false">Call</option>
+                        <option value="true">Do not call</option>
+                      </select>
+                    </span>
+                  </div>
+                )}
+                
+                {/* DECEASED FIELD - Only show in edit mode */}
+                {isEditMode && (
+                  <div className="main-info-item">
+                    <span className="main-info-label">Deceased:</span>
+                    <span className="main-info-value">
+                      <select
+                        className="editable-field"
+                        value={
+                          editedProfile?.Deceased === true || 
+                          (editedProfile?.Deceased || '').toLowerCase() === 'y' || 
+                          (editedProfile?.Deceased || '').toLowerCase() === 'yes' 
+                            ? 'true' 
+                            : 'false'
+                        }
+                        onChange={(e) => handleFieldChange('Deceased', e.target.value === 'true')}
+                        style={{ width: '100%', padding: '6px 10px' }}
+                      >
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                      </select>
+                    </span>
+                  </div>
+                )}
+                
                 {/* Floating status badge - matches Rector badge style */}
-                {(isDeceased || isDoNotCall || isSpiritualDirector) && (
+                {(isDeceased || isDoNotCall || isSpiritualDirector) && !isEditMode && (
                   <div style={{
                     position: 'absolute',
                     top: '24px',
@@ -1100,66 +1250,49 @@ function ProfileView({
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           zIndex: 1000
         }}>
-          <div className="password-modal-content" style={{
+          <div style={{
             position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
             backgroundColor: 'white',
             padding: '30px',
-            borderRadius: '16px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-            width: '95%',
-            maxWidth: '400px'
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            minWidth: '300px'
           }}>
-            <h3 style={{ 
-              marginBottom: '20px',
-              color: '#333',
-              fontSize: '1.5rem'
-            }}>
-              Enter Password to Edit
-            </h3>
+            <h3 style={{ marginTop: 0 }}>Enter Password to Edit</h3>
             <input
               type="password"
               value={passwordInput}
               onChange={(e) => setPasswordInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Enter password"
+              placeholder="Password"
               autoFocus
               style={{
                 width: '100%',
-                padding: '10px',
-                border: `2px solid ${passwordError ? '#dc3545' : '#ccc'}`,
+                padding: '8px',
+                marginBottom: '10px',
+                border: '1px solid #ddd',
                 borderRadius: '4px',
-                fontSize: '16px',
-                marginBottom: '10px'
+                boxSizing: 'border-box'
               }}
             />
             {passwordError && (
-              <p style={{
-                color: '#dc3545',
-                fontSize: '14px',
-                marginBottom: '15px'
-              }}>
+              <div style={{ color: '#dc3545', fontSize: '14px', marginBottom: '10px' }}>
                 Incorrect password. Please try again.
-              </p>
+              </div>
             )}
-            <div style={{
-              display: 'flex',
-              gap: '10px',
-              justifyContent: 'flex-end'
-            }}>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
                 onClick={handleClosePasswordModal}
                 style={{
-                  padding: '10px 20px',
-                  border: 'none',
-                  borderRadius: '4px',
+                  padding: '8px 16px',
                   backgroundColor: '#6c757d',
                   color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: 'bold'
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
                 }}
               >
                 Cancel
@@ -1167,14 +1300,12 @@ function ProfileView({
               <button
                 onClick={handleCheckPassword}
                 style={{
-                  padding: '10px 20px',
-                  border: 'none',
-                  borderRadius: '4px',
+                  padding: '8px 16px',
                   backgroundColor: '#007bff',
                   color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: 'bold'
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
                 }}
               >
                 Submit
@@ -1183,9 +1314,7 @@ function ProfileView({
           </div>
         </div>
       )}
-
       </div>
-      
     </div>
   );
 }
