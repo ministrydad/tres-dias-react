@@ -4,7 +4,7 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 
 // Configuration constant from original
-const MEETING_COUNT = 8; // Number of meetings per team
+const MEETING_COUNT = 6; // Number of meetings per team (matches CONFIG.MEETING_COUNT in original)
 
 export default function SecretariatDashboard() {
   const { orgId } = useAuth();
@@ -226,7 +226,7 @@ export default function SecretariatDashboard() {
   function renderDashboardCards() {
     // Calculate term progress for each position
     const cards = POSITIONS.map(position => {
-      const rosterEntry = secretariatRoster.find(r => r.position === position.key);
+      const rosterEntry = secretariatRoster.find(r => r.position_key === position.key);
       
       if (!rosterEntry) {
         return (
@@ -250,10 +250,16 @@ export default function SecretariatDashboard() {
         );
       }
 
-      // Calculate term progress
-      const startDate = rosterEntry.term_start_date ? new Date(rosterEntry.term_start_date) : null;
-      const endDate = rosterEntry.term_end_date ? new Date(rosterEntry.term_end_date) : null;
+      // Calculate term progress - start_date and term_length_years are used
+      const startDate = rosterEntry.start_date ? new Date(rosterEntry.start_date) : null;
+      const termLengthYears = rosterEntry.term_length_years || position.defaultTerm;
       const isInterim = rosterEntry.is_interim || false;
+
+      let endDate = null;
+      if (startDate) {
+        endDate = new Date(startDate);
+        endDate.setFullYear(endDate.getFullYear() + termLengthYears);
+      }
 
       let progressPercent = 0;
       let timeRemainingText = '';
@@ -280,13 +286,52 @@ export default function SecretariatDashboard() {
         }
       }
 
-      const memberName = position.type === 'couple' && rosterEntry.spouse_pescadore_key
-        ? `${findMemberName(rosterEntry.member_pescadore_key)} & ${findMemberName(rosterEntry.spouse_pescadore_key)}`
-        : findMemberName(rosterEntry.member_pescadore_key);
+      // Build member name - handle couples
+      let memberName = 'Unknown';
+      if (position.type === 'couple') {
+        const member1 = findMemberName(rosterEntry.member1_id);
+        const member2 = findMemberName(rosterEntry.member2_id);
+        
+        if (member1 && member2) {
+          // Check if they have the same last name
+          const member1Obj = allMembers.find(m => String(m.PescadoreKey) === String(rosterEntry.member1_id));
+          const member2Obj = allMembers.find(m => String(m.PescadoreKey) === String(rosterEntry.member2_id));
+          
+          if (member1Obj && member2Obj && member1Obj.Last === member2Obj.Last) {
+            // Same last name: "First1 & First2 Last"
+            const first1 = member1Obj.Preferred || member1Obj.First;
+            const first2 = member2Obj.Preferred || member2Obj.First;
+            memberName = `${first1} & ${first2} ${member1Obj.Last}`;
+          } else {
+            // Different last names: "Full1 & Full2"
+            memberName = `${member1} & ${member2}`;
+          }
+        } else if (member1) {
+          memberName = member1;
+        } else if (member2) {
+          memberName = member2;
+        }
+      } else {
+        // Single position
+        memberName = findMemberName(rosterEntry.member1_id) || 'Unknown';
+      }
 
-      const internInfo = rosterEntry.intern_pescadore_key
-        ? `Intern: ${findMemberName(rosterEntry.intern_pescadore_key)}`
-        : null;
+      // Build intern info - handle couples
+      let internInfo = null;
+      if (position.type === 'couple' && (rosterEntry.intern1_id || rosterEntry.intern2_id)) {
+        const intern1 = findMemberName(rosterEntry.intern1_id);
+        const intern2 = findMemberName(rosterEntry.intern2_id);
+        
+        if (intern1 && intern2) {
+          internInfo = `Interns: ${intern1} & ${intern2}`;
+        } else if (intern1) {
+          internInfo = `Intern: ${intern1}`;
+        } else if (intern2) {
+          internInfo = `Intern: ${intern2}`;
+        }
+      } else if (rosterEntry.intern1_id) {
+        internInfo = `Intern: ${findMemberName(rosterEntry.intern1_id)}`;
+      }
 
       return (
         <div key={position.key} className={`secretariat-card ${isInterim ? 'is-interim' : ''}`}>
@@ -294,7 +339,7 @@ export default function SecretariatDashboard() {
             <div className="position-title">{position.name}</div>
           </div>
           <div className="secretariat-card-body">
-            <div className="member-name">{memberName || 'Unknown'}</div>
+            <div className="member-name">{memberName}</div>
             {internInfo && <div className="intern-info">{internInfo}</div>}
             <div className="term-info-footer">
               <div className="term-dates">
