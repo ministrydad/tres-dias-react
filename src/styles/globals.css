@@ -2089,6 +2089,21 @@ body.light-theme .toggle .opt.active {
     margin-top: 20px;
 }
 
+/* FIX: Edit mode - flatten structure for proper alignment */
+#team-viewer-app .edit-mode .main-info-item {
+    display: contents; /* ← This is the magic! Makes children direct grid items */
+}
+
+#team-viewer-app .edit-mode .main-info-label {
+    align-self: center; /* Vertically center labels with inputs */
+    text-align: right; /* Right-align labels for cleaner look */
+    padding-right: 12px; /* Space between label and input */
+}
+
+#team-viewer-app .edit-mode .main-info-value {
+    align-self: center; /* Vertically center inputs with labels */
+}
+
 
 /* ===============================================
    16. TEAM LIST MODULE
