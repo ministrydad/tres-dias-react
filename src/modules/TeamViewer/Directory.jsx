@@ -107,45 +107,6 @@ export default function Directory() {
     }
   }, [currentGender, activeTeamIdentifier, orgId]);
 
-  // Print Profile Handler
-  const handlePrintProfile = () => {
-    if (currentProfileIndex < 0 || currentProfileIndex >= filteredPescadores.length) {
-      if (window.showMainStatus) {
-        window.showMainStatus('No profile selected to print', true);
-      }
-      return;
-    }
-    
-    const profile = filteredPescadores[currentProfileIndex];
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-    
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Profile - ${profile.First} ${profile.Last}</title>
-        <style>
-          body { font-family: Arial; padding: 20px; }
-          h1 { font-size: 24pt; }
-          .info { margin: 10px 0; }
-          .label { font-weight: bold; }
-        </style>
-      </head>
-      <body onload="window.print();">
-        <h1>${profile.Preferred || profile.First} ${profile.Last}</h1>
-        <div class="info"><span class="label">Address:</span> ${profile.Address || ''}, ${profile.City || ''}, ${profile.State || ''} ${profile.Zip || ''}</div>
-        <div class="info"><span class="label">Church:</span> ${profile.Church || 'N/A'}</div>
-        <div class="info"><span class="label">Email:</span> ${profile.Email || 'N/A'}</div>
-        <div class="info"><span class="label">Phone:</span> ${profile.Phone1 || 'N/A'}</div>
-        ${profile["Candidate Weekend"] ? `<div class="info"><span class="label">Candidate:</span> ${profile["Candidate Weekend"]}</div>` : ''}
-        ${profile["Last weekend worked"] ? `<div class="info"><span class="label">Last Served:</span> ${profile["Last weekend worked"]}</div>` : ''}
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
-
   function performSearch() {
     let data = [...allPescadores[currentGender]];
     data.forEach(p => delete p.searchMatch);
@@ -871,7 +832,7 @@ function ProfileView({
           </button>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="print-button" onClick={handlePrintProfile}>Print Profile</button>
+          <button className="print-button">Print Profile</button>
           <button 
             className="view-team-button" 
             onClick={onOpenRoleSelector}
@@ -964,6 +925,15 @@ function ProfileView({
             <ProfessorRolesCard profile={profile} />
           </div>
 
+          <div className="refresh-section" style={{ marginTop: '16px' }}>
+            <div className="button-group">
+              <button id="refreshButton" className="refresh-button">Refresh Data</button>
+              <button id="editButton" className="edit-button">Edit Profile</button>
+            </div>
+            <div id="lastUpdated" className="last-updated" style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+              Data last refreshed: {new Date().toLocaleString()}
+            </div>
+          </div>
         </div>
 
         {roleSelectorOpen && (
