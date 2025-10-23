@@ -3609,7 +3609,6 @@ body.light-theme .date-picker-dropdown {
         box-shadow: none !important;
         page-break-inside: avoid;
     }
-}
 
 /* Hide navigation elements in profile view */
     #team-viewer-app .navigation,
@@ -3686,3 +3685,4 @@ body.light-theme .date-picker-dropdown {
     #mainStatusBar {
         display: none !important;
     }
+}
