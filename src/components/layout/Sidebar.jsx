@@ -59,7 +59,15 @@ const Sidebar = memo(function Sidebar({ currentView, onNavigate, permissions, on
         gap: '8px',
         marginBottom: '16px'
       }}>
-        <img className="logo-icon" src="/rooster_head_v1.svg" alt="Logo" />
+        <img 
+          className="logo-icon" 
+          src="/rooster_head_v1.svg" 
+          alt="Logo"
+          style={{
+            width: '72px',
+            height: '72px'
+          }}
+        />
         <span className="company-name" style={{
           fontSize: '0.9rem',
           fontWeight: '700',
