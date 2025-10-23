@@ -1178,8 +1178,10 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
 
   return (
     <div className="card pad" style={{ margin: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div className="roles-section" style={{ marginTop: 'auto' }}>
+      <div className="roles-section">
         <div className="roles-title" style={{ marginBottom: '12px' }}>Rector Qualification</div>
+      </div>
+      <div style={{ marginTop: 'auto' }}>
         <div className="rector-qualification-grid">
           <div className="qualification-labels">
             <div className="qualification-label">Head / Asst Head</div>
