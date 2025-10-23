@@ -897,28 +897,30 @@ function ProfileView({
                   <span className="main-info-value">{profile.Phone1 || 'N/A'}</span>
                 </div>
                 
-                {/* Floating status badge - top right with glow */}
+                {/* Floating status badge - matches Rector badge style */}
                 {(isDeceased || isDoNotCall || isSpiritualDirector) && (
                   <div style={{
                     position: 'absolute',
                     top: '24px',
                     right: '24px',
                     bottom: '24px',
-                    width: '110px',
-                    padding: '8px',
-                    borderRadius: '8px',
-                    fontSize: '11px',
-                    fontWeight: 'bold',
+                    width: '122px',
+                    padding: '6px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '500',
                     textTransform: 'uppercase',
-                    letterSpacing: '1px',
+                    letterSpacing: '0.5px',
                     textAlign: 'center',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: `2px solid ${isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745'}`,
-                    backgroundColor: isDeceased ? 'rgba(0, 0, 0, 0.15)' : isDoNotCall ? 'rgba(220, 53, 69, 0.15)' : 'rgba(40, 167, 69, 0.15)',
-                    color: isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745',
-                    boxShadow: isDeceased ? '0 0 12px rgba(0, 0, 0, 0.3)' : isDoNotCall ? '0 0 12px rgba(220, 53, 69, 0.4)' : '0 0 12px rgba(40, 167, 69, 0.4)',
+                    border: `1px solid ${isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745'}`,
+                    backgroundColor: 'transparent',
+                    color: '#333',
+                    boxShadow: isDeceased ? '0 0 10px rgba(0, 0, 0, 0.4)' : isDoNotCall ? '0 0 10px rgba(220, 53, 69, 0.4)' : '0 0 10px rgba(40, 167, 69, 0.4)',
+                    cursor: 'default',
+                    transition: 'all 0.2s ease',
                     zIndex: 10,
                     lineHeight: '1.3'
                   }}>
