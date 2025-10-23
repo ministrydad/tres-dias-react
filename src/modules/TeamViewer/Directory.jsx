@@ -832,7 +832,7 @@ function ProfileView({
           </button>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="print-button">Print Profile</button>
+          <button className="print-button" onClick={() => window.print()}>Print Profile</button>
           <button 
             className="view-team-button" 
             onClick={onOpenRoleSelector}
