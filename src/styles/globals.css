@@ -3685,4 +3685,62 @@ body.light-theme .date-picker-dropdown {
     #mainStatusBar {
         display: none !important;
     }
+
+    /* Optimize profile view for printing - FIT ON ONE PAGE */
+    #team-viewer-app .profile-view {
+        padding: 0.3in !important;
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+        page-break-after: auto;
+    }
+
+    /* Remove scroll containers for print */
+    body, html {
+        overflow: visible !important;
+        height: auto !important;
+    }
+
+    .app-container {
+        overflow: visible !important;
+        height: auto !important;
+    }
+
+    .main-content {
+        overflow: visible !important;
+        height: auto !important;
+    }
+
+    .app-panel-container {
+        padding: 0 !important;
+        overflow: visible !important;
+        height: auto !important;
+    }
+
+    /* Make profile content more compact for printing */
+    #team-viewer-app .profile-container {
+        zoom: 0.85; /* Slightly shrink content to fit better */
+    }
+
+    /* Reduce spacing in profile for print */
+    #team-viewer-app .card.pad {
+        padding: 12px !important;
+        margin-bottom: 8px !important;
+    }
+
+    #team-viewer-app .role-grid {
+        gap: 3px !important;
+        font-size: 11px !important;
+    }
+
+    #team-viewer-app .role-item {
+        padding: 4px 6px !important;
+        min-height: 24px !important;
+    }
+
+    /* Set page size */
+    @page {
+        size: letter portrait;
+        margin: 0.5in;
+    }
 }
