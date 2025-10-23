@@ -339,8 +339,10 @@ export default function SecretariatDashboard() {
             <div className="position-title">{position.name}</div>
           </div>
           <div className="secretariat-card-body">
-            <div className="member-name">{memberName}</div>
-            {internInfo && <div className="intern-info">{internInfo}</div>}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', minHeight: '24px' }}>
+              <div className="member-name">{memberName}</div>
+              {internInfo && <div className="intern-info" style={{ marginTop: 0, paddingLeft: 0 }}>{internInfo}</div>}
+            </div>
             <div className="term-info-footer">
               <div className="term-dates">
                 {startDate && endDate
