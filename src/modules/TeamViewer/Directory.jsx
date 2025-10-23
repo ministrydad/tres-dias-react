@@ -534,7 +534,7 @@ export default function Directory() {
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
-      padding: '24px'
+      padding: '0px'
     }}>
       
       {currentView === 'directory' && (

@@ -517,7 +517,7 @@ export default function SecretariatDashboard() {
 
   if (loading) {
     return (
-      <div className="app-panel" style={{ display: 'block' }}>
+      <div className="app-panel" >
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--muted)' }}>
           Loading Secretariat Dashboard...
         </div>
@@ -526,7 +526,7 @@ export default function SecretariatDashboard() {
   }
 
   return (
-    <div className="app-panel" id="secretariat-app" style={{ display: 'block' }}>
+    <div className="app-panel" id="secretariat-app" >
       {/* Dashboard Cards */}
       <div className="secretariat-dashboard-grid">
         {renderDashboardCards()}
