@@ -534,7 +534,7 @@ export default function Directory() {
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
-      padding: '0px'
+      padding: '24px'
     }}>
       
       {currentView === 'directory' && (
@@ -899,7 +899,7 @@ function ProfileView({
                 
                 {(isDeceased || isDoNotCall || isSpiritualDirector) && (
                   <div style={{
-                    marginTop: '0px',
+                    marginTop: '12px',
                     marginLeft: '-24px',
                     marginRight: '-24px',
                     marginBottom: '-24px',
@@ -911,8 +911,8 @@ function ProfileView({
                     letterSpacing: '1px',
                     color: 'white',
                     backgroundColor: isDeceased ? '#000000' : isDoNotCall ? '#dc3545' : '#28a745',
-                    borderBottomLeftRadius: '16px',
-                    borderBottomRightRadius: '16px'
+                    borderBottomLeftRadius: '8px',
+                    borderBottomRightRadius: '8px'
                   }}>
                     {isDeceased ? 'DECEASED' : isDoNotCall ? 'DO NOT CALL' : 'SPIRITUAL DIRECTOR'}
                   </div>
