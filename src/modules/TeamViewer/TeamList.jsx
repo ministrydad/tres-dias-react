@@ -501,6 +501,12 @@ export default function TeamList() {
               page-break-inside: avoid;
             }
             
+            tbody::before {
+              content: '';
+              display: block;
+              height: 60px;
+            }
+            
             tbody tr:nth-child(even) {
               background-color: #f8f9fa;
             }
