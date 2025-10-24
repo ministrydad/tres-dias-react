@@ -173,7 +173,7 @@ export const PRINT_PROFILE_CSS = `
     align-items: stretch; 
     margin-bottom: 2px; 
     min-height: 24px; 
-    font-size: 8pt; 
+    font-size: 7pt; 
   }
   .role-name, 
   .role-status-cell, 
@@ -185,7 +185,6 @@ export const PRINT_PROFILE_CSS = `
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    border: 1px solid #dee2e6; 
   }
   .role-name { 
     justify-content: flex-start; 
@@ -193,12 +192,14 @@ export const PRINT_PROFILE_CSS = `
   }
   .role-status { 
     display: inline-block; 
+    width: 20px;
+    height: 20px;
     padding: 3px 6px; 
     border-radius: 4px; 
     font-weight: bold; 
-    font-size: 8pt; 
+    font-size: 7pt; 
     text-align: center; 
-    min-width: 20px; 
+    line-height: 14px;
   }
   .role-status.status-N { 
     background-color: #6c757d; 
@@ -214,7 +215,7 @@ export const PRINT_PROFILE_CSS = `
   }
   .service-number, 
   .quantity-number { 
-    font-size: 8pt; 
+    font-size: 7pt; 
     color: #495057; 
   }
   .legend { 
