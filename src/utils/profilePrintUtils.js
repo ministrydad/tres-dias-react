@@ -1,6 +1,6 @@
 // src/utils/profilePrintUtils.js
-// Shared utility for generating printable profile HTML with complete embedded CSS
-// Used by Directory.jsx (window.print) and TeamList.jsx (printJS raw-html)
+// Shared utility for generating printable profile HTML
+// Used by Directory.jsx and TeamList.jsx for print profile functionality
 
 export const ROLE_CONFIG = {
   team: [
@@ -51,7 +51,8 @@ export const ROLE_CONFIG = {
 
 /**
  * Complete embedded CSS for printing profiles
- * Extracted from original script.js printAllTeamProfiles() function
+ * UPDATED: Changed grid-template-columns from 60% 15% 15% 10% to 70% 12% 13% 5%
+ * Reason: Prevents long role names like "Head Spiritual Director" from wrapping
  */
 export const PRINT_PROFILE_CSS = `
   body { 
@@ -134,7 +135,7 @@ export const PRINT_PROFILE_CSS = `
   }
   .role-header-set { 
     display: grid; 
-    grid-template-columns: 60% 15% 15% 10%; 
+    grid-template-columns: 70% 12% 13% 5%; 
     gap: 2px; 
   }
   .role-header-legend { 
@@ -167,7 +168,7 @@ export const PRINT_PROFILE_CSS = `
   }
   .role-item { 
     display: grid; 
-    grid-template-columns: 60% 15% 15% 10%; 
+    grid-template-columns: 70% 12% 13% 5%; 
     gap: 2px; 
     align-items: stretch; 
     margin-bottom: 2px; 
