@@ -1,10 +1,10 @@
 // src/modules/TeamViewer/TeamList.jsx
-// UPDATED: Added "Update Database" button to batch update team member service records
+// UPDATED: Fixed "Print All Profiles" to use complete embedded CSS from profilePrintUtils
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
-import { generatePrintableProfileHTML } from '../../utils/profilePrintUtils';
+import { generatePrintableProfileHTML, PRINT_PROFILE_CSS } from '../../utils/profilePrintUtils';
 
 export default function TeamList() {
   const { user, orgId } = useAuth();
@@ -199,39 +199,14 @@ export default function TeamList() {
 
           if (error) throw error;
 
-          window.showMainStatus?.(`Removed from ${role}`, false);
+          setTeamRoster(prevRoster => 
+            prevRoster.filter(member => !(member.id === personId && member.role === role))
+          );
 
-          if (weekendIdentifier) {
-            const rawTableData = allPescadores[currentGender];
-            const { data, error: fetchError } = await supabase
-              .from(rosterTable)
-              .select('pescadore_key, role')
-              .eq('weekend_identifier', weekendIdentifier)
-              .eq('org_id', orgId);
-
-            if (fetchError) throw fetchError;
-
-            const newRoster = [];
-            if (data) {
-              data.forEach(entry => {
-                const profile = rawTableData.find(p => p.PescadoreKey === entry.pescadore_key);
-                if (profile) {
-                  newRoster.push({
-                    id: profile.PescadoreKey,
-                    name: `${profile.Preferred || profile.First || ''} ${profile.Last || ''}`.trim(),
-                    role: entry.role
-                  });
-                }
-              });
-            }
-            setTeamRoster(newRoster);
-          } else {
-            console.error('No weekendIdentifier available for reload');
-            window.showMainStatus?.('Error: Could not reload roster', true);
-          }
+          window.showMainStatus(`Successfully removed from ${role}`, false);
         } catch (error) {
-          console.error('Error removing teammate:', error);
-          window.showMainStatus?.(`Failed to remove teammate: ${error.message}`, true);
+          console.error('Error removing team member:', error);
+          window.showMainStatus('Failed to remove team member', true);
         } finally {
           setRemovingId(null);
         }
@@ -239,138 +214,108 @@ export default function TeamList() {
     });
   };
 
-  // NEW: Update Database functionality
   const handleUpdateDatabaseClick = () => {
-    if (!weekendIdentifier || teamRoster.length === 0) {
-      window.showMainStatus?.('No team loaded to update', true);
-      return;
-    }
     setShowUpdateModal(true);
   };
 
   const handleConfirmUpdate = async () => {
     setIsUpdating(true);
-    const tableName = currentGender === 'men' ? 'men_raw' : 'women_raw';
-    const rawTableData = allPescadores[currentGender];
     
-    let successCount = 0;
-    let errorCount = 0;
-    const previewChanges = []; // Store changes for test mode
-    
-    try {
-      // Process each team member
-      for (const member of teamRoster) {
-        const profile = rawTableData.find(p => p.PescadoreKey === member.id);
-        if (!profile) {
-          console.warn(`Profile not found for ${member.name}`);
-          errorCount++;
-          continue;
-        }
+    if (testMode) {
+      console.log('🧪 TEST MODE: Would update these members:');
+      const updates = [];
+      
+      teamRoster.forEach(member => {
+        const profile = allPescadores[currentGender].find(p => p.PescadoreKey === member.id);
+        if (!profile) return;
         
-        const role = member.role;
-        const updateData = {};
+        const roleKey = member.role;
+        const serviceField = `${roleKey} Service`;
+        const qtyField = `${roleKey.replace(/ /g, '_')}_Service_Qty`;
+        const statusField = roleKey;
         
-        // Determine field names based on role type
-        let statusField = role;
-        let lastField = `${role} Service`;
-        let qtyField;
-        
-        // Handle professor roles (different naming convention)
-        if (role.startsWith('Prof_')) {
-          qtyField = `${role}_Service_Qty`;
-        } else {
-          qtyField = `${role.replace(/ /g, '_')}_Service_Qty`;
-        }
-        
-        // Update STATUS (N → I, I → E, E stays E)
         const currentStatus = (profile[statusField] || 'N').toUpperCase();
         let newStatus = currentStatus;
-        if (currentStatus === 'N') {
-          newStatus = 'I';
-          updateData[statusField] = 'I';
-        } else if (currentStatus === 'I') {
-          newStatus = 'E';
-          updateData[statusField] = 'E';
-        }
-        // If already 'E', no change needed
+        if (currentStatus === 'N') newStatus = 'I';
+        else if (currentStatus === 'I') newStatus = 'E';
         
-        // Update LAST SERVICE to current weekend identifier
-        const currentLast = profile[lastField] || '(none)';
-        updateData[lastField] = weekendIdentifier;
-        
-        // Increment QUANTITY by 1
-        const currentQty = parseInt(profile[qtyField] || 0, 10);
+        const currentQty = parseInt(profile[qtyField] || '0');
         const newQty = currentQty + 1;
-        updateData[qtyField] = newQty;
         
-        // Store preview for test mode
-        previewChanges.push({
-          name: member.name,
-          role,
-          statusChange: `${currentStatus} → ${newStatus}`,
-          lastChange: `${currentLast} → ${weekendIdentifier}`,
-          qtyChange: `${currentQty} → ${newQty}`,
-          statusField,
-          lastField,
-          qtyField,
-          updateData
-        });
-        
-        // TEST MODE: Skip actual database update
-        if (!testMode) {
-          // Update database
-          const { error } = await supabase
-            .from(tableName)
-            .update(updateData)
-            .eq('PescadoreKey', member.id)
-            .eq('org_id', orgId);
-          
-          if (error) {
-            console.error(`Error updating ${member.name}:`, error);
-            errorCount++;
-          } else {
-            successCount++;
+        updates.push({
+          PescadoreKey: member.id,
+          Name: member.name,
+          Role: member.role,
+          Updates: {
+            [serviceField]: weekendIdentifier,
+            [qtyField]: newQty,
+            [statusField]: newStatus
           }
-        } else {
-          // In test mode, just count as success
-          successCount++;
-        }
-      }
+        });
+      });
       
-      // Show results
-      if (testMode) {
-        console.log('🧪 TEST MODE - No actual database changes made');
-        console.log('📋 Preview of changes that WOULD be made:');
-        console.table(previewChanges);
-        window.showMainStatus?.(
-          `TEST MODE: Would update ${successCount} team member${successCount > 1 ? 's' : ''} (check console for details)`,
-          false
-        );
-      } else {
-        if (errorCount === 0) {
-          window.showMainStatus?.(
-            `Successfully updated ${successCount} team member${successCount > 1 ? 's' : ''}!`,
-            false
-          );
-        } else {
-          window.showMainStatus?.(
-            `Updated ${successCount} members, ${errorCount} error${errorCount > 1 ? 's' : ''}`,
-            true
-          );
-        }
-      }
+      console.table(updates);
+      console.log(`Total members to update: ${updates.length}`);
       
-      // Close modal
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      window.showMainStatus(`🧪 Test complete! Check console for ${updates.length} update preview(s)`, false);
       setShowUpdateModal(false);
-      
-    } catch (error) {
-      console.error('Error in batch update:', error);
-      window.showMainStatus?.('An error occurred during update', true);
-    } finally {
       setIsUpdating(false);
+      return;
     }
+    
+    const rawTable = currentGender === 'men' ? 'men_raw' : 'women_raw';
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const member of teamRoster) {
+      const profile = allPescadores[currentGender].find(p => p.PescadoreKey === member.id);
+      if (!profile) continue;
+      
+      const roleKey = member.role;
+      const serviceField = `${roleKey} Service`;
+      const qtyField = `${roleKey.replace(/ /g, '_')}_Service_Qty`;
+      const statusField = roleKey;
+      
+      const currentStatus = (profile[statusField] || 'N').toUpperCase();
+      let newStatus = currentStatus;
+      if (currentStatus === 'N') newStatus = 'I';
+      else if (currentStatus === 'I') newStatus = 'E';
+      
+      const currentQty = parseInt(profile[qtyField] || '0');
+      const newQty = currentQty + 1;
+      
+      try {
+        const { error } = await supabase
+          .from(rawTable)
+          .update({
+            [serviceField]: weekendIdentifier,
+            [qtyField]: newQty,
+            [statusField]: newStatus
+          })
+          .eq('PescadoreKey', member.id)
+          .eq('org_id', orgId);
+        
+        if (error) throw error;
+        successCount++;
+      } catch (error) {
+        console.error(`Error updating ${member.name}:`, error);
+        errorCount++;
+      }
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (errorCount === 0) {
+      window.showMainStatus(`✅ Successfully updated ${successCount} team member${successCount > 1 ? 's' : ''}!`, false);
+    } else {
+      window.showMainStatus(`⚠️ Updated ${successCount}, but ${errorCount} failed. Check console.`, true);
+    }
+    
+    setShowUpdateModal(false);
+    setIsUpdating(false);
   };
-
 
   const handlePrintRoster = () => {
     if (!teamRoster || teamRoster.length === 0) {
@@ -378,118 +323,78 @@ export default function TeamList() {
       return;
     }
 
-    const genderTitle = currentGender.charAt(0).toUpperCase() + currentGender.slice(1);
-    const now = new Date();
-    const dateGenerated = now.toLocaleDateString();
-    const timeGenerated = now.toLocaleTimeString();
-    
-    // Helper function to get display name for role
-    const getDisplayName = (role) => {
-      // Check if it's a professor role
-      const profRole = ROLE_CONFIG.professor.find(r => r.key === role);
-      if (profRole) return profRole.name;
-      
-      // Otherwise return the role as-is
-      return role;
-    };
-    
-    // Get full profile data for phone and email
-    const rawTableData = allPescadores[currentGender];
-    
+    const genderLabel = currentGender === 'men' ? "Men's" : "Women's";
+    const generatedDate = new Date().toLocaleDateString();
+
     let tableRows = '';
-    teamRoster.forEach((member) => {
-      const displayRole = getDisplayName(member.role);
-      const profile = rawTableData.find(p => p.PescadoreKey === member.id);
-      const phone = profile?.Phone1 || '';
-      const email = profile?.Email || '';
-      
+    teamRoster.forEach(member => {
       tableRows += `
-        <tr style="page-break-inside: avoid;">
-          <td style="padding: 16px 10px; font-size: 12px; font-weight: 700; color: #212529;">${member.name}</td>
-          <td style="padding: 16px 10px; font-size: 12px; font-weight: 700; color: #495057;">${displayRole}</td>
-          <td style="padding: 16px 10px; font-size: 11px; font-weight: 700; color: #6c757d;">${phone}</td>
-          <td style="padding: 16px 10px; font-size: 11px; font-weight: 700; color: #6c757d;">${email}</td>
-          <td style="padding: 16px 10px; text-align: center;">
-            <div style="width: 20px; height: 20px; border: 2px solid #6c757d; border-radius: 4px; margin: 0 auto; background-color: white;"></div>
-          </td>
+        <tr>
+          <td>${member.name}</td>
+          <td>${member.role}</td>
         </tr>
       `;
     });
 
-    const printHTML = `
+    const printableHTML = `
       <!DOCTYPE html>
       <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Team Roster - ${weekendIdentifier || genderTitle}</title>
-        </head>
-        <body style="font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background: white;">
-          <div style="padding: 100px 60px; min-height: 100vh;">
-            
-            <!-- Header -->
-            <div style="text-align: center; margin-bottom: 50px; padding-bottom: 20px; border-bottom: 3px solid #333;">
-              <h1 style="font-size: 28px; font-weight: 700; color: #212529; margin: 0 0 8px 0;">Team Roster Print Out</h1>
-              <div style="font-size: 18px; font-weight: 600; color: #495057; margin-bottom: 12px;">${weekendIdentifier || `${genderTitle}'s Team`}</div>
-              <div style="font-size: 13px; color: #6c757d;">Generated on ${dateGenerated} at ${timeGenerated}</div>
-            </div>
-            
-            <!-- Table -->
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 80px;">
-              <thead>
-                <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Name</th>
-                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Position</th>
-                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Phone</th>
-                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Email</th>
-                  <th style="padding: 14px 12px; text-align: center; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Contacted</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tableRows}
-              </tbody>
-            </table>
-            
-            <!-- Footer -->
-            <div style="margin-top: 50px; padding-top: 20px; border-top: 2px solid #333;">
-              <div style="font-size: 15px; font-weight: 700; color: #212529;">
-                Total Team Members: <span style="color: #28a745; font-size: 18px;">${teamRoster.length}</span>
-              </div>
-            </div>
-            
-          </div>
-        </body>
+      <head>
+        <title>Team Roster - ${weekendIdentifier}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .printable-header { text-align: center; margin-bottom: 20px; }
+          .printable-header h1 { font-size: 22pt; margin: 0; }
+          .printable-header h2 { font-size: 16pt; font-weight: normal; margin: 5px 0; }
+          .printable-header p { font-size: 12pt; color: #666; }
+          .printable-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          .printable-table th, .printable-table td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+          .printable-table th { background-color: #eee; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="printable-header">
+          <h1>Team Roster</h1>
+          <h2>${weekendIdentifier}</h2>
+          <p>Generated on ${generatedDate}</p>
+        </div>
+        <table class="printable-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+        <div class="printable-summary" style="margin-top: 20px; padding-top: 10px; border-top: 2px solid #000;">
+          <div><strong>Total Team Members:</strong> ${teamRoster.length}</div>
+        </div>
+      </body>
       </html>
     `;
 
-    if (typeof printJS !== 'undefined') {
-      printJS({
-        printable: printHTML,
-        type: 'raw-html',
-        documentTitle: `Team Roster - ${weekendIdentifier || genderTitle}`
-      });
-    } else {
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(printHTML);
-      printWindow.document.close();
-      printWindow.print();
-    }
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printableHTML);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const handlePrintAllProfiles = () => {
-    console.log('handlePrintAllProfiles called!', { teamRoster, length: teamRoster?.length });
     if (!teamRoster || teamRoster.length === 0) {
       window.showMainStatus('No team members to print', true);
       return;
     }
 
-    const rawTableData = allPescadores[currentGender];
-    
     let allProfilesHTML = '';
+    
     teamRoster.forEach(member => {
-      const fullProfile = rawTableData.find(p => p.PescadoreKey === member.id);
+      const fullProfile = allPescadores[currentGender].find(p => p.PescadoreKey === member.id);
       if (fullProfile) {
         const singleProfileHTML = generatePrintableProfileHTML(fullProfile);
-        // Wrap each profile in a div that forces a page break after it and has consistent padding
+        // Wrap each profile in a div that forces a page break after it
         allProfilesHTML += `<div style="page-break-after: always; padding: 0.2in;">${singleProfileHTML}</div>`;
       }
     });
@@ -497,277 +402,300 @@ export default function TeamList() {
     const printableHTML = `
       <!DOCTYPE html>
       <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Team Profile Reports</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 0; font-size: 10pt; color: #333; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .profile-main-info, .roles-section { page-break-inside: avoid; }
-            .profile-main-info { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #dee2e6; }
-            .profile-header { display: flex; align-items: baseline; flex-wrap: wrap; margin-bottom: 10px; }
-            .profile-name { font-size: 22pt; font-weight: bold; margin: 0 15px 0 0; }
-            .profile-weekend-info { font-size: 0.8em; font-weight: 600; margin-left: 10px; }
-            .last-served-highlight { background-color: #ffc107; padding: 2px 6px; border-radius: 3px; font-weight: bold; color: #333; }
-            .main-info-item { margin: 4px 0; display: flex; }
-            .main-info-label { font-weight: bold; margin-right: 10px; min-width: 60px; }
-            .roles-section { margin-top: 15px; }
-            .roles-title { font-size: 14pt; font-weight: bold; margin-bottom: 8px; color: #333; }
-            .legend { display: flex; gap: 20px; margin-bottom: 15px; font-size: 9pt; }
-            .legend-item { display: flex; align-items: center; gap: 5px; }
-            .legend-color { width: 16px; height: 16px; border-radius: 3px; }
-            .legend-color.status-N { background-color: #6c757d; }
-            .legend-color.status-I { background-color: #ffc107; }
-            .legend-color.status-E { background-color: #28a745; }
-            .role-header-legend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 8px; font-weight: bold; font-size: 9pt; color: #555; }
-            .professor-headers { grid-template-columns: repeat(2, 1fr); }
-            .role-header-set { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4px; }
-            .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
-            .professor-grid { grid-template-columns: repeat(2, 1fr); }
-            .role-item { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4px; padding: 6px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; align-items: center; font-size: 9pt; }
-            .role-name { font-weight: 600; }
-            .role-status { display: inline-block; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 8pt; text-align: center; }
-            .role-status.status-N { background-color: #6c757d; color: white; }
-            .role-status.status-I { background-color: #ffc107; color: #333; }
-            .role-status.status-E { background-color: #28a745; color: white; }
-            .service-number, .quantity-number { font-size: 9pt; text-align: center; }
-            .card.pad { background: white; padding: 12px; border-radius: 8px; border: 1px solid #dee2e6; margin-bottom: 10px; }
-            
-            /* Rector Qualification Styles */
-            .rector-qualification-grid { display: flex; flex-direction: column; gap: 8px; }
-            .qualification-labels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; }
-            .qualification-label { flex: 1; text-align: center; font-size: 8pt; font-weight: 600; color: #555; padding: 0 4px; }
-            .segmented-bar-container { display: flex; width: 100%; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #dee2e6; background-color: #e9ecef; }
-            .bar-segment { flex: 1; height: 100%; }
-            .bar-segment.pass { background-color: #28a745 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .bar-segment.fail { background-color: #dc3545 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            
-            /* Do Not Call / Deceased Indicators */
-            .profile-main-info.do-not-call { border-left: 30px solid #dc3545 !important; position: relative; background-color: rgba(220, 53, 69, 0.05) !important; }
-            .profile-main-info.do-not-call::before { content: "DO NOT CALL" !important; position: absolute !important; left: -73px !important; top: 50% !important; transform: translateY(-50%) rotate(-90deg) !important; color: white !important; font-weight: bold !important; font-size: 14pt !important; }
-            .profile-main-info.deceased { border-left: 30px solid #000000 !important; position: relative; background-color: rgba(0, 0, 0, 0.05) !important; }
-            .profile-main-info.deceased::before { content: "DECEASED" !important; position: absolute !important; left: -73px !important; top: 50% !important; transform: translateY(-50%) rotate(-90deg) !important; color: white !important; font-weight: bold !important; font-size: 14pt !important; }
-          </style>
-        </head>
-        <body>
-          ${allProfilesHTML}
-        </body>
+      <head>
+        <title>Team Profile Reports - ${weekendIdentifier}</title>
+        <style>
+          ${PRINT_PROFILE_CSS}
+        </style>
+      </head>
+      <body>
+        ${allProfilesHTML}
+      </body>
       </html>
     `;
 
-    if (typeof printJS !== 'undefined') {
-      printJS({
-        printable: printableHTML,
-        type: 'raw-html',
-        documentTitle: 'Team Profiles'
-      });
-    } else {
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(printableHTML);
-      printWindow.document.close();
-      printWindow.print();
-    }
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printableHTML);
+    printWindow.document.close();
+    printWindow.print();
   };
+
   const renderRectorSection = () => {
-    const rector = teamRoster.find(m => m.role === 'Rector');
-    
+    const rectorMembers = teamRoster.filter(m => m.role === 'Rector');
+    if (rectorMembers.length === 0) return null;
+
     return (
-      <div className="rector-section">
-        <div className="rector-title">RECTOR</div>
-        <div id="rectorContainer">
-          {rector ? (
-            <div 
-              className={`rector-badge ${removingId === rector.id ? 'removing' : ''}`}
-              onClick={() => handleRemoveTeammate(rector.id, 'Rector')}
-            >
-              <span className="rector-name">{rector.name}</span>
-              <span className="remove-rector-btn">Remove</span>
+      <div className="team-section-card" style={{ marginBottom: '20px', border: '2px solid var(--accentA)', backgroundColor: 'var(--panel)', borderRadius: '8px', padding: '15px' }}>
+        <div className="section-header" style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px', color: 'var(--ink)' }}>
+          🎯 Rector
+        </div>
+        <div className="section-content">
+          {rectorMembers.map(member => (
+            <div key={`${member.id}-${member.role}`} className="team-member-item" style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              padding: '10px', 
+              backgroundColor: 'var(--bg)', 
+              borderRadius: '6px', 
+              marginBottom: '8px',
+              border: '1px solid var(--border)'
+            }}>
+              <span style={{ fontWeight: '600', color: 'var(--ink)' }}>{member.name}</span>
+              <button
+                onClick={() => handleRemoveTeammate(member.id, member.role)}
+                disabled={removingId === member.id}
+                style={{
+                  padding: '5px 10px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: removingId === member.id ? 'not-allowed' : 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  opacity: removingId === member.id ? 0.6 : 1
+                }}
+              >
+                {removingId === member.id ? 'Removing...' : 'Remove'}
+              </button>
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '14px', padding: '10px' }}>
-              No Rector Assigned
-            </div>
-          )}
+          ))}
         </div>
       </div>
     );
   };
 
   const renderLeadershipSection = () => {
-    const leadershipRoles = ['Head', 'Asst Head', 'BUR', 'Head Spiritual Director', 'Spiritual Director'];
-    const leaders = leadershipRoles.map(role => ({
-      role,
-      members: teamRoster.filter(m => m.role === role)
-    }));
-
-    const totalCount = leaders.reduce((sum, l) => sum + l.members.length, 0);
+    const leadershipRoles = ['BUR', 'Rover', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director'];
+    const leadershipMembers = teamRoster.filter(m => leadershipRoles.includes(m.role));
+    if (leadershipMembers.length === 0) return null;
 
     return (
-      <div className="unified-team-section">
-        <div className="unified-team-header">
-          <span>Leadership Team</span>
-          {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
+      <div className="team-section-card" style={{ marginBottom: '20px', border: '1px solid var(--border)', backgroundColor: 'var(--panel)', borderRadius: '8px', padding: '15px' }}>
+        <div className="section-header" style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px', color: 'var(--ink)' }}>
+          👔 Leadership
         </div>
-        <div className="unified-team-members two-column">
-          {leaders.map(({ role, members }) => (
-            <div key={role}>
-              {members.length > 0 ? (
-                members.map(person => (
-                  <div 
-                    key={person.id} 
-                    className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-                  >
-                    <div className="single-role-name">{role}</div>
-                    <div className="single-role-assigned">
-                      <span className="unified-member-name">{person.name}</span>
-                      <button 
-                        className="remove-teammate-btn"
-                        onClick={() => handleRemoveTeammate(person.id, role)}
-                        disabled={removingId === person.id}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="unified-member-item">
-                  <div className="single-role-name">{role}</div>
-                  <div className="single-role-assigned">
-                    <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
-                  </div>
+        <div className="section-content">
+          {leadershipRoles.map(role => {
+            const members = leadershipMembers.filter(m => m.role === role);
+            if (members.length === 0) return null;
+            return members.map(member => (
+              <div key={`${member.id}-${member.role}`} className="team-member-item" style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                padding: '10px', 
+                backgroundColor: 'var(--bg)', 
+                borderRadius: '6px', 
+                marginBottom: '8px',
+                border: '1px solid var(--border)'
+              }}>
+                <div>
+                  <span style={{ fontWeight: '600', color: 'var(--ink)' }}>{member.name}</span>
+                  <span style={{ marginLeft: '10px', fontSize: '13px', color: 'var(--muted)' }}>({member.role})</span>
                 </div>
-              )}
-            </div>
-          ))}
+                <button
+                  onClick={() => handleRemoveTeammate(member.id, member.role)}
+                  disabled={removingId === member.id}
+                  style={{
+                    padding: '5px 10px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: removingId === member.id ? 'not-allowed' : 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    opacity: removingId === member.id ? 0.6 : 1
+                  }}
+                >
+                  {removingId === member.id ? 'Removing...' : 'Remove'}
+                </button>
+              </div>
+            ));
+          })}
         </div>
       </div>
     );
   };
 
   const renderProfessorSection = () => {
-    const professorRoles = ROLE_CONFIG.professor.map(r => r.key);
-    const professors = professorRoles.map(role => ({
-      role,
-      displayName: ROLE_CONFIG.professor.find(r => r.key === role)?.name || role,
-      members: teamRoster.filter(m => m.role === role)
-    }));
-
-    const totalCount = professors.reduce((sum, p) => sum + p.members.length, 0);
+    const professorKeys = ROLE_CONFIG.professor.map(p => p.key);
+    const professorMembers = teamRoster.filter(m => professorKeys.includes(m.role));
+    if (professorMembers.length === 0) return null;
 
     return (
-      <div className="unified-team-section">
-        <div className="unified-team-header">
-          <span>Professor Team</span>
-          {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
+      <div className="team-section-card" style={{ marginBottom: '20px', border: '1px solid var(--border)', backgroundColor: 'var(--panel)', borderRadius: '8px', padding: '15px' }}>
+        <div className="section-header" style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px', color: 'var(--ink)' }}>
+          📖 Professors
         </div>
-        <div className="unified-team-members two-column">
-          {professors.map(({ role, displayName, members }) => (
-            <div key={role}>
-              {members.length > 0 ? (
-                members.map(person => (
-                  <div 
-                    key={person.id} 
-                    className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-                  >
-                    <div className="single-role-name">{displayName}</div>
-                    <div className="single-role-assigned">
-                      <span className="unified-member-name">{person.name}</span>
-                      <button 
-                        className="remove-teammate-btn"
-                        onClick={() => handleRemoveTeammate(person.id, role)}
-                        disabled={removingId === person.id}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="unified-member-item">
-                  <div className="single-role-name">{displayName}</div>
-                  <div className="single-role-assigned">
-                    <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
-                  </div>
+        <div className="section-content">
+          {ROLE_CONFIG.professor.map(role => {
+            const members = professorMembers.filter(m => m.role === role.key);
+            if (members.length === 0) return null;
+            return members.map(member => (
+              <div key={`${member.id}-${member.role}`} className="team-member-item" style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                padding: '10px', 
+                backgroundColor: 'var(--bg)', 
+                borderRadius: '6px', 
+                marginBottom: '8px',
+                border: '1px solid var(--border)'
+              }}>
+                <div>
+                  <span style={{ fontWeight: '600', color: 'var(--ink)' }}>{member.name}</span>
+                  <span style={{ marginLeft: '10px', fontSize: '13px', color: 'var(--muted)' }}>({role.name})</span>
                 </div>
-              )}
-            </div>
-          ))}
+                <button
+                  onClick={() => handleRemoveTeammate(member.id, member.role)}
+                  disabled={removingId === member.id}
+                  style={{
+                    padding: '5px 10px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: removingId === member.id ? 'not-allowed' : 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    opacity: removingId === member.id ? 0.6 : 1
+                  }}
+                >
+                  {removingId === member.id ? 'Removing...' : 'Remove'}
+                </button>
+              </div>
+            ));
+          })}
         </div>
       </div>
     );
   };
 
   const renderUnifiedTeamSection = (group) => {
-    const headMembers = teamRoster.filter(m => m.role === group.head);
-    const assistantHeadMembers = group.assistantHead ? teamRoster.filter(m => m.role === group.assistantHead) : [];
-    const teamMembers = teamRoster.filter(m => m.role === group.team);
+    const allGroupMembers = teamRoster.filter(m => 
+      m.role === group.head || 
+      m.role === group.assistantHead || 
+      m.role === group.team
+    );
 
-    const totalCount = headMembers.length + assistantHeadMembers.length + teamMembers.length;
+    if (allGroupMembers.length === 0) return null;
+
+    const headMembers = allGroupMembers.filter(m => m.role === group.head);
+    const assistantHeadMembers = group.assistantHead ? allGroupMembers.filter(m => m.role === group.assistantHead) : [];
+    const teamMembers = allGroupMembers.filter(m => m.role === group.team);
 
     return (
-      <div key={group.title} className="unified-team-section">
-        <div className="unified-team-header">
-          <span>{group.title}</span>
-          {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
+      <div key={group.title} className="team-section-card" style={{ marginBottom: '20px', border: '1px solid var(--border)', backgroundColor: 'var(--panel)', borderRadius: '8px', padding: '15px' }}>
+        <div className="section-header" style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px', color: 'var(--ink)' }}>
+          {group.title}
         </div>
-        <div className="unified-team-members two-column">
-          {headMembers.map(person => (
-            <div 
-              key={person.id} 
-              className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-            >
-              <div className="single-role-assigned">
-                <span className="unified-member-name">
-                  {person.name}
-                  <span className="member-role-label head">HEAD</span>
-                </span>
-                <button 
-                  className="remove-teammate-btn"
-                  onClick={() => handleRemoveTeammate(person.id, group.head)}
-                  disabled={removingId === person.id}
-                >
-                  ×
-                </button>
+        <div className="section-content">
+          {headMembers.map(member => (
+            <div key={`${member.id}-${member.role}`} className="team-member-item" style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              padding: '10px', 
+              backgroundColor: 'var(--bg)', 
+              borderRadius: '6px', 
+              marginBottom: '8px',
+              border: '1px solid var(--border)'
+            }}>
+              <div>
+                <span style={{ fontWeight: '700', color: 'var(--accentA)' }}>👑</span>
+                <span style={{ marginLeft: '8px', fontWeight: '600', color: 'var(--ink)' }}>{member.name}</span>
+                <span style={{ marginLeft: '10px', fontSize: '13px', color: 'var(--muted)' }}>(Head)</span>
               </div>
+              <button
+                onClick={() => handleRemoveTeammate(member.id, member.role)}
+                disabled={removingId === member.id}
+                style={{
+                  padding: '5px 10px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: removingId === member.id ? 'not-allowed' : 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  opacity: removingId === member.id ? 0.6 : 1
+                }}
+              >
+                {removingId === member.id ? 'Removing...' : 'Remove'}
+              </button>
             </div>
           ))}
-
-          {assistantHeadMembers.map(person => (
-            <div 
-              key={person.id} 
-              className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-            >
-              <div className="single-role-assigned">
-                <span className="unified-member-name">
-                  {person.name}
-                  <span className="member-role-label asst-head">ASST HEAD</span>
-                </span>
-                <button 
-                  className="remove-teammate-btn"
-                  onClick={() => handleRemoveTeammate(person.id, group.assistantHead)}
-                  disabled={removingId === person.id}
-                >
-                  ×
-                </button>
+          
+          {assistantHeadMembers.map(member => (
+            <div key={`${member.id}-${member.role}`} className="team-member-item" style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              padding: '10px', 
+              backgroundColor: 'var(--bg)', 
+              borderRadius: '6px', 
+              marginBottom: '8px',
+              border: '1px solid var(--border)'
+            }}>
+              <div>
+                <span style={{ fontWeight: '700', color: 'var(--accentB)' }}>⭐</span>
+                <span style={{ marginLeft: '8px', fontWeight: '600', color: 'var(--ink)' }}>{member.name}</span>
+                <span style={{ marginLeft: '10px', fontSize: '13px', color: 'var(--muted)' }}>(Asst Head)</span>
               </div>
+              <button
+                onClick={() => handleRemoveTeammate(member.id, member.role)}
+                disabled={removingId === member.id}
+                style={{
+                  padding: '5px 10px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: removingId === member.id ? 'not-allowed' : 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  opacity: removingId === member.id ? 0.6 : 1
+                }}
+              >
+                {removingId === member.id ? 'Removing...' : 'Remove'}
+              </button>
             </div>
           ))}
-
-          {teamMembers.map(person => (
-            <div 
-              key={person.id} 
-              className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-            >
-              <div className="single-role-assigned">
-                <span className="unified-member-name">{person.name}</span>
-                <button 
-                  className="remove-teammate-btn"
-                  onClick={() => handleRemoveTeammate(person.id, group.team)}
-                  disabled={removingId === person.id}
-                >
-                  ×
-                </button>
+          
+          {teamMembers.map(member => (
+            <div key={`${member.id}-${member.role}`} className="team-member-item" style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              padding: '10px', 
+              backgroundColor: 'var(--bg)', 
+              borderRadius: '6px', 
+              marginBottom: '8px',
+              border: '1px solid var(--border)'
+            }}>
+              <div>
+                <span style={{ marginLeft: '28px', fontWeight: '500', color: 'var(--ink)' }}>{member.name}</span>
               </div>
+              <button
+                onClick={() => handleRemoveTeammate(member.id, member.role)}
+                disabled={removingId === member.id}
+                style={{
+                  padding: '5px 10px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: removingId === member.id ? 'not-allowed' : 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  opacity: removingId === member.id ? 0.6 : 1
+                }}
+              >
+                {removingId === member.id ? 'Removing...' : 'Remove'}
+              </button>
             </div>
           ))}
         </div>
@@ -775,70 +703,63 @@ export default function TeamList() {
     );
   };
 
-  const genderLabel = currentGender.charAt(0).toUpperCase() + currentGender.slice(1);
-  let displayId = weekendIdentifier || '';
-  if (weekendIdentifier) {
-    const match = weekendIdentifier.match(/(\w+)'s (\d+)/);
-    if (match && !weekendIdentifier.toLowerCase().includes('weekend')) {
-      displayId = `${match[1]}'s Weekend ${match[2]}`;
-    }
-  }
+  const genderLabel = currentGender === 'men' ? "Men's" : "Women's";
 
   return (
-    <section id="team-list-app" className="app-panel" style={{ display: 'block', padding: 0 }}>
-      <div className="card">
-        <div className="section-title" id="teamListTitle" style={{ margin: '24px 24px 0', paddingBottom: '20px' }}>
-          <span>{genderLabel}'s Team List</span>
-          {displayId && (
-            <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 400, marginLeft: '15px' }}>
-              {displayId}
-            </span>
-          )}
-        </div>
-
-        <div className="team-list-controls">
+    <section id="team-list-app" className="app-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div className="team-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
           <div>
-            <label className="label" style={{ display: 'block', marginBottom: '6px' }}>Select Team Roster</label>
-            <div className="toggle" id="teamListGenderToggle" style={{ maxWidth: '250px' }}>
-              <div 
-                className={`opt ${currentGender === 'men' ? 'active' : ''}`}
-                onClick={() => handleGenderToggle('men')}
-              >
-                Men
-              </div>
-              <div 
-                className={`opt ${currentGender === 'women' ? 'active' : ''}`}
-                onClick={() => handleGenderToggle('women')}
-              >
-                Women
-              </div>
-            </div>
+            <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'var(--ink)' }}>Team List</h2>
+            <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: 'var(--muted)' }}>
+              {weekendIdentifier || 'No team loaded'}
+            </p>
           </div>
           
-          {/* Test Mode Toggle */}
-          <div>
-            <label className="label" style={{ display: 'block', marginBottom: '6px' }}>Update Mode</label>
-            <div className="toggle" style={{ maxWidth: '250px' }}>
-              <div 
-                className={`opt ${testMode ? 'active' : ''}`}
-                onClick={() => setTestMode(true)}
-                style={{ backgroundColor: testMode ? '#ffc107' : '' }}
-              >
-                🧪 Test
-              </div>
-              <div 
-                className={`opt ${!testMode ? 'active' : ''}`}
-                onClick={() => setTestMode(false)}
-                style={{ backgroundColor: !testMode ? '#dc3545' : '' }}
-              >
-                ⚡ Live
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div>
+              <label className="label" style={{ display: 'block', marginBottom: '6px' }}>Gender</label>
+              <div className="toggle" style={{ maxWidth: '200px' }}>
+                <div 
+                  className={`opt ${currentGender === 'men' ? 'active' : ''}`}
+                  onClick={() => handleGenderToggle('men')}
+                >
+                  Men
+                </div>
+                <div 
+                  className={`opt ${currentGender === 'women' ? 'active' : ''}`}
+                  onClick={() => handleGenderToggle('women')}
+                >
+                  Women
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="team-total-card">
-            <div className="team-total-title">Team Total</div>
-            <div className="team-total-count">{teamRoster.length}</div>
+            
+            {/* Test Mode Toggle */}
+            <div>
+              <label className="label" style={{ display: 'block', marginBottom: '6px' }}>Update Mode</label>
+              <div className="toggle" style={{ maxWidth: '250px' }}>
+                <div 
+                  className={`opt ${testMode ? 'active' : ''}`}
+                  onClick={() => setTestMode(true)}
+                  style={{ backgroundColor: testMode ? '#ffc107' : '' }}
+                >
+                  🧪 Test
+                </div>
+                <div 
+                  className={`opt ${!testMode ? 'active' : ''}`}
+                  onClick={() => setTestMode(false)}
+                  style={{ backgroundColor: !testMode ? '#dc3545' : '' }}
+                >
+                  ⚡ Live
+                </div>
+              </div>
+            </div>
+            
+            <div className="team-total-card">
+              <div className="team-total-title">Team Total</div>
+              <div className="team-total-count">{teamRoster.length}</div>
+            </div>
           </div>
         </div>
 
