@@ -549,13 +549,13 @@ export default function TeamList() {
   };
 
   const renderLeadershipSection = () => {
-    const leadershipRoles = ['Head', 'Asst Head', 'BUR', 'Head Spiritual Director', 'Spiritual Director'];
-    const leaders = leadershipRoles.map(role => ({
-      role,
-      members: teamRoster.filter(m => m.role === role)
-    }));
+    const headSpirDirector = teamRoster.filter(m => m.role === 'Head Spiritual Director');
+    const spirDirectors = teamRoster.filter(m => m.role === 'Spiritual Director');
+    const heads = teamRoster.filter(m => m.role === 'Head');
+    const asstHeads = teamRoster.filter(m => m.role === 'Asst Head');
+    const burs = teamRoster.filter(m => m.role === 'BUR');
 
-    const totalCount = leaders.reduce((sum, l) => sum + l.members.length, 0);
+    const totalCount = headSpirDirector.length + spirDirectors.length + heads.length + asstHeads.length + burs.length;
 
     return (
       <div className="unified-team-section">
@@ -564,37 +564,170 @@ export default function TeamList() {
           {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
         </div>
         <div className="unified-team-members two-column">
-          {leaders.map(({ role, members }) => (
-            <div key={role}>
-              {members.length > 0 ? (
-                members.map(person => (
-                  <div 
-                    key={person.id} 
-                    className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
+          {/* Column 1: Head, Asst Head, BUR, First Spiritual Director */}
+          <div>
+            {heads.map(person => (
+              <div 
+                key={person.id} 
+                className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
+              >
+                <div className="single-role-name">Head</div>
+                <div className="single-role-assigned">
+                  <span className="unified-member-name">{person.name}</span>
+                  <button 
+                    className="remove-teammate-btn"
+                    onClick={() => handleRemoveTeammate(person.id, 'Head')}
+                    disabled={removingId === person.id}
                   >
-                    <div className="single-role-name">{role}</div>
-                    <div className="single-role-assigned">
-                      <span className="unified-member-name">{person.name}</span>
-                      <button 
-                        className="remove-teammate-btn"
-                        onClick={() => handleRemoveTeammate(person.id, role)}
-                        disabled={removingId === person.id}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="unified-member-item">
-                  <div className="single-role-name">{role}</div>
-                  <div className="single-role-assigned">
-                    <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
-                  </div>
+                    ×
+                  </button>
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            ))}
+            {heads.length === 0 && (
+              <div className="unified-member-item">
+                <div className="single-role-name">Head</div>
+                <div className="single-role-assigned">
+                  <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
+                </div>
+              </div>
+            )}
+
+            {asstHeads.map(person => (
+              <div 
+                key={person.id} 
+                className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
+              >
+                <div className="single-role-name">Asst Head</div>
+                <div className="single-role-assigned">
+                  <span className="unified-member-name">{person.name}</span>
+                  <button 
+                    className="remove-teammate-btn"
+                    onClick={() => handleRemoveTeammate(person.id, 'Asst Head')}
+                    disabled={removingId === person.id}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+            {asstHeads.length === 0 && (
+              <div className="unified-member-item">
+                <div className="single-role-name">Asst Head</div>
+                <div className="single-role-assigned">
+                  <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
+                </div>
+              </div>
+            )}
+
+            {burs.map(person => (
+              <div 
+                key={person.id} 
+                className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
+              >
+                <div className="single-role-name">BUR</div>
+                <div className="single-role-assigned">
+                  <span className="unified-member-name">{person.name}</span>
+                  <button 
+                    className="remove-teammate-btn"
+                    onClick={() => handleRemoveTeammate(person.id, 'BUR')}
+                    disabled={removingId === person.id}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+            {burs.length === 0 && (
+              <div className="unified-member-item">
+                <div className="single-role-name">BUR</div>
+                <div className="single-role-assigned">
+                  <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
+                </div>
+              </div>
+            )}
+
+            {/* First Spiritual Director (non-head) in column 1 */}
+            {spirDirectors.length > 0 && (
+              <div 
+                key={spirDirectors[0].id} 
+                className={`unified-member-item ${removingId === spirDirectors[0].id ? 'removing' : ''}`}
+              >
+                <div className="single-role-name">Spiritual Director</div>
+                <div className="single-role-assigned">
+                  <span className="unified-member-name">{spirDirectors[0].name}</span>
+                  <button 
+                    className="remove-teammate-btn"
+                    onClick={() => handleRemoveTeammate(spirDirectors[0].id, 'Spiritual Director')}
+                    disabled={removingId === spirDirectors[0].id}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Column 2: Head Spiritual Director + Second Spiritual Director */}
+          <div>
+            {/* Head Spiritual Director with HEAD pill */}
+            {headSpirDirector.map(person => (
+              <div 
+                key={person.id} 
+                className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
+              >
+                <div className="single-role-assigned">
+                  <span className="unified-member-name">
+                    {person.name}
+                    <span className="member-role-label head">HEAD</span>
+                  </span>
+                  <button 
+                    className="remove-teammate-btn"
+                    onClick={() => handleRemoveTeammate(person.id, 'Head Spiritual Director')}
+                    disabled={removingId === person.id}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+            {headSpirDirector.length === 0 && (
+              <div className="unified-member-item">
+                <div className="single-role-name">Spiritual Director</div>
+                <div className="single-role-assigned">
+                  <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
+                </div>
+              </div>
+            )}
+
+            {/* Second Spiritual Director (non-head) in column 2 */}
+            {spirDirectors.length > 1 && (
+              <div 
+                key={spirDirectors[1].id} 
+                className={`unified-member-item ${removingId === spirDirectors[1].id ? 'removing' : ''}`}
+              >
+                <div className="single-role-name">Spiritual Director</div>
+                <div className="single-role-assigned">
+                  <span className="unified-member-name">{spirDirectors[1].name}</span>
+                  <button 
+                    className="remove-teammate-btn"
+                    onClick={() => handleRemoveTeammate(spirDirectors[1].id, 'Spiritual Director')}
+                    disabled={removingId === spirDirectors[1].id}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+            {spirDirectors.length < 2 && (
+              <div className="unified-member-item">
+                <div className="single-role-name">Spiritual Director</div>
+                <div className="single-role-assigned">
+                  <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
