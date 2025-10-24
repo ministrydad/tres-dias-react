@@ -392,13 +392,22 @@ export default function TeamList() {
       return role;
     };
     
+    // Get full profile data for phone and email
+    const rawTableData = allPescadores[currentGender];
+    
     let tableRows = '';
     teamRoster.forEach(member => {
       const displayRole = getDisplayName(member.role);
+      const profile = rawTableData.find(p => p.PescadoreKey === member.id);
+      const phone = profile?.Phone1 || '';
+      const email = profile?.Email || '';
+      
       tableRows += `
         <tr>
           <td>${member.name}</td>
           <td>${displayRole}</td>
+          <td>${phone}</td>
+          <td>${email}</td>
           <td style="text-align: center;">
             <div class="checkbox"></div>
           </td>
@@ -480,6 +489,7 @@ export default function TeamList() {
             
             tbody tr {
               border-bottom: 1px solid #dee2e6;
+              page-break-inside: avoid;
             }
             
             tbody tr:nth-child(even) {
@@ -491,17 +501,24 @@ export default function TeamList() {
             }
             
             td {
-              padding: 12px;
-              font-size: 14px;
+              padding: 10px 8px;
+              font-size: 12px;
+              font-weight: 700;
               color: #212529;
             }
             
             td:first-child {
-              font-weight: 600;
+              font-weight: 700;
             }
             
             td:nth-child(2) {
               color: #495057;
+            }
+            
+            td:nth-child(3),
+            td:nth-child(4) {
+              font-size: 11px;
+              color: #6c757d;
             }
             
             .checkbox {
@@ -520,6 +537,7 @@ export default function TeamList() {
               display: flex;
               justify-content: space-between;
               align-items: center;
+              page-break-inside: avoid;
             }
             
             .footer .total {
@@ -535,7 +553,27 @@ export default function TeamList() {
             
             @page {
               size: portrait;
-              margin: 0.75in;
+              margin: 0.75in 0.75in 1in 0.75in;
+            }
+            
+            @media print {
+              body {
+                padding-top: 0.5in;
+                padding-bottom: 0.5in;
+              }
+              
+              table {
+                page-break-after: auto;
+              }
+              
+              tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+              }
+              
+              thead {
+                display: table-header-group;
+              }
             }
           </style>
         </head>
@@ -551,6 +589,8 @@ export default function TeamList() {
               <tr>
                 <th>Name</th>
                 <th>Position</th>
+                <th>Phone</th>
+                <th>Email</th>
                 <th>Contacted</th>
               </tr>
             </thead>
