@@ -553,13 +553,13 @@ export default function TeamList() {
             
             @page {
               size: portrait;
-              margin: 0.75in 0.75in 1in 0.75in;
+              margin: 1.25in 0.75in 1.5in 0.75in;
             }
             
             @media print {
               body {
-                padding-top: 0.5in;
-                padding-bottom: 0.5in;
+                padding-top: 0.75in;
+                padding-bottom: 0.75in;
               }
               
               table {
@@ -569,6 +569,11 @@ export default function TeamList() {
               tr {
                 page-break-inside: avoid;
                 page-break-after: auto;
+              }
+              
+              tbody {
+                orphans: 3;
+                widows: 3;
               }
               
               thead {
