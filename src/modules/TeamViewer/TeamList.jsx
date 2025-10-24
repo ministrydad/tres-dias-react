@@ -431,14 +431,19 @@ export default function TeamList() {
             body {
               font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
               color: #333;
-              padding: 40px;
+              background: white;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
             
+            .page-wrapper {
+              padding: 60px 40px 80px 40px;
+              min-height: 100vh;
+            }
+            
             .header {
               text-align: center;
-              margin-bottom: 32px;
+              margin-bottom: 40px;
               padding-bottom: 20px;
               border-bottom: 3px solid #333;
             }
@@ -460,6 +465,10 @@ export default function TeamList() {
             .header .meta {
               font-size: 13px;
               color: #6c757d;
+            }
+            
+            .table-wrapper {
+              margin-bottom: 60px;
             }
             
             table {
@@ -496,12 +505,8 @@ export default function TeamList() {
               background-color: #f8f9fa;
             }
             
-            tbody tr:hover {
-              background-color: #e9ecef;
-            }
-            
             td {
-              padding: 10px 8px;
+              padding: 14px 10px;
               font-size: 12px;
               font-weight: 700;
               color: #212529;
@@ -531,12 +536,9 @@ export default function TeamList() {
             }
             
             .footer {
-              margin-top: 32px;
+              margin-top: 40px;
               padding-top: 20px;
               border-top: 2px solid #333;
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
               page-break-inside: avoid;
             }
             
@@ -551,57 +553,60 @@ export default function TeamList() {
               font-size: 18px;
             }
             
+            /* Spacing helpers for page breaks */
+            .page-break-spacer {
+              height: 80px;
+              page-break-after: always;
+            }
+            
             @page {
               size: portrait;
-              margin: 1.25in 0.75in 2in 0.75in;
+              margin: 0.5in;
             }
             
             @media print {
-              body {
-                padding-top: 0.75in;
-                padding-bottom: 0.75in;
+              .page-wrapper {
+                padding: 40px 30px 60px 30px;
               }
               
-              table {
-                page-break-after: auto;
-              }
-              
-              tr {
+              tbody tr {
                 page-break-inside: avoid;
-                page-break-after: auto;
               }
               
-              tbody {
-                orphans: 3;
-                widows: 3;
+              .footer {
+                page-break-before: avoid;
               }
             }
           </style>
         </head>
         <body>
-          <div class="header">
-            <h1>Team Roster Print Out</h1>
-            <div class="weekend">${weekendIdentifier || `${genderTitle}'s Team`}</div>
-            <div class="meta">Generated on ${dateGenerated} at ${timeGenerated}</div>
-          </div>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Contacted</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
-          </table>
-          
-          <div class="footer">
-            <div class="total">Total Team Members: <span>${teamRoster.length}</span></div>
+          <div class="page-wrapper">
+            <div class="header">
+              <h1>Team Roster Print Out</h1>
+              <div class="weekend">${weekendIdentifier || `${genderTitle}'s Team`}</div>
+              <div class="meta">Generated on ${dateGenerated} at ${timeGenerated}</div>
+            </div>
+            
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Position</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Contacted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRows}
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="footer">
+              <div class="total">Total Team Members: <span>${teamRoster.length}</span></div>
+            </div>
           </div>
         </body>
       </html>
