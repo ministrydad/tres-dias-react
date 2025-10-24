@@ -1270,6 +1270,7 @@ function ProfileView({
                         className="editable-field"
                         value={
                           editedProfile?.Do_Not_Call === true || 
+                          editedProfile?.Do_Not_Call === 'true' ||
                           (editedProfile?.Do_Not_Call || '').toLowerCase() === 'y' || 
                           (editedProfile?.Do_Not_Call || '').toLowerCase() === 'yes' 
                             ? 'true' 
@@ -1294,6 +1295,7 @@ function ProfileView({
                         className="editable-field"
                         value={
                           editedProfile?.Deceased === true || 
+                          editedProfile?.Deceased === 'true' ||
                           (editedProfile?.Deceased || '').toLowerCase() === 'y' || 
                           (editedProfile?.Deceased || '').toLowerCase() === 'yes' 
                             ? 'true' 
