@@ -370,6 +370,87 @@ export default function TeamList() {
     }
   };
 
+
+  const handlePrintRoster = () => {
+    if (!teamRoster || teamRoster.length === 0) {
+      window.showMainStatus('No team members to print', true);
+      return;
+    }
+
+    const genderTitle = currentGender.charAt(0).toUpperCase() + currentGender.slice(1);
+    const reportTitle = `${genderTitle}'s Team ${weekendIdentifier || 'Roster'}`;
+    
+    let tableRows = '';
+    teamRoster.forEach(member => {
+      tableRows += `
+        <tr>
+          <td style="padding: 12px; border: 1px solid #dee2e6;">${member.name}</td>
+          <td style="padding: 12px; border: 1px solid #dee2e6;">${member.role}</td>
+          <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">
+            <div style="width: 24px; height: 24px; border: 2px solid #6c757d; border-radius: 4px; margin: 0 auto;"></div>
+          </td>
+        </tr>
+      `;
+    });
+
+    const printHTML = `
+      <div style="padding: 20px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="margin: 0; font-size: 24px; color: #333;">${reportTitle}</h1>
+          <p style="margin: 8px 0 0 0; color: #666; font-size: 14px;">Generated on ${new Date().toLocaleDateString()}</p>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <thead>
+            <tr style="background-color: #f8f9fa;">
+              <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left; font-weight: 700;">Name</th>
+              <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left; font-weight: 700;">Position</th>
+              <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center; font-weight: 700;">Contacted</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 2px solid #333;">
+          <div style="font-size: 14px; color: #666;">
+            <strong>Total Team Members:</strong> ${teamRoster.length}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const tempDiv = document.createElement('div');
+    tempDiv.id = 'team-roster-printable';
+    tempDiv.innerHTML = printHTML;
+    document.body.appendChild(tempDiv);
+
+    const printStyles = `
+      body { 
+        font-family: 'Source Sans Pro', sans-serif; 
+        color: #212529; 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact;
+      }
+      @page { 
+        size: portrait; 
+        margin: 0.75in; 
+      }
+    `;
+
+    if (typeof printJS !== 'undefined') {
+      printJS({
+        printable: 'team-roster-printable',
+        type: 'html',
+        documentTitle: reportTitle,
+        style: printStyles,
+        scanStyles: false,
+        onPrintDialogClose: () => document.body.removeChild(tempDiv)
+      });
+    } else {
+      window.print();
+      document.body.removeChild(tempDiv);
+    }
+  };
   const renderRectorSection = () => {
     const rector = teamRoster.find(m => m.role === 'Rector');
     
@@ -686,7 +767,7 @@ export default function TeamList() {
             >
               {isUpdating ? 'Processing...' : testMode ? '🧪 Test Update' : '⚡ Update Database'}
             </button>
-            <button className="btn btn-warning" onClick={() => console.log('Print Report')}>
+            <button className="btn btn-warning" onClick={handlePrintRoster}>
               Print Report
             </button>
             <button className="btn btn-warning" onClick={() => console.log('Print All Profiles')}>
