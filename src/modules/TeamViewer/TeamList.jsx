@@ -410,7 +410,7 @@ export default function TeamList() {
           <span>Leadership Team</span>
           {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
         </div>
-        <div className="unified-team-members">
+        <div className="unified-team-members two-column">
           {leaders.map(({ role, members }) => (
             <div key={role}>
               {members.length > 0 ? (
@@ -513,7 +513,7 @@ export default function TeamList() {
           <span>{group.title}</span>
           {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
         </div>
-        <div className="unified-team-members">
+        <div className="unified-team-members two-column">
           {headMembers.map(person => (
             <div 
               key={person.id} 
