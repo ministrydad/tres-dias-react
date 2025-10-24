@@ -476,6 +476,7 @@ export default function TeamList() {
   };
 
   const handlePrintAllProfiles = () => {
+    console.log('handlePrintAllProfiles called!', { teamRoster, length: teamRoster?.length });
     if (!teamRoster || teamRoster.length === 0) {
       window.showMainStatus('No team members to print', true);
       return;
