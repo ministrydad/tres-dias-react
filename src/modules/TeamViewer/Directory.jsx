@@ -1,5 +1,19 @@
 // src/modules/TeamViewer/Directory.jsx
-// UPDATED: Added sliding role selector panel + active team management
+// ============================================================
+// PHASE 2D COMPLETE: Role Editing in Profile View
+// ============================================================
+// ✅ Phase 2a: Name field editing (First, Preferred, Last)
+// ✅ Phase 2b: Contact field editing (Address, City, State, Zip, Church, Email, Phone, Do Not Call, Deceased)
+// ✅ Phase 2c: Save functionality with change detection and database updates
+// ✅ Phase 2d: Role editing (Status badges clickable, Last/Qty fields editable)
+//
+// Changes in Phase 2d:
+// 1. TeamRolesCard & ProfessorRolesCard now accept isEditMode and onFieldChange props
+// 2. Role status badges are clickable in edit mode (cycle N → I → E)
+// 3. Last Service fields become text inputs in edit mode
+// 4. Quantity fields become number inputs in edit mode
+// 5. handleSaveChanges collects and saves all role field changes
+// ============================================================
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
@@ -1707,23 +1721,79 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
   );
 }
 
-function TeamRolesCard({ profile }) {
+// PHASE 2D: Updated TeamRolesCard with edit mode support
+function TeamRolesCard({ profile, isEditMode, onFieldChange }) {
   const createRoleItem = (role) => {
     const status = (profile[role.key] || 'N').toUpperCase();
-    const serviceNumber = profile[`${role.key} Service`] || '';
-    const quantityNumber = profile[`${role.key.replace(/ /g, '_')}_Service_Qty`] || '';
+    const serviceField = `${role.key} Service`;
+    const quantityField = `${role.key.replace(/ /g, '_')}_Service_Qty`;
+    const serviceNumber = profile[serviceField] || '';
+    const quantityNumber = profile[quantityField] || '';
 
     return (
       <div key={role.key} className="role-item">
         <div className="role-name">{role.name}</div>
         <div className="role-status-cell">
-          <span className={`role-status status-${status}`}>{status}</span>
+          {isEditMode ? (
+            <span 
+              className={`role-status status-${status}`}
+              onClick={() => {
+                const currentStatus = status;
+                let nextStatus;
+                if (currentStatus === 'N') nextStatus = 'I';
+                else if (currentStatus === 'I') nextStatus = 'E';
+                else nextStatus = 'N';
+                onFieldChange(role.key, nextStatus);
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              {status}
+            </span>
+          ) : (
+            <span className={`role-status status-${status}`}>{status}</span>
+          )}
         </div>
         <div className="role-last-cell">
-          <span className="service-number">{serviceNumber}</span>
+          {isEditMode ? (
+            <input
+              type="text"
+              className="editable-field"
+              value={serviceNumber}
+              onChange={(e) => onFieldChange(serviceField, e.target.value)}
+              placeholder=""
+              style={{
+                width: '100%',
+                padding: '4px 6px',
+                border: '1px solid #007bff',
+                borderRadius: '3px',
+                fontSize: '11px',
+                textAlign: 'center'
+              }}
+            />
+          ) : (
+            <span className="service-number">{serviceNumber}</span>
+          )}
         </div>
         <div className="role-qty-cell">
-          <span className="quantity-number">{quantityNumber}</span>
+          {isEditMode ? (
+            <input
+              type="number"
+              className="editable-field"
+              value={quantityNumber}
+              onChange={(e) => onFieldChange(quantityField, e.target.value)}
+              placeholder=""
+              style={{
+                width: '100%',
+                padding: '4px 6px',
+                border: '1px solid #007bff',
+                borderRadius: '3px',
+                fontSize: '11px',
+                textAlign: 'center'
+              }}
+            />
+          ) : (
+            <span className="quantity-number">{quantityNumber}</span>
+          )}
         </div>
       </div>
     );
@@ -1767,23 +1837,79 @@ function TeamRolesCard({ profile }) {
   );
 }
 
-function ProfessorRolesCard({ profile }) {
+// PHASE 2D: Updated ProfessorRolesCard with edit mode support
+function ProfessorRolesCard({ profile, isEditMode, onFieldChange }) {
   const createRoleItem = (role) => {
     const status = (profile[role.key] || 'N').toUpperCase();
-    const serviceNumber = profile[`${role.key} Service`] || '';
-    const quantityNumber = profile[`${role.key}_Service_Qty`] || '';
+    const serviceField = `${role.key} Service`;
+    const quantityField = `${role.key}_Service_Qty`;
+    const serviceNumber = profile[serviceField] || '';
+    const quantityNumber = profile[quantityField] || '';
 
     return (
       <div key={role.key} className="role-item">
         <div className="role-name">{role.name}</div>
         <div className="role-status-cell">
-          <span className={`role-status status-${status}`}>{status}</span>
+          {isEditMode ? (
+            <span 
+              className={`role-status status-${status}`}
+              onClick={() => {
+                const currentStatus = status;
+                let nextStatus;
+                if (currentStatus === 'N') nextStatus = 'I';
+                else if (currentStatus === 'I') nextStatus = 'E';
+                else nextStatus = 'N';
+                onFieldChange(role.key, nextStatus);
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              {status}
+            </span>
+          ) : (
+            <span className={`role-status status-${status}`}>{status}</span>
+          )}
         </div>
         <div className="role-last-cell">
-          <span className="service-number">{serviceNumber}</span>
+          {isEditMode ? (
+            <input
+              type="text"
+              className="editable-field"
+              value={serviceNumber}
+              onChange={(e) => onFieldChange(serviceField, e.target.value)}
+              placeholder=""
+              style={{
+                width: '100%',
+                padding: '4px 6px',
+                border: '1px solid #007bff',
+                borderRadius: '3px',
+                fontSize: '11px',
+                textAlign: 'center'
+              }}
+            />
+          ) : (
+            <span className="service-number">{serviceNumber}</span>
+          )}
         </div>
         <div className="role-qty-cell">
-          <span className="quantity-number">{quantityNumber}</span>
+          {isEditMode ? (
+            <input
+              type="number"
+              className="editable-field"
+              value={quantityNumber}
+              onChange={(e) => onFieldChange(quantityField, e.target.value)}
+              placeholder=""
+              style={{
+                width: '100%',
+                padding: '4px 6px',
+                border: '1px solid #007bff',
+                borderRadius: '3px',
+                fontSize: '11px',
+                textAlign: 'center'
+              }}
+            />
+          ) : (
+            <span className="quantity-number">{quantityNumber}</span>
+          )}
         </div>
       </div>
     );
