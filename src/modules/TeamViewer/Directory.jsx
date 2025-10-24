@@ -819,8 +819,8 @@ function ProfileView({
   const { orgId } = useAuth();
   const { refreshData } = usePescadores();
   
-  const isDeceased = profile.Deceased === true || (profile.Deceased || '').toLowerCase() === 'y' || (profile.Deceased || '').toLowerCase() === 'yes';
-  const isDoNotCall = profile.Do_Not_Call === true || (profile.Do_Not_Call || '').toLowerCase() === 'y' || (profile.Do_Not_Call || '').toLowerCase() === 'yes';
+  const isDeceased = profile.Deceased === true || profile.Deceased === 'true' || (profile.Deceased || '').toLowerCase() === 'y' || (profile.Deceased || '').toLowerCase() === 'yes';
+  const isDoNotCall = profile.Do_Not_Call === true || profile.Do_Not_Call === 'true' || (profile.Do_Not_Call || '').toLowerCase() === 'y' || (profile.Do_Not_Call || '').toLowerCase() === 'yes';
   const isSpiritualDirector = (profile['Spiritual Director'] || 'N').toUpperCase() === 'E';
   const fullName = `${profile.Preferred || profile.First || ''} ${profile.Last || ''}`.trim();
   const legalName = profile.First !== profile.Preferred && profile.Preferred ? profile.First : null;
@@ -904,7 +904,7 @@ function ProfileView({
     }
     
     // Handle boolean fields (Do_Not_Call, Deceased)
-    // Database stores these as TEXT 'y' or 'n', not BOOLEAN
+    // Database stores these as TEXT 'true' or 'false' strings
     const booleanFields = ['Do_Not_Call', 'Deceased'];
     
     for (const fieldName of booleanFields) {
@@ -913,6 +913,7 @@ function ProfileView({
       
       // Convert original value to boolean for comparison
       const isOriginalTrue = originalValue === true || 
+                            originalValue === 'true' ||
                             (originalValue || '').toLowerCase() === 'y' || 
                             (originalValue || '').toLowerCase() === 'yes';
       
@@ -923,8 +924,8 @@ function ProfileView({
                         (newValue || '').toLowerCase() === 'yes';
       
       if (isNewTrue !== isOriginalTrue) {
-        // Save as 'y' or 'n' string since database columns are TEXT type
-        updateData[fieldName] = isNewTrue ? 'y' : 'n';
+        // Save as 'true' or 'false' string since database columns are TEXT type
+        updateData[fieldName] = isNewTrue ? 'true' : 'false';
       }
     }
     
