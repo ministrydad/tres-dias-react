@@ -1,5 +1,5 @@
 // src/modules/TeamViewer/TeamList.jsx
-// COMPLETE FILE - Abort signals removed, cleanup simplified
+// UPDATED: Added "Update Database" button to batch update team member service records
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -13,6 +13,9 @@ export default function TeamList() {
   const [teamRoster, setTeamRoster] = useState([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [removingId, setRemovingId] = useState(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [testMode, setTestMode] = useState(true); // Start in test mode by default
 
   const ROLE_CONFIG = {
     team: [
@@ -75,7 +78,6 @@ export default function TeamList() {
     { title: 'Media Team', head: 'Head Media', team: 'Media' }
   ];
 
-  // ✅ FIXED: Removed AbortController and isMounted - just load data when ready
   useEffect(() => {
     if (!pescadoresLoading && orgId && allPescadores[currentGender]?.length > 0) {
       console.log('TeamList: Loading latest team for', currentGender);
@@ -83,7 +85,6 @@ export default function TeamList() {
     }
   }, [currentGender, pescadoresLoading, orgId, allPescadores]);
 
-  // ✅ FIXED: No abort signals, no isMounted checks
   const loadLatestTeam = async () => {
     const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
     
@@ -132,7 +133,6 @@ export default function TeamList() {
     }
   };
 
-  // ✅ FIXED: No abort signals, no isMounted checks
   const loadTeamRoster = async (identifier) => {
     const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
     const rawTableData = allPescadores[currentGender];
@@ -238,6 +238,138 @@ export default function TeamList() {
     });
   };
 
+  // NEW: Update Database functionality
+  const handleUpdateDatabaseClick = () => {
+    if (!weekendIdentifier || teamRoster.length === 0) {
+      window.showMainStatus?.('No team loaded to update', true);
+      return;
+    }
+    setShowUpdateModal(true);
+  };
+
+  const handleConfirmUpdate = async () => {
+    setIsUpdating(true);
+    const tableName = currentGender === 'men' ? 'men_raw' : 'women_raw';
+    const rawTableData = allPescadores[currentGender];
+    
+    let successCount = 0;
+    let errorCount = 0;
+    const previewChanges = []; // Store changes for test mode
+    
+    try {
+      // Process each team member
+      for (const member of teamRoster) {
+        const profile = rawTableData.find(p => p.PescadoreKey === member.id);
+        if (!profile) {
+          console.warn(`Profile not found for ${member.name}`);
+          errorCount++;
+          continue;
+        }
+        
+        const role = member.role;
+        const updateData = {};
+        
+        // Determine field names based on role type
+        let statusField = role;
+        let lastField = `${role} Service`;
+        let qtyField;
+        
+        // Handle professor roles (different naming convention)
+        if (role.startsWith('Prof_')) {
+          qtyField = `${role}_Service_Qty`;
+        } else {
+          qtyField = `${role.replace(/ /g, '_')}_Service_Qty`;
+        }
+        
+        // Update STATUS (N → I, I → E, E stays E)
+        const currentStatus = (profile[statusField] || 'N').toUpperCase();
+        let newStatus = currentStatus;
+        if (currentStatus === 'N') {
+          newStatus = 'I';
+          updateData[statusField] = 'I';
+        } else if (currentStatus === 'I') {
+          newStatus = 'E';
+          updateData[statusField] = 'E';
+        }
+        // If already 'E', no change needed
+        
+        // Update LAST SERVICE to current weekend identifier
+        const currentLast = profile[lastField] || '(none)';
+        updateData[lastField] = weekendIdentifier;
+        
+        // Increment QUANTITY by 1
+        const currentQty = parseInt(profile[qtyField] || 0, 10);
+        const newQty = currentQty + 1;
+        updateData[qtyField] = newQty;
+        
+        // Store preview for test mode
+        previewChanges.push({
+          name: member.name,
+          role,
+          statusChange: `${currentStatus} → ${newStatus}`,
+          lastChange: `${currentLast} → ${weekendIdentifier}`,
+          qtyChange: `${currentQty} → ${newQty}`,
+          statusField,
+          lastField,
+          qtyField,
+          updateData
+        });
+        
+        // TEST MODE: Skip actual database update
+        if (!testMode) {
+          // Update database
+          const { error } = await supabase
+            .from(tableName)
+            .update(updateData)
+            .eq('PescadoreKey', member.id)
+            .eq('org_id', orgId);
+          
+          if (error) {
+            console.error(`Error updating ${member.name}:`, error);
+            errorCount++;
+          } else {
+            successCount++;
+          }
+        } else {
+          // In test mode, just count as success
+          successCount++;
+        }
+      }
+      
+      // Show results
+      if (testMode) {
+        console.log('🧪 TEST MODE - No actual database changes made');
+        console.log('📋 Preview of changes that WOULD be made:');
+        console.table(previewChanges);
+        window.showMainStatus?.(
+          `TEST MODE: Would update ${successCount} team member${successCount > 1 ? 's' : ''} (check console for details)`,
+          false
+        );
+      } else {
+        if (errorCount === 0) {
+          window.showMainStatus?.(
+            `Successfully updated ${successCount} team member${successCount > 1 ? 's' : ''}!`,
+            false
+          );
+        } else {
+          window.showMainStatus?.(
+            `Updated ${successCount} members, ${errorCount} error${errorCount > 1 ? 's' : ''}`,
+            true
+          );
+        }
+      }
+      
+      // Close modal
+      setShowUpdateModal(false);
+      
+    } catch (error) {
+      console.error('Error in batch update:', error);
+      window.showMainStatus?.('An error occurred during update', true);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const renderRectorSection = () => {
     const rector = teamRoster.find(m => m.role === 'Rector');
     
@@ -248,15 +380,14 @@ export default function TeamList() {
           {rector ? (
             <div 
               className={`rector-badge ${removingId === rector.id ? 'removing' : ''}`}
-              onClick={() => !removingId && handleRemoveTeammate(rector.id, 'Rector')}
-              style={{ cursor: removingId === rector.id ? 'not-allowed' : 'pointer' }}
+              onClick={() => handleRemoveTeammate(rector.id, 'Rector')}
             >
               <span className="rector-name">{rector.name}</span>
-              <span className="remove-rector-btn">Remove ×</span>
+              <span className="remove-rector-btn">Remove</span>
             </div>
           ) : (
-            <div style={{ color: '#6c757d', fontStyle: 'italic', padding: '8px 16px' }}>
-              (No Rector Assigned)
+            <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '14px', padding: '10px' }}>
+              No Rector Assigned
             </div>
           )}
         </div>
@@ -266,94 +397,51 @@ export default function TeamList() {
 
   const renderLeadershipSection = () => {
     const leadershipRoles = ['Head', 'Asst Head', 'BUR', 'Head Spiritual Director', 'Spiritual Director'];
-    const leadershipMembers = teamRoster.filter(m => leadershipRoles.includes(m.role));
-    const totalMembers = leadershipMembers.length;
+    const leaders = leadershipRoles.map(role => ({
+      role,
+      members: teamRoster.filter(m => m.role === role)
+    }));
 
-    const headSpiritualDirector = teamRoster.find(m => m.role === 'Head Spiritual Director');
-    const regularSDs = teamRoster.filter(m => m.role === 'Spiritual Director').slice(0, 2);
+    const totalCount = leaders.reduce((sum, l) => sum + l.members.length, 0);
 
     return (
       <div className="unified-team-section">
         <div className="unified-team-header">
           <span>Leadership Team</span>
-          {totalMembers > 0 && <span className="team-header-count-badge">{totalMembers}</span>}
+          {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
         </div>
-        <div className="unified-team-members" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
-          <div style={{ borderRight: '1px solid #f0f0f0' }}>
-            {['Head', 'Asst Head', 'BUR'].map(roleKey => {
-              const person = teamRoster.find(m => m.role === roleKey);
-              return (
-                <div key={roleKey} className={`unified-member-item ${removingId === person?.id ? 'removing' : ''}`}>
-                  <div className="single-role-name">{roleKey}:</div>
+        <div className="unified-team-members">
+          {leaders.map(({ role, members }) => (
+            <div key={role}>
+              {members.length > 0 ? (
+                members.map(person => (
+                  <div 
+                    key={person.id} 
+                    className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
+                  >
+                    <div className="single-role-name">{role}</div>
+                    <div className="single-role-assigned">
+                      <span className="unified-member-name">{person.name}</span>
+                      <button 
+                        className="remove-teammate-btn"
+                        onClick={() => handleRemoveTeammate(person.id, role)}
+                        disabled={removingId === person.id}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="unified-member-item">
+                  <div className="single-role-name">{role}</div>
                   <div className="single-role-assigned">
-                    {person ? (
-                      <>
-                        <span className="unified-member-name">{person.name}</span>
-                        <button 
-                          className="remove-teammate-btn"
-                          onClick={() => handleRemoveTeammate(person.id, roleKey)}
-                          disabled={removingId === person.id}
-                        >
-                          ×
-                        </button>
-                      </>
-                    ) : (
-                      <span style={{ color: '#6c757d', fontStyle: 'italic' }}></span>
-                    )}
+                    <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-
-          <div>
-            <div className={`unified-member-item ${removingId === headSpiritualDirector?.id ? 'removing' : ''}`}>
-              <div className="single-role-name">Spiritual Director:</div>
-              <div className="single-role-assigned">
-                {headSpiritualDirector ? (
-                  <>
-                    <span className="unified-member-name">
-                      {headSpiritualDirector.name} <span className="member-role-label head">HEAD</span>
-                    </span>
-                    <button 
-                      className="remove-teammate-btn"
-                      onClick={() => handleRemoveTeammate(headSpiritualDirector.id, 'Head Spiritual Director')}
-                      disabled={removingId === headSpiritualDirector.id}
-                    >
-                      ×
-                    </button>
-                  </>
-                ) : (
-                  <span style={{ color: '#6c757d', fontStyle: 'italic' }}></span>
-                )}
-              </div>
+              )}
             </div>
-
-            {[0, 1].map(i => {
-              const person = regularSDs[i];
-              return (
-                <div key={i} className={`unified-member-item ${removingId === person?.id ? 'removing' : ''}`}>
-                  <div className="single-role-name">Spiritual Director:</div>
-                  <div className="single-role-assigned">
-                    {person ? (
-                      <>
-                        <span className="unified-member-name">{person.name}</span>
-                        <button 
-                          className="remove-teammate-btn"
-                          onClick={() => handleRemoveTeammate(person.id, 'Spiritual Director')}
-                          disabled={removingId === person.id}
-                        >
-                          ×
-                        </button>
-                      </>
-                    ) : (
-                      <span style={{ color: '#6c757d', fontStyle: 'italic' }}></span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          ))}
         </div>
       </div>
     );
@@ -361,42 +449,52 @@ export default function TeamList() {
 
   const renderProfessorSection = () => {
     const professorRoles = ROLE_CONFIG.professor.map(r => r.key);
-    const professorMembers = teamRoster.filter(m => professorRoles.includes(m.role));
-    const totalMembers = professorMembers.length;
+    const professors = professorRoles.map(role => ({
+      role,
+      displayName: ROLE_CONFIG.professor.find(r => r.key === role)?.name || role,
+      members: teamRoster.filter(m => m.role === role)
+    }));
+
+    const totalCount = professors.reduce((sum, p) => sum + p.members.length, 0);
 
     return (
       <div className="unified-team-section">
         <div className="unified-team-header">
           <span>Professor Team</span>
-          {totalMembers > 0 && <span className="team-header-count-badge">{totalMembers}</span>}
+          {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
         </div>
         <div className="unified-team-members two-column">
-          {ROLE_CONFIG.professor.map(role => {
-            const person = teamRoster.find(m => m.role === role.key);
-            const displayName = role.name.replace('Professor - ', '');
-            
-            return (
-              <div key={role.key} className={`unified-member-item ${removingId === person?.id ? 'removing' : ''}`}>
-                <div className="single-role-name">{displayName}:</div>
-                <div className="single-role-assigned">
-                  {person ? (
-                    <>
+          {professors.map(({ role, displayName, members }) => (
+            <div key={role}>
+              {members.length > 0 ? (
+                members.map(person => (
+                  <div 
+                    key={person.id} 
+                    className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
+                  >
+                    <div className="single-role-name">{displayName}</div>
+                    <div className="single-role-assigned">
                       <span className="unified-member-name">{person.name}</span>
                       <button 
                         className="remove-teammate-btn"
-                        onClick={() => handleRemoveTeammate(person.id, role.key)}
+                        onClick={() => handleRemoveTeammate(person.id, role)}
                         disabled={removingId === person.id}
                       >
                         ×
                       </button>
-                    </>
-                  ) : (
-                    <span style={{ color: '#6c757d', fontStyle: 'italic' }}></span>
-                  )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="unified-member-item">
+                  <div className="single-role-name">{displayName}</div>
+                  <div className="single-role-assigned">
+                    <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              )}
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -404,25 +502,28 @@ export default function TeamList() {
 
   const renderUnifiedTeamSection = (group) => {
     const headMembers = teamRoster.filter(m => m.role === group.head);
-    const assistantMembers = group.assistantHead ? teamRoster.filter(m => m.role === group.assistantHead) : [];
+    const assistantHeadMembers = group.assistantHead ? teamRoster.filter(m => m.role === group.assistantHead) : [];
     const teamMembers = teamRoster.filter(m => m.role === group.team);
-    const totalMembers = headMembers.length + assistantMembers.length + teamMembers.length;
+
+    const totalCount = headMembers.length + assistantHeadMembers.length + teamMembers.length;
 
     return (
       <div key={group.title} className="unified-team-section">
         <div className="unified-team-header">
           <span>{group.title}</span>
-          {totalMembers > 0 && <span className="team-header-count-badge">{totalMembers}</span>}
+          {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
         </div>
-        <div className="unified-team-members two-column">
+        <div className="unified-team-members">
           {headMembers.map(person => (
             <div 
               key={person.id} 
               className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
             >
               <div className="single-role-assigned">
-                <span className="unified-member-name">{person.name}</span>
-                <span className="member-role-label head">HEAD</span>
+                <span className="unified-member-name">
+                  {person.name}
+                  <span className="member-role-label head">HEAD</span>
+                </span>
                 <button 
                   className="remove-teammate-btn"
                   onClick={() => handleRemoveTeammate(person.id, group.head)}
@@ -434,14 +535,16 @@ export default function TeamList() {
             </div>
           ))}
 
-          {group.assistantHead && assistantMembers.map(person => (
+          {assistantHeadMembers.map(person => (
             <div 
               key={person.id} 
               className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
             >
               <div className="single-role-assigned">
-                <span className="unified-member-name">{person.name}</span>
-                <span className="member-role-label asst-head">ASST HEAD</span>
+                <span className="unified-member-name">
+                  {person.name}
+                  <span className="member-role-label asst-head">ASST HEAD</span>
+                </span>
                 <button 
                   className="remove-teammate-btn"
                   onClick={() => handleRemoveTeammate(person.id, group.assistantHead)}
@@ -514,6 +617,28 @@ export default function TeamList() {
               </div>
             </div>
           </div>
+          
+          {/* Test Mode Toggle */}
+          <div>
+            <label className="label" style={{ display: 'block', marginBottom: '6px' }}>Update Mode</label>
+            <div className="toggle" style={{ maxWidth: '250px' }}>
+              <div 
+                className={`opt ${testMode ? 'active' : ''}`}
+                onClick={() => setTestMode(true)}
+                style={{ backgroundColor: testMode ? '#ffc107' : '' }}
+              >
+                🧪 Test
+              </div>
+              <div 
+                className={`opt ${!testMode ? 'active' : ''}`}
+                onClick={() => setTestMode(false)}
+                style={{ backgroundColor: !testMode ? '#dc3545' : '' }}
+              >
+                ⚡ Live
+              </div>
+            </div>
+          </div>
+          
           <div className="team-total-card">
             <div className="team-total-title">Team Total</div>
             <div className="team-total-count">{teamRoster.length}</div>
@@ -547,6 +672,20 @@ export default function TeamList() {
             </span>
           </div>
           <div className="team-action-buttons" style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              className="btn btn-primary" 
+              onClick={handleUpdateDatabaseClick}
+              disabled={!weekendIdentifier || teamRoster.length === 0 || isUpdating}
+              style={{
+                backgroundColor: testMode ? '#ffc107' : '#28a745',
+                borderColor: testMode ? '#ffc107' : '#28a745',
+                color: testMode ? '#333' : 'white',
+                fontWeight: 'bold'
+              }}
+              title={testMode ? 'Test mode: No actual changes will be made' : 'Live mode: Will update database'}
+            >
+              {isUpdating ? 'Processing...' : testMode ? '🧪 Test Update' : '⚡ Update Database'}
+            </button>
             <button className="btn btn-warning" onClick={() => console.log('Print Report')}>
               Print Report
             </button>
@@ -564,6 +703,97 @@ export default function TeamList() {
             </button>
           </div>
         </div>
+
+        {/* Update Database Confirmation Modal */}
+        {showUpdateModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '30px',
+              maxWidth: '500px',
+              width: '90%',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+            }}>
+              <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>
+                {testMode ? '🧪 TEST MODE: Preview Changes' : 'Update Database'} for {weekendIdentifier}?
+              </h3>
+              {testMode && (
+                <div style={{
+                  backgroundColor: '#fff3cd',
+                  border: '1px solid #ffc107',
+                  borderRadius: '6px',
+                  padding: '12px',
+                  marginBottom: '20px'
+                }}>
+                  <strong style={{ color: '#856404' }}>🧪 Test Mode Active</strong>
+                  <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#856404' }}>
+                    No actual database changes will be made. Check browser console for preview.
+                  </p>
+                </div>
+              )}
+              <p style={{ marginBottom: '20px', color: '#666', lineHeight: '1.6' }}>
+                This will {testMode ? 'preview updating' : 'update'} <strong>{teamRoster.length} team member{teamRoster.length > 1 ? 's' : ''}</strong> with their service information:
+              </p>
+              <ul style={{ marginBottom: '25px', paddingLeft: '20px', color: '#666' }}>
+                <li><strong>Last Service:</strong> Set to "{weekendIdentifier}"</li>
+                <li><strong>Quantity:</strong> Increment by 1</li>
+                <li><strong>Status:</strong> Upgrade N→I or I→E (if applicable)</li>
+              </ul>
+              <p style={{ marginBottom: '25px', fontSize: '14px', color: testMode ? '#856404' : '#dc3545', fontWeight: 500 }}>
+                {testMode 
+                  ? '💡 Test mode: Results will be shown in browser console. No database changes will be made.' 
+                  : '⚠️ This action cannot be undone. Only the specific roles assigned on this team will be updated.'}
+              </p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setShowUpdateModal(false)}
+                  disabled={isUpdating}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: isUpdating ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    opacity: isUpdating ? 0.6 : 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmUpdate}
+                  disabled={isUpdating}
+                  style={{
+                    padding: '8px 20px',
+                    backgroundColor: testMode ? '#ffc107' : '#28a745',
+                    color: testMode ? '#333' : 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: isUpdating ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    opacity: isUpdating ? 0.6 : 1
+                  }}
+                >
+                  {isUpdating ? 'Processing...' : testMode ? '🧪 Run Test' : '⚡ Confirm Update'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
