@@ -396,7 +396,7 @@ export default function TeamList() {
     const rawTableData = allPescadores[currentGender];
     
     let tableRows = '';
-    teamRoster.forEach(member => {
+    teamRoster.forEach((member, index) => {
       const displayRole = getDisplayName(member.role);
       const profile = rawTableData.find(p => p.PescadoreKey === member.id);
       const phone = profile?.Phone1 || '';
@@ -413,6 +413,27 @@ export default function TeamList() {
           </td>
         </tr>
       `;
+      
+      // Insert page break spacer after row 18 (page 1), then every 23 rows
+      const rowNumber = index + 1;
+      if (rowNumber === 18 || (rowNumber > 18 && (rowNumber - 18) % 23 === 0)) {
+        tableRows += `
+          </tbody>
+          </table>
+          <div class="page-break-spacer"></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Contacted</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+      }
     });
 
     const printHTML = `
@@ -501,12 +522,6 @@ export default function TeamList() {
               page-break-inside: avoid;
             }
             
-            tbody::before {
-              content: '';
-              display: block;
-              height: 60px;
-            }
-            
             tbody tr:nth-child(even) {
               background-color: #f8f9fa;
             }
@@ -561,8 +576,9 @@ export default function TeamList() {
             
             /* Spacing helpers for page breaks */
             .page-break-spacer {
-              height: 80px;
-              page-break-after: always;
+              height: 1px;
+              page-break-before: always;
+              margin-top: 60px;
             }
             
             @page {
