@@ -135,7 +135,7 @@ export const PRINT_PROFILE_CSS = `
   }
   .role-header-set { 
     display: grid; 
-    grid-template-columns: 49% 20% 16% 10%; 
+    grid-template-columns: 48% 19% 18% 10%; 
     gap: 2px; 
   }
   .role-header-legend { 
@@ -168,7 +168,7 @@ export const PRINT_PROFILE_CSS = `
   }
   .role-item { 
     display: grid; 
-    grid-template-columns: 49% 20% 16% 10%; 
+    grid-template-columns: 48% 19% 18% 10%; 
     gap: 2px; 
     align-items: stretch; 
     margin-bottom: 2px; 
