@@ -913,6 +913,48 @@ function ProfileView({
       }
     }
     
+    // ===== PHASE 2D: Collect role status changes =====
+    const allRoleKeys = [
+      ...ROLE_CONFIG.team.map(r => r.key),
+      ...ROLE_CONFIG.professor.map(r => r.key)
+    ];
+
+    for (const roleKey of allRoleKeys) {
+      const newStatus = (editedProfile?.[roleKey] || 'N').toUpperCase();
+      const originalStatus = (profile[roleKey] || 'N').toUpperCase();
+      
+      if (newStatus !== originalStatus) {
+        updateData[roleKey] = newStatus;
+      }
+    }
+
+    // Collect changes from role service and quantity fields
+    const teamRoleFields = ROLE_CONFIG.team.map(r => ({
+      serviceField: `${r.key} Service`,
+      quantityField: `${r.key.replace(/ /g, '_')}_Service_Qty`
+    }));
+
+    const profRoleFields = ROLE_CONFIG.professor.map(r => ({
+      serviceField: `${r.key} Service`,
+      quantityField: `${r.key}_Service_Qty`
+    }));
+
+    [...teamRoleFields, ...profRoleFields].forEach(({ serviceField, quantityField }) => {
+      // Check service field
+      const newService = editedProfile?.[serviceField] || '';
+      const originalService = profile[serviceField] || '';
+      if (newService !== originalService) {
+        updateData[serviceField] = newService;
+      }
+      
+      // Check quantity field
+      const newQty = editedProfile?.[quantityField] || '';
+      const originalQty = profile[quantityField] || '';
+      if (String(newQty) !== String(originalQty)) {
+        updateData[quantityField] = newQty === '' ? null : parseInt(newQty, 10);
+      }
+    });
+    
     // If no changes detected, exit early
     if (Object.keys(updateData).length === 0) {
       window.showMainStatus('No changes detected.', false);
@@ -1285,8 +1327,17 @@ function ProfileView({
 
               <RectorQualificationCard profile={profile} getRectorQualificationStatus={getRectorQualificationStatus} />
             </div>
-            <TeamRolesCard profile={profile} />
-            <ProfessorRolesCard profile={profile} />
+            {/* PHASE 2D: Pass edit mode props to role cards */}
+            <TeamRolesCard 
+              profile={isEditMode ? editedProfile : profile} 
+              isEditMode={isEditMode}
+              onFieldChange={handleFieldChange}
+            />
+            <ProfessorRolesCard 
+              profile={isEditMode ? editedProfile : profile} 
+              isEditMode={isEditMode}
+              onFieldChange={handleFieldChange}
+            />
           </div>
 
           {!isEditMode && (
