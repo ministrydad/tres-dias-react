@@ -1,6 +1,6 @@
 // src/utils/profilePrintUtils.js
-// Shared utility for generating printable profile HTML
-// Used by Directory.jsx and TeamList.jsx
+// Shared utility for generating printable profile HTML with complete embedded CSS
+// Used by Directory.jsx (window.print) and TeamList.jsx (printJS raw-html)
 
 export const ROLE_CONFIG = {
   team: [
@@ -48,6 +48,280 @@ export const ROLE_CONFIG = {
     { name: 'Reunion', key: 'Prof_Reunion' }
   ]
 };
+
+/**
+ * Complete embedded CSS for printing profiles
+ * Extracted from original script.js printAllTeamProfiles() function
+ */
+export const PRINT_PROFILE_CSS = `
+  body { 
+    font-family: Arial, sans-serif; 
+    margin: 0; 
+    font-size: 10pt; 
+    color: #333; 
+    -webkit-print-color-adjust: exact; 
+    print-color-adjust: exact; 
+  }
+  .page-container { 
+    padding: 0.2in; 
+  }
+  .profile-main-info, 
+  .roles-section { 
+    page-break-inside: avoid; 
+  }
+  .profile-main-info { 
+    background-color: #f8f9fa; 
+    padding: 15px; 
+    border-radius: 8px; 
+    margin-bottom: 15px; 
+    border: 1px solid #dee2e6; 
+    position: relative;
+  }
+  .profile-header { 
+    display: flex; 
+    align-items: baseline; 
+    flex-wrap: wrap; 
+    margin-bottom: 10px; 
+  }
+  .profile-name { 
+    font-size: 22pt; 
+    font-weight: bold; 
+    margin: 0 15px 0 0; 
+  }
+  .profile-weekend-info { 
+    font-size: 0.8em; 
+    font-weight: 600; 
+    margin-left: 10px; 
+  }
+  .last-served-highlight { 
+    background-color: #ffc107; 
+    padding: 2px 6px; 
+    border-radius: 3px; 
+    font-weight: bold; 
+    color: #333; 
+  }
+  .main-info-item { 
+    margin: 4px 0; 
+    display: flex; 
+  }
+  .main-info-label { 
+    font-weight: bold; 
+    width: 100px; 
+    flex-shrink: 0; 
+  }
+  .roles-section { 
+    margin-top: 15px; 
+  }
+  .roles-title { 
+    font-weight: bold; 
+    margin-bottom: 10px; 
+    font-size: 14pt; 
+    border-bottom: 2px solid #007bff; 
+    padding-bottom: 5px; 
+  }
+  .role-grid { 
+    display: grid; 
+    grid-auto-flow: column; 
+    gap: 10px; 
+  }
+  .team-grid { 
+    grid-template-columns: repeat(3, 1fr); 
+    grid-template-rows: repeat(10, auto); 
+  }
+  .professor-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+    grid-template-rows: repeat(5, auto); 
+  }
+  .role-header-set { 
+    display: grid; 
+    grid-template-columns: 60% 15% 15% 10%; 
+    gap: 2px; 
+  }
+  .role-header-legend { 
+    display: grid; 
+    grid-auto-flow: column; 
+    gap: 10px; 
+    margin-bottom: 5px; 
+  }
+  .role-header-legend.team-headers { 
+    grid-template-columns: repeat(3, 1fr); 
+  }
+  .role-header-legend.professor-headers { 
+    grid-template-columns: repeat(2, 1fr); 
+  }
+  .role-header-name, 
+  .role-header-status, 
+  .role-header-last, 
+  .role-header-qty { 
+    padding: 4px; 
+    background-color: #495057; 
+    color: white; 
+    border-radius: 3px; 
+    text-align: center; 
+    font-size: 7pt; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+  }
+  .role-header-name { 
+    text-align: left; 
+  }
+  .role-item { 
+    display: grid; 
+    grid-template-columns: 60% 15% 15% 10%; 
+    gap: 2px; 
+    align-items: stretch; 
+    margin-bottom: 2px; 
+    min-height: 24px; 
+    font-size: 8pt; 
+  }
+  .role-name, 
+  .role-status-cell, 
+  .role-last-cell, 
+  .role-qty-cell { 
+    padding: 4px; 
+    background-color: #f8f9fa; 
+    border-radius: 3px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    border: 1px solid #dee2e6; 
+  }
+  .role-name { 
+    justify-content: flex-start; 
+    font-weight: 600; 
+  }
+  .role-status { 
+    display: inline-block; 
+    padding: 3px 6px; 
+    border-radius: 4px; 
+    font-weight: bold; 
+    font-size: 8pt; 
+    text-align: center; 
+    min-width: 20px; 
+  }
+  .role-status.status-N { 
+    background-color: #6c757d; 
+    color: white; 
+  }
+  .role-status.status-I { 
+    background-color: #ffc107; 
+    color: #333; 
+  }
+  .role-status.status-E { 
+    background-color: #28a745; 
+    color: white; 
+  }
+  .service-number, 
+  .quantity-number { 
+    font-size: 8pt; 
+    color: #495057; 
+  }
+  .legend { 
+    display: flex; 
+    gap: 15px; 
+    margin-top: 10px; 
+    margin-bottom: 15px; 
+    font-size: 9pt; 
+  }
+  .legend-item { 
+    display: flex; 
+    align-items: center; 
+    gap: 5px; 
+  }
+  .legend-color { 
+    width: 16px; 
+    height: 16px; 
+    border-radius: 3px; 
+    border: 1px solid #dee2e6; 
+  }
+  .legend-color.status-N { 
+    background-color: #6c757d; 
+  }
+  .legend-color.status-I { 
+    background-color: #ffc107; 
+  }
+  .legend-color.status-E { 
+    background-color: #28a745; 
+  }
+  .rector-qualification-grid { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px; 
+  }
+  .qualification-labels { 
+    display: flex; 
+    justify-content: space-around; 
+  }
+  .qualification-label { 
+    flex: 1; 
+    text-align: center; 
+    font-size: 8pt; 
+    font-weight: 600; 
+    color: #555; 
+    padding: 0 4px; 
+  }
+  .segmented-bar-container { 
+    display: flex; 
+    width: 100%; 
+    height: 12px; 
+    border-radius: 6px; 
+    overflow: hidden; 
+    border: 1px solid #dee2e6; 
+    background-color: #e9ecef; 
+  }
+  .bar-segment { 
+    flex: 1; 
+    height: 100%; 
+  }
+  .bar-segment.pass { 
+    background-color: #28a745 !important; 
+    -webkit-print-color-adjust: exact !important; 
+    print-color-adjust: exact !important; 
+  }
+  .bar-segment.fail { 
+    background-color: #dc3545 !important; 
+    -webkit-print-color-adjust: exact !important; 
+    print-color-adjust: exact !important; 
+  }
+  
+  /* Do Not Call / Deceased styling */
+  .profile-main-info.do-not-call {
+    border-left: 30px solid #dc3545 !important;
+    background-color: rgba(220, 53, 69, 0.05) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .profile-main-info.do-not-call::before {
+    content: "DO NOT CALL" !important;
+    position: absolute !important;
+    left: -73px !important;
+    top: 50% !important;
+    transform: translateY(-50%) rotate(-90deg) !important;
+    color: white !important;
+    font-weight: bold !important;
+    font-size: 14pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .profile-main-info.deceased {
+    border-left: 30px solid #000000 !important;
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .profile-main-info.deceased::before {
+    content: "DECEASED" !important;
+    position: absolute !important;
+    left: -73px !important;
+    top: 50% !important;
+    transform: translateY(-50%) rotate(-90deg) !important;
+    color: white !important;
+    font-weight: bold !important;
+    font-size: 14pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+`;
 
 /**
  * Generates complete printable HTML for a single profile
