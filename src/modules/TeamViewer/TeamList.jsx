@@ -382,12 +382,23 @@ export default function TeamList() {
     const dateGenerated = now.toLocaleDateString();
     const timeGenerated = now.toLocaleTimeString();
     
+    // Helper function to get display name for role
+    const getDisplayName = (role) => {
+      // Check if it's a professor role
+      const profRole = ROLE_CONFIG.professor.find(r => r.key === role);
+      if (profRole) return profRole.name;
+      
+      // Otherwise return the role as-is
+      return role;
+    };
+    
     let tableRows = '';
     teamRoster.forEach(member => {
+      const displayRole = getDisplayName(member.role);
       tableRows += `
         <tr>
           <td>${member.name}</td>
-          <td>${member.role}</td>
+          <td>${displayRole}</td>
           <td style="text-align: center;">
             <div class="checkbox"></div>
           </td>
@@ -525,12 +536,6 @@ export default function TeamList() {
             @page {
               size: portrait;
               margin: 0.75in;
-            }
-            
-            @media print {
-              body {
-                padding: 0;
-              }
             }
           </style>
         </head>
