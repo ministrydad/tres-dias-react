@@ -192,14 +192,14 @@ export const PRINT_PROFILE_CSS = `
   }
   .role-status { 
     display: inline-block; 
-    width: 20px;
-    height: 20px;
+    width: 12px;
+    height: 12px;
     padding: 3px 6px; 
     border-radius: 4px; 
     font-weight: bold; 
     font-size: 7pt; 
     text-align: center; 
-    line-height: 14px;
+    line-height: 6px;
   }
   .role-status.status-N { 
     background-color: #6c757d; 
