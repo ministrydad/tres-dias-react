@@ -135,7 +135,7 @@ export const PRINT_PROFILE_CSS = `
   }
   .role-header-set { 
     display: grid; 
-    grid-template-columns: 55% 16% 14% 10%; 
+    grid-template-columns: 51% 20% 14% 10%; 
     gap: 2px; 
   }
   .role-header-legend { 
@@ -168,7 +168,7 @@ export const PRINT_PROFILE_CSS = `
   }
   .role-item { 
     display: grid; 
-    grid-template-columns: 55% 16% 14% 10%; 
+    grid-template-columns: 51% 20% 14% 10%; 
     gap: 2px; 
     align-items: stretch; 
     margin-bottom: 2px; 
@@ -191,15 +191,14 @@ export const PRINT_PROFILE_CSS = `
     font-weight: 600; 
   }
   .role-status { 
-    display: inline-block; 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 12px;
     height: 12px;
-    padding: 3px 6px; 
     border-radius: 4px; 
     font-weight: bold; 
     font-size: 7pt; 
-    text-align: center; 
-    line-height: 6px;
   }
   .role-status.status-N { 
     background-color: #6c757d; 
