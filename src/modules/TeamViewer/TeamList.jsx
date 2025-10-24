@@ -378,77 +378,200 @@ export default function TeamList() {
     }
 
     const genderTitle = currentGender.charAt(0).toUpperCase() + currentGender.slice(1);
-    const reportTitle = `${genderTitle}'s Team ${weekendIdentifier || 'Roster'}`;
+    const now = new Date();
+    const dateGenerated = now.toLocaleDateString();
+    const timeGenerated = now.toLocaleTimeString();
     
     let tableRows = '';
     teamRoster.forEach(member => {
       tableRows += `
         <tr>
-          <td style="padding: 12px; border: 1px solid #dee2e6;">${member.name}</td>
-          <td style="padding: 12px; border: 1px solid #dee2e6;">${member.role}</td>
-          <td style="padding: 12px; border: 1px solid #dee2e6; text-align: center;">
-            <div style="width: 24px; height: 24px; border: 2px solid #6c757d; border-radius: 4px; margin: 0 auto;"></div>
+          <td>${member.name}</td>
+          <td>${member.role}</td>
+          <td style="text-align: center;">
+            <div class="checkbox"></div>
           </td>
         </tr>
       `;
     });
 
     const printHTML = `
-      <div style="padding: 20px;">
-        <div style="text-align: center; margin-bottom: 24px;">
-          <h1 style="margin: 0; font-size: 24px; color: #333;">${reportTitle}</h1>
-          <p style="margin: 8px 0 0 0; color: #666; font-size: 14px;">Generated on ${new Date().toLocaleDateString()}</p>
-        </div>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-          <thead>
-            <tr style="background-color: #f8f9fa;">
-              <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left; font-weight: 700;">Name</th>
-              <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left; font-weight: 700;">Position</th>
-              <th style="padding: 12px; border: 1px solid #dee2e6; text-align: center; font-weight: 700;">Contacted</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${tableRows}
-          </tbody>
-        </table>
-        <div style="margin-top: 24px; padding-top: 16px; border-top: 2px solid #333;">
-          <div style="font-size: 14px; color: #666;">
-            <strong>Total Team Members:</strong> ${teamRoster.length}
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Team Roster - ${weekendIdentifier || genderTitle}</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+              color: #333;
+              padding: 40px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            
+            .header {
+              text-align: center;
+              margin-bottom: 32px;
+              padding-bottom: 20px;
+              border-bottom: 3px solid #333;
+            }
+            
+            .header h1 {
+              font-size: 28px;
+              font-weight: 700;
+              color: #212529;
+              margin-bottom: 8px;
+            }
+            
+            .header .weekend {
+              font-size: 18px;
+              font-weight: 600;
+              color: #495057;
+              margin-bottom: 12px;
+            }
+            
+            .header .meta {
+              font-size: 13px;
+              color: #6c757d;
+            }
+            
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 24px;
+            }
+            
+            thead tr {
+              background-color: #f8f9fa;
+              border-bottom: 2px solid #dee2e6;
+            }
+            
+            th {
+              padding: 14px 12px;
+              text-align: left;
+              font-weight: 700;
+              font-size: 14px;
+              color: #495057;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            
+            th:last-child {
+              text-align: center;
+            }
+            
+            tbody tr {
+              border-bottom: 1px solid #dee2e6;
+            }
+            
+            tbody tr:nth-child(even) {
+              background-color: #f8f9fa;
+            }
+            
+            tbody tr:hover {
+              background-color: #e9ecef;
+            }
+            
+            td {
+              padding: 12px;
+              font-size: 14px;
+              color: #212529;
+            }
+            
+            td:first-child {
+              font-weight: 600;
+            }
+            
+            td:nth-child(2) {
+              color: #495057;
+            }
+            
+            .checkbox {
+              width: 20px;
+              height: 20px;
+              border: 2px solid #6c757d;
+              border-radius: 4px;
+              margin: 0 auto;
+              background-color: white;
+            }
+            
+            .footer {
+              margin-top: 32px;
+              padding-top: 20px;
+              border-top: 2px solid #333;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            }
+            
+            .footer .total {
+              font-size: 15px;
+              font-weight: 700;
+              color: #212529;
+            }
+            
+            .footer .total span {
+              color: #28a745;
+              font-size: 18px;
+            }
+            
+            @page {
+              size: portrait;
+              margin: 0.75in;
+            }
+            
+            @media print {
+              body {
+                padding: 0;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Team Roster Print Out</h1>
+            <div class="weekend">${weekendIdentifier || `${genderTitle}'s Team`}</div>
+            <div class="meta">Generated on ${dateGenerated} at ${timeGenerated}</div>
           </div>
-        </div>
-      </div>
-    `;
-
-    const tempDiv = document.createElement('div');
-    tempDiv.id = 'team-roster-printable';
-    tempDiv.innerHTML = printHTML;
-    document.body.appendChild(tempDiv);
-
-    const printStyles = `
-      body { 
-        font-family: 'Source Sans Pro', sans-serif; 
-        color: #212529; 
-        -webkit-print-color-adjust: exact; 
-        print-color-adjust: exact;
-      }
-      @page { 
-        size: portrait; 
-        margin: 0.75in; 
-      }
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Contacted</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            <div class="total">Total Team Members: <span>${teamRoster.length}</span></div>
+          </div>
+        </body>
+      </html>
     `;
 
     if (typeof printJS !== 'undefined') {
       printJS({
-        printable: 'team-roster-printable',
-        type: 'html',
-        documentTitle: reportTitle,
-        style: printStyles,
-        scanStyles: false,
-        onPrintDialogClose: () => document.body.removeChild(tempDiv)
+        printable: printHTML,
+        type: 'raw-html',
+        documentTitle: `Team Roster - ${weekendIdentifier || genderTitle}`
       });
     } else {
-      window.print();
-      document.body.removeChild(tempDiv);
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printHTML);
+      printWindow.document.close();
+      printWindow.print();
     }
   };
   const renderRectorSection = () => {
