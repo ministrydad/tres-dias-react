@@ -904,7 +904,7 @@ function ProfileView({
     }
     
     // Handle boolean fields (Do_Not_Call, Deceased)
-    // These need special handling because the database might store 'y'/'yes'/true
+    // Database stores these as TEXT 'y' or 'n', not BOOLEAN
     const booleanFields = ['Do_Not_Call', 'Deceased'];
     
     for (const fieldName of booleanFields) {
@@ -923,7 +923,8 @@ function ProfileView({
                         (newValue || '').toLowerCase() === 'yes';
       
       if (isNewTrue !== isOriginalTrue) {
-        updateData[fieldName] = isNewTrue;
+        // Save as 'y' or 'n' string since database columns are TEXT type
+        updateData[fieldName] = isNewTrue ? 'y' : 'n';
       }
     }
     
