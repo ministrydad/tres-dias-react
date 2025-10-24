@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
+import { generatePrintableProfileHTML } from '../../utils/profilePrintUtils';
 
 export default function TeamList() {
   const { user, orgId } = useAuth();
@@ -473,6 +474,98 @@ export default function TeamList() {
       printWindow.print();
     }
   };
+
+  const handlePrintAllProfiles = () => {
+    if (!teamRoster || teamRoster.length === 0) {
+      window.showMainStatus('No team members to print', true);
+      return;
+    }
+
+    const rawTableData = allPescadores[currentGender];
+    
+    let allProfilesHTML = '';
+    teamRoster.forEach(member => {
+      const fullProfile = rawTableData.find(p => p.PescadoreKey === member.id);
+      if (fullProfile) {
+        const singleProfileHTML = generatePrintableProfileHTML(fullProfile);
+        // Wrap each profile in a div that forces a page break after it and has consistent padding
+        allProfilesHTML += `<div style="page-break-after: always; padding: 0.2in;">${singleProfileHTML}</div>`;
+      }
+    });
+
+    const printableHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Team Profile Reports</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; font-size: 10pt; color: #333; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .profile-main-info, .roles-section { page-break-inside: avoid; }
+            .profile-main-info { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #dee2e6; }
+            .profile-header { display: flex; align-items: baseline; flex-wrap: wrap; margin-bottom: 10px; }
+            .profile-name { font-size: 22pt; font-weight: bold; margin: 0 15px 0 0; }
+            .profile-weekend-info { font-size: 0.8em; font-weight: 600; margin-left: 10px; }
+            .last-served-highlight { background-color: #ffc107; padding: 2px 6px; border-radius: 3px; font-weight: bold; color: #333; }
+            .main-info-item { margin: 4px 0; display: flex; }
+            .main-info-label { font-weight: bold; margin-right: 10px; min-width: 60px; }
+            .roles-section { margin-top: 15px; }
+            .roles-title { font-size: 14pt; font-weight: bold; margin-bottom: 8px; color: #333; }
+            .legend { display: flex; gap: 20px; margin-bottom: 15px; font-size: 9pt; }
+            .legend-item { display: flex; align-items: center; gap: 5px; }
+            .legend-color { width: 16px; height: 16px; border-radius: 3px; }
+            .legend-color.status-N { background-color: #6c757d; }
+            .legend-color.status-I { background-color: #ffc107; }
+            .legend-color.status-E { background-color: #28a745; }
+            .role-header-legend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 8px; font-weight: bold; font-size: 9pt; color: #555; }
+            .professor-headers { grid-template-columns: repeat(2, 1fr); }
+            .role-header-set { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4px; }
+            .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+            .professor-grid { grid-template-columns: repeat(2, 1fr); }
+            .role-item { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4px; padding: 6px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; align-items: center; font-size: 9pt; }
+            .role-name { font-weight: 600; }
+            .role-status { display: inline-block; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 8pt; text-align: center; }
+            .role-status.status-N { background-color: #6c757d; color: white; }
+            .role-status.status-I { background-color: #ffc107; color: #333; }
+            .role-status.status-E { background-color: #28a745; color: white; }
+            .service-number, .quantity-number { font-size: 9pt; text-align: center; }
+            .card.pad { background: white; padding: 12px; border-radius: 8px; border: 1px solid #dee2e6; margin-bottom: 10px; }
+            
+            /* Rector Qualification Styles */
+            .rector-qualification-grid { display: flex; flex-direction: column; gap: 8px; }
+            .qualification-labels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; }
+            .qualification-label { flex: 1; text-align: center; font-size: 8pt; font-weight: 600; color: #555; padding: 0 4px; }
+            .segmented-bar-container { display: flex; width: 100%; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #dee2e6; background-color: #e9ecef; }
+            .bar-segment { flex: 1; height: 100%; }
+            .bar-segment.pass { background-color: #28a745 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .bar-segment.fail { background-color: #dc3545 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            /* Do Not Call / Deceased Indicators */
+            .profile-main-info.do-not-call { border-left: 30px solid #dc3545 !important; position: relative; background-color: rgba(220, 53, 69, 0.05) !important; }
+            .profile-main-info.do-not-call::before { content: "DO NOT CALL" !important; position: absolute !important; left: -73px !important; top: 50% !important; transform: translateY(-50%) rotate(-90deg) !important; color: white !important; font-weight: bold !important; font-size: 14pt !important; }
+            .profile-main-info.deceased { border-left: 30px solid #000000 !important; position: relative; background-color: rgba(0, 0, 0, 0.05) !important; }
+            .profile-main-info.deceased::before { content: "DECEASED" !important; position: absolute !important; left: -73px !important; top: 50% !important; transform: translateY(-50%) rotate(-90deg) !important; color: white !important; font-weight: bold !important; font-size: 14pt !important; }
+          </style>
+        </head>
+        <body>
+          ${allProfilesHTML}
+        </body>
+      </html>
+    `;
+
+    if (typeof printJS !== 'undefined') {
+      printJS({
+        printable: printableHTML,
+        type: 'raw-html',
+        documentTitle: 'Team Profiles'
+      });
+    } else {
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printableHTML);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
   const renderRectorSection = () => {
     const rector = teamRoster.find(m => m.role === 'Rector');
     
@@ -792,7 +885,7 @@ export default function TeamList() {
             <button className="btn btn-warning" onClick={handlePrintRoster}>
               Print Report
             </button>
-            <button className="btn btn-warning" onClick={() => console.log('Print All Profiles')}>
+            <button className="btn btn-warning" onClick={handlePrintAllProfiles}>
               Print All Profiles
             </button>
             <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
