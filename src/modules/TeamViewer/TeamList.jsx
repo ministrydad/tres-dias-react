@@ -396,20 +396,20 @@ export default function TeamList() {
     const rawTableData = allPescadores[currentGender];
     
     let tableRows = '';
-    teamRoster.forEach(member => {
+    teamRoster.forEach((member) => {
       const displayRole = getDisplayName(member.role);
       const profile = rawTableData.find(p => p.PescadoreKey === member.id);
       const phone = profile?.Phone1 || '';
       const email = profile?.Email || '';
       
       tableRows += `
-        <tr>
-          <td>${member.name}</td>
-          <td>${displayRole}</td>
-          <td>${phone}</td>
-          <td>${email}</td>
-          <td style="text-align: center;">
-            <div class="checkbox"></div>
+        <tr style="page-break-inside: avoid;">
+          <td style="padding: 16px 10px; font-size: 12px; font-weight: 700; color: #212529;">${member.name}</td>
+          <td style="padding: 16px 10px; font-size: 12px; font-weight: 700; color: #495057;">${displayRole}</td>
+          <td style="padding: 16px 10px; font-size: 11px; font-weight: 700; color: #6c757d;">${phone}</td>
+          <td style="padding: 16px 10px; font-size: 11px; font-weight: 700; color: #6c757d;">${email}</td>
+          <td style="padding: 16px 10px; text-align: center;">
+            <div style="width: 20px; height: 20px; border: 2px solid #6c757d; border-radius: 4px; margin: 0 auto; background-color: white;"></div>
           </td>
         </tr>
       `;
@@ -421,192 +421,40 @@ export default function TeamList() {
         <head>
           <meta charset="UTF-8">
           <title>Team Roster - ${weekendIdentifier || genderTitle}</title>
-          <style>
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            
-            body {
-              font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-              color: #333;
-              background: white;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            
-            .page-wrapper {
-              padding: 60px 40px 80px 40px;
-              min-height: 100vh;
-            }
-            
-            .header {
-              text-align: center;
-              margin-bottom: 40px;
-              padding-bottom: 20px;
-              border-bottom: 3px solid #333;
-            }
-            
-            .header h1 {
-              font-size: 28px;
-              font-weight: 700;
-              color: #212529;
-              margin-bottom: 8px;
-            }
-            
-            .header .weekend {
-              font-size: 18px;
-              font-weight: 600;
-              color: #495057;
-              margin-bottom: 12px;
-            }
-            
-            .header .meta {
-              font-size: 13px;
-              color: #6c757d;
-            }
-            
-            .table-wrapper {
-              margin-bottom: 60px;
-            }
-            
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 24px;
-            }
-            
-            thead tr {
-              background-color: #f8f9fa;
-              border-bottom: 2px solid #dee2e6;
-            }
-            
-            th {
-              padding: 14px 12px;
-              text-align: left;
-              font-weight: 700;
-              font-size: 14px;
-              color: #495057;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            }
-            
-            th:last-child {
-              text-align: center;
-            }
-            
-            tbody tr {
-              border-bottom: 1px solid #dee2e6;
-              page-break-inside: avoid;
-            }
-            
-            tbody tr:nth-child(even) {
-              background-color: #f8f9fa;
-            }
-            
-            td {
-              padding: 14px 10px;
-              font-size: 12px;
-              font-weight: 700;
-              color: #212529;
-            }
-            
-            td:first-child {
-              font-weight: 700;
-            }
-            
-            td:nth-child(2) {
-              color: #495057;
-            }
-            
-            td:nth-child(3),
-            td:nth-child(4) {
-              font-size: 11px;
-              color: #6c757d;
-            }
-            
-            .checkbox {
-              width: 20px;
-              height: 20px;
-              border: 2px solid #6c757d;
-              border-radius: 4px;
-              margin: 0 auto;
-              background-color: white;
-            }
-            
-            .footer {
-              margin-top: 40px;
-              padding-top: 20px;
-              border-top: 2px solid #333;
-              page-break-inside: avoid;
-            }
-            
-            .footer .total {
-              font-size: 15px;
-              font-weight: 700;
-              color: #212529;
-            }
-            
-            .footer .total span {
-              color: #28a745;
-              font-size: 18px;
-            }
-            
-            /* Spacing helpers for page breaks */
-            .page-break-spacer {
-              height: 80px;
-              page-break-after: always;
-            }
-            
-            @page {
-              size: portrait;
-              margin: 0.5in;
-            }
-            
-            @media print {
-              .page-wrapper {
-                padding: 40px 30px 60px 30px;
-              }
-              
-              tbody tr {
-                page-break-inside: avoid;
-              }
-              
-              .footer {
-                page-break-before: avoid;
-              }
-            }
-          </style>
         </head>
-        <body>
-          <div class="page-wrapper">
-            <div class="header">
-              <h1>Team Roster Print Out</h1>
-              <div class="weekend">${weekendIdentifier || `${genderTitle}'s Team`}</div>
-              <div class="meta">Generated on ${dateGenerated} at ${timeGenerated}</div>
+        <body style="font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background: white;">
+          <div style="padding: 100px 60px; min-height: 100vh;">
+            
+            <!-- Header -->
+            <div style="text-align: center; margin-bottom: 50px; padding-bottom: 20px; border-bottom: 3px solid #333;">
+              <h1 style="font-size: 28px; font-weight: 700; color: #212529; margin: 0 0 8px 0;">Team Roster Print Out</h1>
+              <div style="font-size: 18px; font-weight: 600; color: #495057; margin-bottom: 12px;">${weekendIdentifier || `${genderTitle}'s Team`}</div>
+              <div style="font-size: 13px; color: #6c757d;">Generated on ${dateGenerated} at ${timeGenerated}</div>
             </div>
             
-            <div class="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Position</th>
-                    <th>Phone</th>
-                    <th>Email</th>
-                    <th>Contacted</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${tableRows}
-                </tbody>
-              </table>
+            <!-- Table -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 80px;">
+              <thead>
+                <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Name</th>
+                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Position</th>
+                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Phone</th>
+                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Email</th>
+                  <th style="padding: 14px 12px; text-align: center; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Contacted</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+            
+            <!-- Footer -->
+            <div style="margin-top: 50px; padding-top: 20px; border-top: 2px solid #333;">
+              <div style="font-size: 15px; font-weight: 700; color: #212529;">
+                Total Team Members: <span style="color: #28a745; font-size: 18px;">${teamRoster.length}</span>
+              </div>
             </div>
             
-            <div class="footer">
-              <div class="total">Total Team Members: <span>${teamRoster.length}</span></div>
-            </div>
           </div>
         </body>
       </html>
