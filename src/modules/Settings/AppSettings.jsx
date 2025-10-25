@@ -574,11 +574,18 @@ export default function AppSettings() {
 
             <div className="field">
               <label className="label">Select Person from Directory</label>
-              <select 
-                className="input"
-                value={selectedPerson?.PescadoreKey || ''}
-                onChange={handlePersonSelection}
-              >
+              <select
+  className="input"
+  value=""  // ← Change this to empty string always
+  onChange={(e) => {
+    if (!e.target.value) return; // Ignore empty selection
+    console.log('🔵 Dropdown changed, value:', e.target.value);
+    const person = allMembers.find(m => m.PescadoreKey === parseInt(e.target.value));
+    console.log('🔵 Found person:', person);
+    if (person) selectPersonForInvite(person);
+    e.target.value = ''; // Reset dropdown after selection
+  }}
+>
                 <option value="">-- Select from directory (optional) --</option>
                 {allMembers.map(person => (
                   <option key={person.PescadoreKey} value={person.PescadoreKey}>
