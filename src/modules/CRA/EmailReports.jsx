@@ -373,7 +373,7 @@ export default function EmailReports() {
 
   return (
     <section id="cra-email" className="app-panel" style={{ display: 'block' }}>
-      <div className="main-container" style={{ display: 'grid', gridTemplateColumns: selectedReport ? '1fr 600px' : '1fr', transition: 'grid-template-columns 0.3s ease' }}>
+      <div className="main-container" style={{ display: 'grid', gridTemplateColumns: selectedReport ? '1fr 1fr' : '1fr', transition: 'grid-template-columns 0.3s ease' }}>
         
         {/* LEFT PANEL - Main Content */}
         <div className="list-container" style={{ overflowY: 'auto', padding: '0 24px 0 0' }}>
@@ -473,7 +473,7 @@ export default function EmailReports() {
 
         {/* RIGHT PANEL - Detail View */}
         {selectedReport && (
-          <div className="detail-panel" style={{ borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflowY: 'auto', paddingTop: '24px' }}>
+          <div className="detail-panel card pad" style={{ borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
             <div style={{ padding: '0 24px 24px', borderBottom: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
