@@ -151,7 +151,7 @@ export default function EmailReports() {
   const quickAddRole = async (role, gender) => {
     try {
       // Step 1: Get current weekend identifier for this org
-      const tableName = gender === 'men' ? 'men_team_roster' : 'women_team_roster';
+      const tableName = gender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
       const rawTableName = gender === 'men' ? 'men_raw' : 'women_raw';
       
       const { data: rosterData, error: rosterError } = await supabase
