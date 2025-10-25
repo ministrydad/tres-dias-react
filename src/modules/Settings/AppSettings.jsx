@@ -298,7 +298,7 @@ export default function AppSettings() {
         ...prev,
         firstName: person.Preferred || person.First || '',
         lastName: person.Last || '',
-        email: person.Email || ''
+        email: person.Email || '',
         phone: person.Phone1 || '',
       }));
     }
