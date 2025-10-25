@@ -288,15 +288,15 @@ const Sidebar = memo(function Sidebar({ currentView, onNavigate, permissions, on
                 justifyContent: 'center' 
               }}
             >
-              {isSuperAdmin ? (
-                <>
-                  Welcome,&nbsp;<span className="super-admin-glow">
-                    {user?.display_name || (user?.full_name ? user.full_name.split(' ')[0] : 'Admin')}
-                  </span>
-                </>
-              ) : (
-                `Welcome, ${user?.display_name || (user?.full_name ? user.full_name.split(' ')[0] : 'User')}`
-              )}
+             {isSuperAdmin ? (
+  <>
+    Welcome,&nbsp;<span className="super-admin-glow">
+      {user?.display_name ? user.display_name.split(' ')[0] : (user?.full_name ? user.full_name.split(' ')[0] : 'Admin')}
+    </span>
+  </>
+) : (
+  `Welcome, ${user?.display_name ? user.display_name.split(' ')[0] : (user?.full_name ? user.full_name.split(' ')[0] : 'User')}`
+)}
             </span>
           </div>
           
