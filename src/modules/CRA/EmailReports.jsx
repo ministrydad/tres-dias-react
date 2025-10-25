@@ -163,7 +163,9 @@ export default function EmailReports() {
       if (rosterError) throw rosterError;
 
       if (!rosterData || rosterData.length === 0) {
-        alert(`No active weekend found for ${gender}. Please set up a team roster first.`);
+        if (window.showMainStatus) {
+          window.showMainStatus(`No active weekend found for ${gender}. Please set up a team roster first.`, true);
+        }
         return;
       }
 
@@ -180,7 +182,9 @@ export default function EmailReports() {
       if (roleError) throw roleError;
 
       if (!roleData || roleData.length === 0) {
-        alert(`No ${role} assigned for current ${gender} weekend.`);
+        if (window.showMainStatus) {
+          window.showMainStatus(`No ${role} assigned for current ${gender} weekend`, true);
+        }
         return;
       }
 
@@ -195,7 +199,9 @@ export default function EmailReports() {
       if (emailError) throw emailError;
 
       if (!emailData || emailData.length === 0) {
-        alert(`No email found for ${role}.`);
+        if (window.showMainStatus) {
+          window.showMainStatus(`No email found for ${role}`, true);
+        }
         return;
       }
 
@@ -219,13 +225,19 @@ export default function EmailReports() {
       
       const addedCount = updatedList.length - currentList.length;
       if (addedCount > 0) {
-        alert(`Added ${addedCount} email(s) for ${role}.`);
+        if (window.showMainStatus) {
+          window.showMainStatus(`Added ${addedCount} email(s) for ${role}`, false);
+        }
       } else {
-        alert(`${role} email(s) already in list.`);
+        if (window.showMainStatus) {
+          window.showMainStatus(`${role} email(s) already in list`, false);
+        }
       }
     } catch (error) {
       console.error('Error in quickAddRole:', error);
-      alert(`Failed to add ${role} email.`);
+      if (window.showMainStatus) {
+        window.showMainStatus(`Failed to add ${role} email`, true);
+      }
     }
   };
   const sendReport = async () => {
@@ -681,7 +693,7 @@ export default function EmailReports() {
                           <span key={email} className="recipient-badge">
                             {email}
                             <button 
-                              className="delete-recipient-btn" 
+                              className="btn-delete" 
                               onClick={() => deleteRecipient(email)}
                             >
                               ×
