@@ -50,6 +50,7 @@ export default function AppSettings() {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
     role: 'user',
     permissions: {
       'team-viewer-app': true,
@@ -82,8 +83,8 @@ export default function AppSettings() {
         supabase.from('app_settings').select('*').eq('org_id', orgId).single(),
         supabase.from('app_budgets').select('*').eq('id', 1).single(),
         supabase.from('secretariat_roster').select('*').eq('org_id', orgId),
-        supabase.from('men_raw').select('PescadoreKey, First, Last, Preferred, Email').eq('org_id', orgId),
-        supabase.from('women_raw').select('PescadoreKey, First, Last, Preferred, Email').eq('org_id', orgId),
+        supabase.from('men_raw').select('PescadoreKey, First, Last, Preferred, Email, Phone1').eq('org_id', orgId),
+        supabase.from('women_raw').select('PescadoreKey, First, Last, Preferred, Email, Phone1').eq('org_id', orgId),
         supabase.from('memberships').select('role, permissions, profiles(user_id, full_name, email)').eq('org_id', orgId),
         supabase.from('organizations').select('billing_status, trial_expires_at').eq('id', orgId).single()
       ]);
@@ -298,6 +299,7 @@ export default function AppSettings() {
         firstName: person.Preferred || person.First || '',
         lastName: person.Last || '',
         email: person.Email || ''
+        phone: person.Phone1 || '',
       }));
     }
   }
@@ -588,7 +590,7 @@ export default function AppSettings() {
               </select>
             </div>
 
-            <div className="grid grid-2">
+            <div className="grid grid-3">
               <div className="field">
                 <label className="label">First Name *</label>
                 <input 
@@ -606,6 +608,17 @@ export default function AppSettings() {
                   type="text"
                   value={inviteFormData.lastName}
                   onChange={(e) => setInviteFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                  readOnly={!!selectedPerson}
+                />
+              </div>
+              <div className="field">
+                <label className="label">Phone *</label>
+                <input 
+                  className="input"
+                  type="tel"
+                  placeholder="5551234567"
+                  value={inviteFormData.phone}
+                  onChange={(e) => setInviteFormData(prev => ({ ...prev, phone: e.target.value }))}
                   readOnly={!!selectedPerson}
                 />
               </div>
