@@ -644,8 +644,8 @@ export default function EmailReports() {
                           <button className="btn btn-small" onClick={() => quickAddRole('Head', previewGender)}>
                             + Head
                           </button>
-                          <button className="btn btn-small" onClick={() => quickAddRole('Asst. Head', previewGender)}>
-                            + Asst. Head
+                          <button className="btn btn-small" onClick={() => quickAddRole('Asst Head', previewGender)}>
+                            + Asst Head
                           </button>
                         </>
                       )}
@@ -654,8 +654,8 @@ export default function EmailReports() {
                           <button className="btn btn-small" onClick={() => quickAddRole('Head Kitchen', previewGender)}>
                             + Head Kitchen
                           </button>
-                          <button className="btn btn-small" onClick={() => quickAddRole('Asst. Head Kitchen', previewGender)}>
-                            + Asst. Head Kitchen
+                          <button className="btn btn-small" onClick={() => quickAddRole('Asst Head Kitchen', previewGender)}>
+                            + Asst Head Kitchen
                           </button>
                         </>
                       )}
