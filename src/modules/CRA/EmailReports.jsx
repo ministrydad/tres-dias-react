@@ -147,6 +147,87 @@ export default function EmailReports() {
     }
   };
 
+
+  const quickAddRole = async (role, gender) => {
+    try {
+      // Step 1: Get current weekend identifier for this org
+      const tableName = gender === 'men' ? 'men_team_roster' : 'women_team_roster';
+      const rawTableName = gender === 'men' ? 'men_raw' : 'women_raw';
+      
+      const { data: rosterData, error: rosterError } = await supabase
+        .from(tableName)
+        .select('weekend_identifier')
+        .eq('org_id', orgId)
+        .limit(1);
+
+      if (rosterError) throw rosterError;
+
+      if (!rosterData || rosterData.length === 0) {
+        alert(`No active weekend found for ${gender}. Please set up a team roster first.`);
+        return;
+      }
+
+      const currentWeekend = rosterData[0].weekend_identifier;
+
+      // Step 2: Find people with this role in current weekend
+      const { data: roleData, error: roleError } = await supabase
+        .from(tableName)
+        .select('pescadore_key')
+        .eq('org_id', orgId)
+        .eq('weekend_identifier', currentWeekend)
+        .eq('role', role);
+
+      if (roleError) throw roleError;
+
+      if (!roleData || roleData.length === 0) {
+        alert(`No ${role} assigned for current ${gender} weekend.`);
+        return;
+      }
+
+      // Step 3: Get emails from men_raw/women_raw
+      const pescadoreKeys = roleData.map(r => r.pescadore_key);
+      const { data: emailData, error: emailError } = await supabase
+        .from(rawTableName)
+        .select('Email')
+        .in('PescadoreKey', pescadoreKeys)
+        .eq('org_id', orgId);
+
+      if (emailError) throw emailError;
+
+      if (!emailData || emailData.length === 0) {
+        alert(`No email found for ${role}.`);
+        return;
+      }
+
+      // Step 4: Add emails to recipient list (avoid duplicates)
+      const newEmails = emailData.map(e => e.Email).filter(e => e && e.trim());
+      const currentList = emailLists[selectedReport] || [];
+      const updatedList = [...new Set([...currentList, ...newEmails])]; // Remove duplicates
+
+      // Step 5: Save to database
+      const { error: saveError } = await supabase
+        .from('cra_email_lists')
+        .upsert({
+          org_id: orgId,
+          list_name: selectedReport,
+          emails: updatedList
+        }, { onConflict: 'org_id,list_name' });
+
+      if (saveError) throw saveError;
+
+      setEmailLists(prev => ({ ...prev, [selectedReport]: updatedList }));
+      
+      const addedCount = updatedList.length - currentList.length;
+      if (addedCount > 0) {
+        alert(`Added ${addedCount} email(s) for ${role}.`);
+      } else {
+        alert(`${role} email(s) already in list.`);
+      }
+    } catch (error) {
+      console.error('Error in quickAddRole:', error);
+      alert(`Failed to add ${role} email.`);
+    }
+  };
   const sendReport = async () => {
     const recipients = emailLists[selectedReport];
     if (!recipients || recipients.length === 0) {
@@ -550,6 +631,46 @@ export default function EmailReports() {
                 </>
               ) : (
                 <>
+
+                  {/* Quick Add Buttons */}
+                  <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
+                    <label className="label">Quick Add Team Emails</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                      {selectedReport === 'rector' && (
+                        <>
+                          <button className="btn btn-small" onClick={() => quickAddRole('Rector', previewGender)}>
+                            + Rector
+                          </button>
+                          <button className="btn btn-small" onClick={() => quickAddRole('Head', previewGender)}>
+                            + Head
+                          </button>
+                          <button className="btn btn-small" onClick={() => quickAddRole('Asst. Head', previewGender)}>
+                            + Asst. Head
+                          </button>
+                        </>
+                      )}
+                      {selectedReport === 'kitchen' && (
+                        <>
+                          <button className="btn btn-small" onClick={() => quickAddRole('Head Kitchen', previewGender)}>
+                            + Head Kitchen
+                          </button>
+                          <button className="btn btn-small" onClick={() => quickAddRole('Asst. Head Kitchen', previewGender)}>
+                            + Asst. Head Kitchen
+                          </button>
+                        </>
+                      )}
+                      {selectedReport === 'prayer' && (
+                        <button className="btn btn-small" onClick={() => quickAddRole('Head Prayer', previewGender)}>
+                          + Head Prayer
+                        </button>
+                      )}
+                      {selectedReport === 'dorm' && (
+                        <button className="btn btn-small" onClick={() => quickAddRole('Head Dorm', previewGender)}>
+                          + Head Dorm
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   <div style={{ marginBottom: '16px' }}>
                     <label className="label">Current Recipients ({emailLists[selectedReport]?.length || 0})</label>
                     <div id="recipientListContainer" style={{ marginTop: '8px' }}>
