@@ -49,7 +49,6 @@ export default function AppSettings() {
   const [inviteFormData, setInviteFormData] = useState({
     firstName: '',
     lastName: '',
-    phone: '',  // ✅ ADDED
     email: '',
     role: 'user',
     permissions: {
@@ -83,8 +82,8 @@ export default function AppSettings() {
         supabase.from('app_settings').select('*').eq('org_id', orgId).single(),
         supabase.from('app_budgets').select('*').eq('id', 1).single(),
         supabase.from('secretariat_roster').select('*').eq('org_id', orgId),
-        supabase.from('men_raw').select('PescadoreKey, First, Last, Preferred, Email, Phone1').eq('org_id', orgId),
-        supabase.from('women_raw').select('PescadoreKey, First, Last, Preferred, Email, Phone1').eq('org_id', orgId),
+        supabase.from('men_raw').select('PescadoreKey, First, Last, Preferred, Email').eq('org_id', orgId),
+        supabase.from('women_raw').select('PescadoreKey, First, Last, Preferred, Email').eq('org_id', orgId),
         supabase.from('memberships').select('role, permissions, profiles(user_id, full_name, email)').eq('org_id', orgId),
         supabase.from('organizations').select('billing_status, trial_expires_at').eq('id', orgId).single()
       ]);
@@ -168,177 +167,100 @@ export default function AppSettings() {
 
       setLoading(false);
     } catch (error) {
-      console.error('Error loading data:', error);
-      window.showMainStatus?.('Failed to load settings: ' + error.message, true);
+      console.error('Error loading app settings:', error);
       setLoading(false);
     }
   }
 
-  async function handleSaveGeneralSettings() {
-    if (!orgId) {
-      window.showMainStatus?.('Organization ID not found', true);
-      return;
-    }
-
+  async function saveGeneralSettings() {
     try {
+      const payload = {
+        org_id: orgId,
+        community_name: communityName,
+        weekend_fee: parseFloat(weekendFee) || 0,
+        team_fee: parseFloat(teamFee) || 0,
+        sponsor_fee: parseFloat(sponsorFee) || 0
+      };
+
       const { error } = await supabase
         .from('app_settings')
-        .upsert({
-          org_id: orgId,
-          community_name: communityName,
-          weekend_fee: weekendFee,
-          team_fee: teamFee,
-          sponsor_fee: sponsorFee
-        }, {
-          onConflict: 'org_id'
-        });
+        .upsert(payload, { onConflict: 'org_id' });
 
       if (error) throw error;
-      window.showMainStatus?.('General settings saved successfully', false);
+      
+      window.showMainStatus('General settings saved successfully.');
     } catch (error) {
       console.error('Error saving general settings:', error);
-      window.showMainStatus?.('Failed to save general settings: ' + error.message, true);
+      window.showMainStatus(`Failed to save settings: ${error.message}`, true);
     }
   }
 
-  async function handleSaveBudgets() {
+  async function saveBudgetSettings() {
     try {
-      const budgetData = { id: 1 };
+      const payload = { id: 1 };
+      
       BUDGET_KEYS.forEach(key => {
         const dbKey = `budget_${key.toLowerCase()}`;
-        budgetData[dbKey] = budgetSettings[key] || '';
+        payload[dbKey] = parseFloat(budgetSettings[key]) || 0;
       });
 
       const { error } = await supabase
         .from('app_budgets')
-        .upsert(budgetData);
+        .upsert(payload);
 
       if (error) throw error;
-      window.showMainStatus?.('Budget settings saved successfully', false);
+      
+      window.showMainStatus('Budget settings saved successfully.');
     } catch (error) {
       console.error('Error saving budget settings:', error);
-      window.showMainStatus?.('Failed to save budget settings: ' + error.message, true);
+      window.showMainStatus(`Failed to save budget settings: ${error.message}`, true);
     }
   }
 
-  async function handleSaveRoster() {
-    if (!orgId) {
-      window.showMainStatus?.('Organization ID not found', true);
-      return;
-    }
+  async function saveTermLengths() {
+    const updates = POSITIONS.map(pos => {
+      const input = document.getElementById(`term-${pos.key}`);
+      const termLength = input ? parseInt(input.value, 10) : pos.defaultTerm;
+      return {
+        position_key: pos.key,
+        term_length_years: isNaN(termLength) ? pos.defaultTerm : termLength,
+        org_id: orgId
+      };
+    });
 
     try {
-      const rosterEntries = Object.entries(rosterData).map(([key, value]) => ({
-        org_id: orgId,
-        position_key: key,
-        pescadore_key: value.pescadore_key || null,
-        spouse_pescadore_key: value.spouse_pescadore_key || null,
-        full_name: value.full_name || null,
-        spouse_full_name: value.spouse_full_name || null,
-        email: value.email || null,
-        term_expiry_date: value.term_expiry_date || null
-      }));
-
       const { error } = await supabase
         .from('secretariat_roster')
-        .upsert(rosterEntries, {
-          onConflict: 'org_id,position_key'
-        });
+        .upsert(updates, { onConflict: 'position_key,org_id' });
 
       if (error) throw error;
-      window.showMainStatus?.('Secretariat roster saved successfully', false);
-    } catch (error) {
-      console.error('Error saving roster:', error);
-      window.showMainStatus?.('Failed to save roster: ' + error.message, true);
-    }
-  }
-
-  async function handleInviteUser() {
-    // ✅ UPDATED VALIDATION - Now includes phone
-    if (!inviteFormData.email || !inviteFormData.firstName || !inviteFormData.lastName || !inviteFormData.phone) {
-      window.showMainStatus?.('Please fill in all required fields (including phone number).', true);
-      return;
-    }
-
-    setInviteLoading(true);
-    
-    try {
-      console.log('🔵 Step 1: Getting session...');
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (sessionError) {
-        console.error('❌ Session error:', sessionError);
-        throw new Error('Could not get user session: ' + sessionError.message);
-      }
-      
-      if (!session) {
-        console.error('❌ No session found');
-        throw new Error('User not authenticated.');
-      }
-      
-      console.log('✅ Session retrieved');
-      console.log('🔵 Step 2: Calling Edge Function...');
-
-      // ✅ UPDATED - Now passes phone to Edge Function
-      const { data, error } = await supabase.functions.invoke('invite-user', {
-        body: {
-          email: inviteFormData.email,
-          full_name: `${inviteFormData.firstName} ${inviteFormData.lastName}`,
-          phone: inviteFormData.phone,  // ✅ ADDED
-          role: inviteFormData.role,
-          permissions: inviteFormData.permissions,
-          org_id: orgId
-        },
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        }
-      });
-
-      if (error) {
-        console.error('❌ Edge Function error:', error);
-        throw error;
-      }
-
-      console.log('✅ Edge Function response:', data);
-
-      // ✅ UPDATED - Reset form now includes phone
-      setInviteFormData({
-        firstName: '',
-        lastName: '',
-        phone: '',  // ✅ ADDED
-        email: '',
-        role: 'user',
-        permissions: {
-          'team-viewer-app': true,
-          'team-book': true,
-          'meeting-check-in-app': true,
-          'candidate-registration': true,
-          'secretariat-app': true,
-          'app-settings': true
-        }
-      });
-      
-      setShowInviteForm(false);
-      window.showMainStatus?.('User invited successfully!', false);
+      window.showMainStatus('Term lengths have been saved successfully.');
+      setHasLoaded(false);
       await loadAllData();
     } catch (error) {
-      console.error('❌ Error inviting user:', error);
-      window.showMainStatus?.('Failed to invite user: ' + error.message, true);
-    } finally {
-      setInviteLoading(false);
+      console.error('Error saving term lengths:', error);
+      window.showMainStatus(`Failed to save term lengths: ${error.message}`, true);
     }
   }
 
-  // ✅ UPDATED - openInviteForm now includes phone
+  function handleBudgetChange(key, value) {
+    setBudgetSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  }
+
   function openInviteForm() {
     setShowInviteForm(true);
     setSelectedPerson(null);
     setInviteFormData({
       firstName: '',
       lastName: '',
-      phone: '',  // ✅ ADDED
+      phone: '',
       email: '',
-      role: 'user',
+      phone: '',
+      role: 'User',
       permissions: {
         'team-viewer-app': true,
         'team-book': true,
@@ -350,471 +272,431 @@ export default function AppSettings() {
     });
   }
 
-  function selectPersonForInvite(person) {
-    setSelectedPerson(person);
+  function closeInviteForm() {
+    setShowInviteForm(false);
+    setSelectedPerson(null);
+  }
+
+  function handlePersonSelection(e) {
+    const personKey = e.target.value;
+    if (!personKey) {
+      setSelectedPerson(null);
+      setInviteFormData(prev => ({
+        ...prev,
+        firstName: '',
+        lastName: '',
+        email: ''
+      }));
+      return;
+    }
+
+    const person = allMembers.find(p => p.PescadoreKey === personKey);
+    if (person) {
+      setSelectedPerson(person);
+      setInviteFormData(prev => ({
+        ...prev,
+        firstName: person.Preferred || person.First || '',
+        lastName: person.Last || '',
+        email: person.Email || ''
+      }));
+    }
+  }
+
+  function handlePermissionToggle(permKey) {
     setInviteFormData(prev => ({
       ...prev,
-      firstName: person.First || person.Preferred || '',
-      lastName: person.Last || '',
-      phone: person.Phone1 || '',  // ✅ ADDED - Autofill phone from directory
-      email: person.Email || ''
+      permissions: {
+        ...prev.permissions,
+        [permKey]: !prev.permissions[permKey]
+      }
     }));
   }
 
+ async function handleInviteUser() {
+ if (!inviteFormData.email || !inviteFormData.firstName || !inviteFormData.lastName || !inviteFormData.phone) {
+  window.showMainStatus('Please fill in all required fields (including phone number).', true);
+  return;
+}
+
+  setInviteLoading(true);  // ⬅️ ADD THIS
+  
+  try {
+    // ✅ Get the current session token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw new Error("Could not get user session.");
+    if (!session) throw new Error("User not authenticated.");
+
+    // ✅ Call Edge Function with Authorization header
+    const { data, error } = await supabase.functions.invoke('invite-user', {
+      body: {
+        email: inviteFormData.email,
+        full_name: `${inviteFormData.firstName} ${inviteFormData.lastName}`,
+        phone: inviteFormData.phone,
+        role: inviteFormData.role.toLowerCase(),
+        permissions: inviteFormData.permissions,
+        org_id: orgId
+      },
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    });
+
+    console.log('✅ Edge Function Response - data:', data);
+    console.log('✅ Edge Function Response - error:', error);
+
+    if (error) {
+  console.error('🔴 Full Edge Function Error:', error);
+  console.error('🔴 Error message:', error.message);
+  console.error('🔴 Error context:', error.context);
+  console.error('🔴 Error stringified:', JSON.stringify(error, null, 2));
+  throw error;
+}
+
+    window.showMainStatus('Invitation sent successfully! User will receive an email to set up their account.');
+    closeInviteForm();
+    setHasLoaded(false);
+    await loadAllData();
+  } catch (error) {
+  console.error('❌ Full catch error:', error);
+  console.error('❌ Error name:', error.name);
+  console.error('❌ Error message:', error.message);
+  console.error('❌ Error context:', error.context);
+  
+  // Try to get detailed error from Edge Function
+  let detailedMessage = error.message;
+  if (error.context?.json?.error) {
+    detailedMessage = error.context.json.error;
+  } else if (error.context?.body) {
+    detailedMessage = error.context.body;
+  }
+  
+  console.error('❌ Detailed message:', detailedMessage);
+  window.showMainStatus(`Failed to invite user: ${detailedMessage}`, true);
+} finally {
+    setInviteLoading(false);
+  }
+}
+
   if (loading) {
     return (
-      <section className="app-panel" style={{ display: 'block' }}>
-        <div style={{ padding: '40px', textAlign: 'center' }}>
-          <div className="spinner" style={{ margin: '0 auto' }}></div>
-          <p style={{ marginTop: '16px', color: 'var(--muted)' }}>Loading settings...</p>
+      <section id="app-settings" className="app-panel">
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
+          Loading settings...
         </div>
       </section>
     );
   }
 
   return (
-    <section className="app-panel" style={{ display: 'block' }}>
-      {/* General Settings */}
-      <div className="card pad">
-        <div className="section-title">General Settings</div>
-        <div className="grid grid-2">
+    <section id="app-settings" className="app-panel" style={{ display: 'block' }}>
+      {/* General Configuration */}
+      <div className="card pad" style={{ marginBottom: '16px' }}>
+        <div className="section-title">General Configuration</div>
+        <div className="grid grid-4">
           <div className="field">
             <label className="label">Community Name</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="Enter community name"
+            <input 
+              id="communityName" 
+              className="input settings-input" 
+              placeholder="Placeholder Inc."
               value={communityName}
               onChange={(e) => setCommunityName(e.target.value)}
             />
           </div>
           <div className="field">
-            <label className="label">Weekend Fee</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="$0.00"
+            <label className="label">Weekend Fee ($)</label>
+            <input 
+              id="weekendFee" 
+              className="input settings-input" 
+              type="number" 
+              min="0" 
+              placeholder="265.00"
               value={weekendFee}
               onChange={(e) => setWeekendFee(e.target.value)}
             />
           </div>
           <div className="field">
-            <label className="label">Team Fee</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="$0.00"
+            <label className="label">Team Fee ($)</label>
+            <input 
+              id="teamFee" 
+              className="input settings-input" 
+              type="number" 
+              min="0" 
+              placeholder="30.00"
               value={teamFee}
               onChange={(e) => setTeamFee(e.target.value)}
             />
           </div>
           <div className="field">
-            <label className="label">Sponsor Fee</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="$0.00"
+            <label className="label">Sponsor Fee ($)</label>
+            <input 
+              id="sponsorFee" 
+              className="input settings-input" 
+              type="number" 
+              min="0" 
+              placeholder="50.00"
               value={sponsorFee}
               onChange={(e) => setSponsorFee(e.target.value)}
             />
           </div>
         </div>
-        <div style={{ marginTop: '24px' }}>
-          <button 
-            className="btn btn-primary" 
-            onClick={handleSaveGeneralSettings}
-          >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+          <button className="btn btn-primary" onClick={saveGeneralSettings}>
             Save General Settings
           </button>
         </div>
       </div>
 
-      {/* Budget Settings */}
+      {/* Budget Configuration */}
       <div className="card pad" style={{ marginTop: '16px' }}>
-        <div className="section-title">Budget Settings</div>
-        <div className="grid grid-3">
+        <div className="section-title">Budget Configuration</div>
+        <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: '-10px', marginBottom: '20px' }}>
+          Set the default budget amounts for each team role. These will be used in the MCI Budget screen.
+        </p>
+        <div className="grid grid-4" id="budgetSettingsContainer">
           {BUDGET_KEYS.map(key => (
-            <div className="field" key={key}>
-              <label className="label">{key}</label>
-              <input
-                type="text"
-                className="input"
-                placeholder="$0.00"
+            <div key={key} className="field">
+              <label className="label">{key} ($)</label>
+              <input 
+                id={`budget${key}`}
+                className="input settings-input" 
+                type="number" 
+                min="0" 
+                step="0.01" 
+                placeholder="0.00"
                 value={budgetSettings[key] || ''}
-                onChange={(e) => setBudgetSettings(prev => ({
-                  ...prev,
-                  [key]: e.target.value
-                }))}
+                onChange={(e) => handleBudgetChange(key, e.target.value)}
               />
             </div>
           ))}
         </div>
-        <div style={{ marginTop: '24px' }}>
-          <button 
-            className="btn btn-primary" 
-            onClick={handleSaveBudgets}
-          >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+          <button className="btn btn-primary" onClick={saveBudgetSettings}>
             Save Budget Settings
           </button>
         </div>
       </div>
 
-      {/* Secretariat Roster */}
-      <div className="card pad" style={{ marginTop: '16px' }}>
-        <div className="section-title">Secretariat Roster</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {POSITIONS.map(position => (
-            <div key={position.key} style={{ 
-              padding: '16px', 
-              background: 'var(--bg)', 
-              borderRadius: '8px',
-              border: '1px solid var(--border)'
-            }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: '12px'
-              }}>
-                <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>
-                  {position.name}
-                </h4>
-                <span style={{ 
-                  fontSize: '0.85rem', 
-                  color: 'var(--muted)',
-                  background: 'var(--bg-darker)',
-                  padding: '4px 12px',
-                  borderRadius: '12px'
-                }}>
-                  {position.type === 'couple' ? 'Couple' : 'Single'}
-                </span>
-              </div>
-              
-              <div className="grid grid-2" style={{ gap: '12px' }}>
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <label className="label">{position.type === 'couple' ? 'Primary' : 'Name'}</label>
-                  <select
-                    className="input"
-                    value={rosterData[position.key]?.pescadore_key || ''}
-                    onChange={(e) => {
-                      const selectedMember = allMembers.find(m => m.PescadoreKey === parseInt(e.target.value));
-                      setRosterData(prev => ({
-                        ...prev,
-                        [position.key]: {
-                          ...prev[position.key],
-                          pescadore_key: parseInt(e.target.value) || null,
-                          full_name: selectedMember ? `${selectedMember.First} ${selectedMember.Last}` : null,
-                          email: selectedMember?.Email || null
-                        }
-                      }));
-                    }}
-                  >
-                    <option value="">Select person...</option>
-                    {allMembers.map(member => (
-                      <option key={member.PescadoreKey} value={member.PescadoreKey}>
-                        {member.Preferred || member.First} {member.Last}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {position.type === 'couple' && (
-                  <div className="field" style={{ marginBottom: 0 }}>
-                    <label className="label">Spouse</label>
-                    <select
-                      className="input"
-                      value={rosterData[position.key]?.spouse_pescadore_key || ''}
-                      onChange={(e) => {
-                        const selectedMember = allMembers.find(m => m.PescadoreKey === parseInt(e.target.value));
-                        setRosterData(prev => ({
-                          ...prev,
-                          [position.key]: {
-                            ...prev[position.key],
-                            spouse_pescadore_key: parseInt(e.target.value) || null,
-                            spouse_full_name: selectedMember ? `${selectedMember.First} ${selectedMember.Last}` : null
-                          }
-                        }));
-                      }}
-                    >
-                      <option value="">Select spouse...</option>
-                      {allMembers.map(member => (
-                        <option key={member.PescadoreKey} value={member.PescadoreKey}>
-                          {member.Preferred || member.First} {member.Last}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <label className="label">Term Expiry</label>
-                  <input
-                    type="date"
-                    className="input"
-                    value={rosterData[position.key]?.term_expiry_date || ''}
-                    onChange={(e) => setRosterData(prev => ({
-                      ...prev,
-                      [position.key]: {
-                        ...prev[position.key],
-                        term_expiry_date: e.target.value
-                      }
-                    }))}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ marginTop: '24px' }}>
-          <button 
-            className="btn btn-primary" 
-            onClick={handleSaveRoster}
-          >
-            Save Roster
-          </button>
-        </div>
-      </div>
-
-      {/* User Management */}
-      <div className="card pad" style={{ marginTop: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      {/* User Management with Sliding Panel */}
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', marginTop: '16px' }}>
+        <div 
+          className="card pad"
+          style={{
+            width: showInviteForm ? '45%' : '100%',
+            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            minWidth: 0
+          }}
+        >
           <div className="section-title">User Management</div>
-          <button 
-            className="btn btn-primary"
-            onClick={openInviteForm}
-          >
-            + Invite User
-          </button>
-        </div>
-
-        {users.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '40px', 
-            color: 'var(--muted)',
-            background: 'var(--bg)',
-            borderRadius: '8px'
-          }}>
-            No users yet. Invite your first user to get started!
+          <div id="user-management-header">
+            <p style={{ color: 'var(--muted)', fontSize: '0.9rem', maxWidth: '75%', margin: 0 }}>
+              Invite new users to your organization and manage their access permissions.
+            </p>
+            <button 
+              id="inviteUserBtn" 
+              className="btn btn-primary"
+              onClick={openInviteForm}
+            >
+              Invite New User
+            </button>
           </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
+          <div id="user-list-container">
+            <table id="user-list-table" className="table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Permissions</th>
-                  <th>Actions</th>
+                  <th>User Email</th>
+                  <th style={{ width: '120px' }}>Role</th>
+                  <th style={{ width: '200px', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {users.map(user => (
-                  <tr key={user.id}>
-                    <td>{user.full_name}</td>
-                    <td>{user.email}</td>
-                    <td>
-                      <span className={`badge ${user.role}`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                        {Object.entries(user.permissions || {})
-                          .filter(([_, value]) => value)
-                          .map(([key]) => (
-                            <span 
-                              key={key}
-                              style={{
-                                fontSize: '0.75rem',
-                                padding: '2px 8px',
-                                background: 'var(--bg-darker)',
-                                borderRadius: '4px',
-                                color: 'var(--muted)'
-                              }}
-                            >
-                              {key.replace('-app', '').replace('-', ' ')}
-                            </span>
-                          ))
-                        }
-                      </div>
-                    </td>
-                    <td>
-                      <button 
-                        className="btn btn-small btn-danger"
-                        onClick={() => console.log('Delete user:', user.id)}
-                      >
-                        Remove
-                      </button>
+              <tbody id="user-list-tbody">
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan="3" style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
+                      No users found.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  users.map(user => (
+                    <tr key={user.id}>
+                      <td>
+                        <strong>{user.full_name || 'Name not found'}</strong><br />
+                        <span style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>
+                          {user.email || 'Email not found'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`role-badge ${(user.role || 'user').toLowerCase()}`}>
+                          {user.role || 'USER'}
+                        </span>
+                      </td>
+                      <td className="actions-cell">
+                        <button className="btn btn-small" onClick={() => console.log('Manage', user.id)}>
+                          Manage
+                        </button>
+                        <button className="btn btn-small btn-danger" onClick={() => console.log('Delete', user.id)}>
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Invite User Modal */}
-      {showInviteForm && (
-        <div className="modal-overlay" onClick={() => setShowInviteForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        {showInviteForm && (
+          <div
+            className="card pad"
+            style={{
+              width: '53%',
+              animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              maxHeight: 'calc(100vh - 200px)',
+              overflowY: 'auto'
+            }}
+          >
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
               alignItems: 'center',
-              marginBottom: '24px'
+              marginBottom: '20px'
             }}>
-              <h2 style={{ margin: 0 }}>Invite New User</h2>
+              <div className="section-title">Invite New User</div>
               <button 
-                className="btn-close"
-                onClick={() => setShowInviteForm(false)}
-                aria-label="Close"
+                className="btn btn-small"
+                onClick={closeInviteForm}
+                style={{ padding: '4px 12px', fontSize: '0.9rem' }}
               >
-                ×
+                Close ✕
               </button>
             </div>
 
-            {/* Select from directory */}
             <div className="field">
-              <label className="label">Select from Directory (Optional)</label>
-              <select
+              <label className="label">Select Person from Directory</label>
+              <select 
                 className="input"
                 value={selectedPerson?.PescadoreKey || ''}
-                onChange={(e) => {
-                  const person = allMembers.find(m => m.PescadoreKey === parseInt(e.target.value));
-                  if (person) selectPersonForInvite(person);
-                }}
+                onChange={handlePersonSelection}
               >
-                <option value="">Choose a person...</option>
-                {allMembers.map(member => (
-                  <option key={member.PescadoreKey} value={member.PescadoreKey}>
-                    {member.Preferred || member.First} {member.Last} ({member.Email})
+                <option value="">-- Select from directory (optional) --</option>
+                {allMembers.map(person => (
+                  <option key={person.PescadoreKey} value={person.PescadoreKey}>
+                    {person.Last}, {person.Preferred || person.First}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div style={{ 
-              height: '1px', 
-              background: 'var(--border)', 
-              margin: '24px 0' 
-            }}></div>
-
-            {/* Manual entry */}
             <div className="grid grid-2">
               <div className="field">
                 <label className="label">First Name *</label>
-                <input
-                  type="text"
+                <input 
                   className="input"
-                  placeholder="John"
+                  type="text"
                   value={inviteFormData.firstName}
-                  onChange={(e) => setInviteFormData(prev => ({ 
-                    ...prev, 
-                    firstName: e.target.value 
-                  }))}
+                  onChange={(e) => setInviteFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                  readOnly={!!selectedPerson}
                 />
               </div>
               <div className="field">
                 <label className="label">Last Name *</label>
-                <input
-                  type="text"
+                <input 
                   className="input"
-                  placeholder="Doe"
+                  type="text"
                   value={inviteFormData.lastName}
-                  onChange={(e) => setInviteFormData(prev => ({ 
-                    ...prev, 
-                    lastName: e.target.value 
-                  }))}
+                  onChange={(e) => setInviteFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                  readOnly={!!selectedPerson}
                 />
               </div>
             </div>
 
-            {/* ✅ ADDED - Phone Number Field */}
-            <div className="field">
-              <label className="label">Phone Number *</label>
-              <input
-                type="tel"
-                className="input"
-                placeholder="5551234567"
-                value={inviteFormData.phone}
-                onChange={(e) => setInviteFormData(prev => ({ 
-                  ...prev, 
-                  phone: e.target.value 
-                }))}
-              />
-              <p style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '4px' }}>
-                Digits only - this will be their temporary password
-              </p>
+            <div className="grid grid-2">
+              <div className="field">
+                <label className="label">Email Address *</label>
+                <input 
+                  className="input"
+                  type="email"
+                  value={inviteFormData.email}
+                  onChange={(e) => setInviteFormData(prev => ({ ...prev, email: e.target.value }))}
+                  readOnly={!!selectedPerson}
+                />
+              </div>
+              <div className="field">
+  <label className="label">Role</label>
+  <select 
+    className="input"
+    value={inviteFormData.role}
+    onChange={(e) => setInviteFormData(prev => ({ ...prev, role: e.target.value }))}
+  >
+    <option value="user">User</option>
+    <option value="admin">Admin</option>
+  </select>
+</div>
             </div>
 
-            <div className="field">
-              <label className="label">Email *</label>
-              <input
-                type="email"
-                className="input"
-                placeholder="john.doe@example.com"
-                value={inviteFormData.email}
-                onChange={(e) => setInviteFormData(prev => ({ 
-                  ...prev, 
-                  email: e.target.value 
-                }))}
-              />
-            </div>
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
 
             <div className="field">
-              <label className="label">Role</label>
-              <select
-                className="input"
-                value={inviteFormData.role}
-                onChange={(e) => setInviteFormData(prev => ({ 
-                  ...prev, 
-                  role: e.target.value 
-                }))}
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-                <option value="owner">Owner</option>
-              </select>
-            </div>
-
-            <div className="field">
-              <label className="label">Permissions</label>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '8px',
-                padding: '12px',
-                background: 'var(--bg)',
-                borderRadius: '8px',
-                border: '1px solid var(--border)'
-              }}>
-                {Object.keys(inviteFormData.permissions).map(key => (
-                  <label 
-                    key={key}
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={inviteFormData.permissions[key]}
-                      onChange={(e) => setInviteFormData(prev => ({
-                        ...prev,
-                        permissions: {
-                          ...prev.permissions,
-                          [key]: e.target.checked
-                        }
-                      }))}
-                    />
-                    <span>{key.replace(/-/g, ' ').replace(/app/g, '').trim()}</span>
-                  </label>
+              <label className="label">Module Permissions</label>
+              <div id="permissions-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginTop: '20px' }}>
+                {[
+                  { key: 'team-viewer-app', label: 'Directory' },
+                  { key: 'team-book', label: 'Team Book' },
+                  { key: 'meeting-check-in-app', label: 'Team Meetings' },
+                  { key: 'candidate-registration', label: 'Candidate Registration' },
+                  { key: 'secretariat-app', label: 'Secretariat' },
+                  { key: 'app-settings', label: 'Settings' }
+                ].map(perm => (
+                  <div key={perm.key} className="permission-item" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    padding: '7px 12px',
+                    borderRadius: '8px'
+                  }}>
+                    <label className="label" style={{ margin: 0, flexGrow: 1, fontWeight: 600 }}>
+                      {perm.label}
+                    </label>
+                    <label className="switch" style={{
+                      position: 'relative',
+                      display: 'inline-block',
+                      width: '44px',
+                      height: '24px'
+                    }}>
+                      <input 
+                        type="checkbox"
+                        checked={inviteFormData.permissions[perm.key]}
+                        onChange={() => handlePermissionToggle(perm.key)}
+                        style={{ opacity: 0, width: 0, height: 0 }}
+                      />
+                      <span className="slider" style={{
+                        position: 'absolute',
+                        cursor: 'pointer',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: inviteFormData.permissions[perm.key] ? 'var(--accentA)' : 'var(--border)',
+                        transition: '.4s',
+                        borderRadius: '24px'
+                      }}>
+                        <span style={{
+                          position: 'absolute',
+                          content: '""',
+                          height: '18px',
+                          width: '18px',
+                          left: '3px',
+                          bottom: '3px',
+                          backgroundColor: 'white',
+                          transition: '.4s',
+                          borderRadius: '50%',
+                          transform: inviteFormData.permissions[perm.key] ? 'translateX(20px)' : 'translateX(0)'
+                        }}></span>
+                      </span>
+                    </label>
+                  </div>
                 ))}
               </div>
             </div>
@@ -823,37 +705,103 @@ export default function AppSettings() {
               display: 'flex', 
               gap: '12px', 
               marginTop: '24px',
-              justifyContent: 'flex-end'
+              paddingTop: '20px',
+              borderTop: '1px solid var(--border)'
             }}>
               <button 
-                className="btn"
-                onClick={() => setShowInviteForm(false)}
-                disabled={inviteLoading}
+                className="btn" 
+                onClick={closeInviteForm}
+                style={{ flex: 1 }}
               >
                 Cancel
               </button>
               <button 
-                className="btn btn-primary"
-                onClick={handleInviteUser}
-                disabled={inviteLoading}
-              >
-                {inviteLoading ? 'Sending...' : 'Send Invitation'}
-              </button>
+  className="btn btn-primary"
+  onClick={handleInviteUser}
+  disabled={inviteLoading}
+  style={{ flex: 1 }}
+>
+  {inviteLoading ? 'Sending...' : 'Send Invitation'}
+</button>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Secretariat Configuration */}
+      <div className="card pad" style={{ marginTop: '16px' }}>
+        <div className="section-title">Secretariat Configuration</div>
+        <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: '-10px', marginBottom: '20px' }}>
+          Define term lengths for each board position and manage the current roster assignments.
+        </p>
+        <div id="secretariat-config-container">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <button 
+              className="btn btn-info"
+              onClick={() => console.log('Manage roster - navigate to Secretariat')}
+            >
+              Manage Board Roster
+            </button>
+            <button 
+              className="btn btn-primary"
+              onClick={saveTermLengths}
+            >
+              Save Term Lengths
+            </button>
+          </div>
+          <div id="secretariat-positions-grid">
+            {POSITIONS.map(pos => {
+              const savedTerm = rosterData[pos.key]?.term_length_years;
+              const termValue = savedTerm !== null && savedTerm !== undefined ? savedTerm : pos.defaultTerm;
+              
+              return (
+                <div key={pos.key} className="secretariat-position-item">
+                  <span className="position-name">{pos.name}</span>
+                  <div className="term-input-group">
+                    <input 
+                      type="number" 
+                      className="input term-input" 
+                      id={`term-${pos.key}`} 
+                      defaultValue={termValue} 
+                      min="1" 
+                      max="5"
+                    />
+                    <label className="label" htmlFor={`term-${pos.key}`} style={{ margin: 0 }}>
+                      Years
+                    </label>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      )}
+      </div>
 
       {/* Data Management */}
       <div className="card pad" style={{ marginTop: '16px' }}>
         <div className="section-title">Data Management</div>
-        <p style={{ color: 'var(--muted)', marginBottom: '24px' }}>
-          Manage your application data and perform maintenance tasks.
-        </p>
-        <div className="grid grid-3">
+        <div className="grid grid-2" id="dataManagementContainer">
           <div className="card pad data-management-card">
-            <h4>Candidate Registration</h4>
-            <p>Clear candidate registration data from views or database.</p>
+            <h4>Meeting Check-In (MCI)</h4>
+            <p>Manage all stored check-in data including attendance, payments, and Palanca status.</p>
+            <div className="actions">
+              <button 
+                className="btn btn-small" 
+                onClick={() => console.log('Clear MCI view')}
+              >
+                Clear Current View
+              </button>
+              <button 
+                className="btn btn-danger btn-small" 
+                onClick={() => console.log('Delete MCI DB')}
+              >
+                Clear All Database Records
+              </button>
+            </div>
+          </div>
+          <div className="card pad data-management-card">
+            <h4>Candidate Registration (CRA)</h4>
+            <p>Manage all stored candidate applications. This data is now stored in Supabase.</p>
             <div className="actions">
               <button 
                 className="btn btn-small" 
