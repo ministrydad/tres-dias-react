@@ -352,10 +352,9 @@ export default function EmailReports() {
       const rows = apps.map(app => {
         const prefix = gender === 'men' ? 'm_' : 'f_';
         const name = `${app[prefix + 'pref'] || app[prefix + 'first']} ${app.c_lastname}`;
-        const church = app[prefix + 'church'] || 'N/A';
-        const phone = app[prefix + 'cell'] || 'N/A';
-        const email = app[prefix + 'email'] || 'N/A';
-        return `<tr><td ${styles.td}>${name}</td><td ${styles.td}>${church}</td><td ${styles.td}>${phone}</td><td ${styles.td}>${email}</td></tr>`;
+        const age = app[prefix + 'age'] || 'N/A';
+        const church = app.c_church || 'N/A';
+        return `<tr><td ${styles.td}>${name}</td><td ${styles.td}>${age}</td><td ${styles.td}>${church}</td></tr>`;
       }).join('');
 
       reportBody = `
@@ -369,7 +368,7 @@ export default function EmailReports() {
         </table>
         <div ${styles.sectionTitle}>Candidate Roster</div>
         <table ${styles.table}>
-          <thead><tr><th ${styles.th}>Name</th><th ${styles.th}>Church</th><th ${styles.th}>Phone</th><th ${styles.th}>Email</th></tr></thead>
+          <thead><tr><th ${styles.th}>Name</th><th ${styles.th}>Age</th><th ${styles.th}>Church</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       `;
@@ -477,7 +476,7 @@ export default function EmailReports() {
   }
 
   const reports = [
-    { type: 'rector', title: 'Rector Report', data: 'Name, Church, Phone, Email' },
+    { type: 'rector', title: 'Rector Report', data: 'Name, Age, Church' },
     { type: 'prayer', title: 'Prayer Team Report', data: 'Name, Church' },
     { type: 'dorm', title: 'Dorm Team Report', data: 'Name, Smoker Status' },
     { type: 'kitchen', title: 'Kitchen Report', data: 'Headcount, Dietary Needs' }
