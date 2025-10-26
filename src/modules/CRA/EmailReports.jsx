@@ -8,10 +8,14 @@ export default function EmailReports() {
   const [currentFilter, setCurrentFilter] = useState('men');
   const [applications, setApplications] = useState([]);
   const [emailLists, setEmailLists] = useState({
-    rector: [],
-    prayer: [],
-    dorm: [],
-    kitchen: []
+    rector_men: [],
+    rector_women: [],
+    prayer_men: [],
+    prayer_women: [],
+    dorm_men: [],
+    dorm_women: [],
+    kitchen_men: [],
+    kitchen_women: []
   });
   const [emailSettings, setEmailSettings] = useState({
     from_name: '',
@@ -61,10 +65,14 @@ export default function EmailReports() {
 
       if (emailData) {
         const lists = {
-          rector: emailData.find(d => d.list_name === 'rector')?.emails || [],
-          prayer: emailData.find(d => d.list_name === 'prayer')?.emails || [],
-          dorm: emailData.find(d => d.list_name === 'dorm')?.emails || [],
-          kitchen: emailData.find(d => d.list_name === 'kitchen')?.emails || []
+          rector_men: emailData.find(d => d.list_name === 'rector_men')?.emails || [],
+          rector_women: emailData.find(d => d.list_name === 'rector_women')?.emails || [],
+          prayer_men: emailData.find(d => d.list_name === 'prayer_men')?.emails || [],
+          prayer_women: emailData.find(d => d.list_name === 'prayer_women')?.emails || [],
+          dorm_men: emailData.find(d => d.list_name === 'dorm_men')?.emails || [],
+          dorm_women: emailData.find(d => d.list_name === 'dorm_women')?.emails || [],
+          kitchen_men: emailData.find(d => d.list_name === 'kitchen_men')?.emails || [],
+          kitchen_women: emailData.find(d => d.list_name === 'kitchen_women')?.emails || []
         };
         setEmailLists(lists);
 
@@ -105,7 +113,8 @@ export default function EmailReports() {
       return;
     }
 
-    const updatedList = [...emailLists[selectedReport], email];
+    const listName = `${selectedReport}_${previewGender}`;
+    const updatedList = [...emailLists[listName], email];
 
     try {
       const { error } = await supabase
@@ -127,7 +136,8 @@ export default function EmailReports() {
   };
 
   const deleteRecipient = async (email) => {
-    const updatedList = emailLists[selectedReport].filter(e => e !== email);
+    const listName = `${selectedReport}_${previewGender}`;
+    const updatedList = emailLists[listName].filter(e => e !== email);
 
     try {
       const { error } = await supabase
@@ -207,7 +217,8 @@ export default function EmailReports() {
 
       // Step 4: Add emails to recipient list (avoid duplicates)
       const newEmails = emailData.map(e => e.Email).filter(e => e && e.trim());
-      const currentList = emailLists[selectedReport] || [];
+      const listName = `${selectedReport}_${gender}`;
+      const currentList = emailLists[listName] || [];
       const updatedList = [...new Set([...currentList, ...newEmails])]; // Remove duplicates
 
       // Step 5: Save to database
@@ -241,7 +252,8 @@ export default function EmailReports() {
     }
   };
   const sendReport = async () => {
-    const recipients = emailLists[selectedReport];
+    const listName = `${selectedReport}_${previewGender}`;
+    const recipients = emailLists[listName];
     if (!recipients || recipients.length === 0) {
       alert('No recipients configured. Please add recipients first.');
       return;
@@ -268,7 +280,14 @@ export default function EmailReports() {
       const { html, title } = generateReportHTML(selectedReport, previewGender, apps);
 
       const { error } = await supabase.functions.invoke('send-custom-report', {
-        body: { recipients, subject: title, htmlContent: html }
+        body: { 
+          recipients, 
+          subject: title, 
+          htmlContent: html,
+          fromName: emailSettings.from_name,
+          replyTo: emailSettings.reply_to,
+          bcc: emailSettings.bcc
+        }
       });
 
       if (error) throw error;
@@ -504,7 +523,7 @@ export default function EmailReports() {
                   <tr key={report.type}>
                     <td><strong>{report.title}</strong></td>
                     <td>{report.data}</td>
-                    <td>{emailLists[report.type]?.length || 0} recipient(s)</td>
+                    <td>{(emailLists[`${report.type}_men`]?.length || 0) + (emailLists[`${report.type}_women`]?.length || 0)} total</td>
                     <td className="actions-cell">
                       <button 
                         className="btn btn-small btn-primary" 
@@ -526,18 +545,26 @@ export default function EmailReports() {
                 <label className="label">From Name</label>
                 <input 
                   className="input" 
+                  placeholder="e.g., Tres Dias of St. Louis"
                   value={emailSettings.from_name}
                   onChange={(e) => setEmailSettings(prev => ({ ...prev, from_name: e.target.value }))}
                 />
+                <small style={{ color: 'var(--muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                  Emails will be sent from: {emailSettings.from_name || 'Team Tools Pro Reports'} &lt;reports@teamtoolspro.com&gt;
+                </small>
               </div>
               <div className="field">
-                <label className="label">From Email</label>
+                <label className="label">From Email (Fixed)</label>
                 <input 
                   className="input" 
                   type="email"
-                  value={emailSettings.from_email}
-                  onChange={(e) => setEmailSettings(prev => ({ ...prev, from_email: e.target.value }))}
+                  value="reports@teamtoolspro.com"
+                  disabled
+                  style={{ backgroundColor: 'var(--bg)', cursor: 'not-allowed' }}
                 />
+                <small style={{ color: 'var(--muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                  All reports sent from verified domain
+                </small>
               </div>
               <div className="field">
                 <label className="label">Reply-To</label>
@@ -684,12 +711,12 @@ export default function EmailReports() {
                     </div>
                   </div>
                   <div style={{ marginBottom: '16px' }}>
-                    <label className="label">Current Recipients ({emailLists[selectedReport]?.length || 0})</label>
+                    <label className="label">Current Recipients ({emailLists[`${selectedReport}_${previewGender}`]?.length || 0})</label>
                     <div id="recipientListContainer" style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                      {emailLists[selectedReport]?.length === 0 ? (
+                      {emailLists[`${selectedReport}_${previewGender}`]?.length === 0 ? (
                         <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>No recipients added yet.</span>
                       ) : (
-                        emailLists[selectedReport]?.map(email => (
+                        emailLists[`${selectedReport}_${previewGender}`]?.map(email => (
                           <span key={email} className="payment-badge" style={{ background: 'rgba(0, 163, 255, 0.2)', color: 'var(--ink)' }}>
                             {email}
                             <button 
