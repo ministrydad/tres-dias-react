@@ -147,7 +147,7 @@ export default function EmailReports() {
       setEmailLists(prev => ({ ...prev, [listName]: updatedList }));
     } catch (error) {
       console.error('Error deleting recipient:', error);
-      alert('Failed to delete recipient.');
+      if (window.showMainStatus) { window.showMainStatus('Failed to delete recipient.', true); }
     }
   };
 
@@ -259,7 +259,7 @@ export default function EmailReports() {
     const listName = `${selectedReport}_${previewGender}`;
     const recipients = emailLists[listName];
     if (!recipients || recipients.length === 0) {
-      alert('No recipients configured. Please add recipients first.');
+      if (window.showMainStatus) { window.showMainStatus('No recipients configured. Please add recipients first.', true); }
       return;
     }
 
@@ -319,10 +319,10 @@ export default function EmailReports() {
 
       if (error) throw error;
 
-      alert('Report sent successfully!');
+      if (window.showMainStatus) { window.showMainStatus('Report sent successfully!', false); }
     } catch (error) {
       console.error('Error sending report:', error);
-      alert(`Error: ${error.message}`);
+      if (window.showMainStatus) { window.showMainStatus(`Failed to send report: ${error.message}`, true); }
     } finally {
       setSending(false);
     }
@@ -340,10 +340,10 @@ export default function EmailReports() {
 
       if (error) throw error;
 
-      alert('Email settings saved successfully!');
+      if (window.showMainStatus) { window.showMainStatus('Email settings saved successfully!', false); }
     } catch (error) {
       console.error('Error saving email settings:', error);
-      alert('Failed to save email settings.');
+      if (window.showMainStatus) { window.showMainStatus('Failed to save email settings.', true); }
     }
   };
 
