@@ -111,13 +111,13 @@ export default function EmailReports() {
         .from('cra_email_lists')
         .upsert({
           org_id: orgId,
-          list_name: selectedReport,
+          list_name: listName,
           emails: updatedList
         }, { onConflict: 'org_id,list_name' });
 
       if (error) throw error;
 
-      setEmailLists(prev => ({ ...prev, [selectedReport]: updatedList }));
+      setEmailLists(prev => ({ ...prev, [listName]: updatedList }));
       setNewRecipientEmail('');
     } catch (error) {
       console.error('Error adding recipient:', error);
@@ -134,13 +134,13 @@ export default function EmailReports() {
         .from('cra_email_lists')
         .upsert({
           org_id: orgId,
-          list_name: selectedReport,
+          list_name: listName,
           emails: updatedList
         }, { onConflict: 'org_id,list_name' });
 
       if (error) throw error;
 
-      setEmailLists(prev => ({ ...prev, [selectedReport]: updatedList }));
+      setEmailLists(prev => ({ ...prev, [listName]: updatedList }));
     } catch (error) {
       console.error('Error deleting recipient:', error);
       alert('Failed to delete recipient.');
