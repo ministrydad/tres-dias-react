@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function EmailReports() {
   const { orgId } = useAuth();
-  const [currentFilter, setCurrentFilter] = useState('men');
+
   const [applications, setApplications] = useState([]);
   const [emailLists, setEmailLists] = useState({
     rector_men: [],
@@ -38,12 +38,7 @@ export default function EmailReports() {
     }
   }, [orgId]);
 
-  // Update preview gender when main filter changes
-  useEffect(() => {
-    setPreviewGender(currentFilter);
-  }, [currentFilter]);
-
-  const loadData = async () => {
+const loadData = async () => {
     setLoading(true);
     try {
       // Load applications
@@ -91,11 +86,7 @@ export default function EmailReports() {
     }
   };
 
-  const handleFilterChange = (filter) => {
-    setCurrentFilter(filter);
-  };
-
-  const openDetailPanel = (type) => {
+const openDetailPanel = (type) => {
     setSelectedReport(type);
     setDetailTab('preview');
     setPreviewGender(currentFilter);
@@ -602,6 +593,27 @@ export default function EmailReports() {
                 <button className="btn btn-small" onClick={closeDetailPanel}>✕ Close</button>
               </div>
 
+              {/* Gender Toggle - Persistent across all tabs */}
+              <div style={{ marginBottom: '16px' }}>
+                <label className="label" style={{ marginBottom: '8px', display: 'block' }}>
+                  Managing {previewGender === 'men' ? "Men's" : "Women's"} List
+                </label>
+                <div className="toggle" style={{ maxWidth: '250px' }}>
+                  <div 
+                    className={`opt ${previewGender === 'men' ? 'active' : ''}`}
+                    onClick={() => setPreviewGender('men')}
+                  >
+                    Men
+                  </div>
+                  <div 
+                    className={`opt ${previewGender === 'women' ? 'active' : ''}`}
+                    onClick={() => setPreviewGender('women')}
+                  >
+                    Women
+                  </div>
+                </div>
+              </div>
+
               {/* Tab Toggle */}
               <div className="toggle" style={{ maxWidth: '100%' }}>
                 <div 
@@ -622,23 +634,7 @@ export default function EmailReports() {
             <div style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
               {detailTab === 'preview' ? (
                 <>
-                  <div style={{ marginBottom: '16px' }}>
-                    <label className="label">Preview for Gender:</label>
-                    <div className="toggle" style={{ maxWidth: '250px', marginTop: '8px' }}>
-                      <div 
-                        className={`opt ${previewGender === 'men' ? 'active' : ''}`}
-                        onClick={() => setPreviewGender('men')}
-                      >
-                        Men
-                      </div>
-                      <div 
-                        className={`opt ${previewGender === 'women' ? 'active' : ''}`}
-                        onClick={() => setPreviewGender('women')}
-                      >
-                        Women
-                      </div>
-                    </div>
-                  </div>
+
 
                   <div 
                     id="report-preview-content-wrapper"
