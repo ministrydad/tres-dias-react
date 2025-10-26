@@ -99,7 +99,9 @@ export default function EmailReports() {
   const addRecipient = async () => {
     const email = newRecipientEmail.trim();
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      alert('Please enter a valid email address.');
+      if (window.showMainStatus) {
+        window.showMainStatus('Please enter a valid email address.', true);
+      }
       return;
     }
 
@@ -121,7 +123,9 @@ export default function EmailReports() {
       setNewRecipientEmail('');
     } catch (error) {
       console.error('Error adding recipient:', error);
-      alert('Failed to add recipient.');
+      if (window.showMainStatus) {
+        window.showMainStatus('Failed to add recipient.', true);
+      }
     }
   };
 
@@ -259,11 +263,25 @@ export default function EmailReports() {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Send ${selectedReport.charAt(0).toUpperCase() + selectedReport.slice(1)} Report to ${recipients.length} recipient(s)?`
-    );
+    // Show custom confirmation modal
+    if (!window.showConfirm) {
+      console.error('Confirm modal not available');
+      return;
+    }
 
-    if (!confirmed) return;
+    window.showConfirm({
+      title: 'Send Report',
+      message: `Send ${selectedReport.charAt(0).toUpperCase() + selectedReport.slice(1)} Report to ${recipients.length} recipient(s)?`,
+      confirmText: 'Send',
+      cancelText: 'Cancel',
+      isDangerous: false,
+      onConfirm: async () => {
+        await executeSend();
+      }
+    });
+  };
+
+  const executeSend = async () => {
 
     setSending(true);
     try {
@@ -376,10 +394,12 @@ export default function EmailReports() {
       `;
     } else if (type === 'prayer') {
       reportTitle = `${genderText}'s Prayer Team Report`;
-      const rows = apps.map(app => {
+      // Filter out withdrawn candidates (attendance = 'no')
+      const activeApps = apps.filter(app => app.attendance !== 'no');
+      const rows = activeApps.map(app => {
         const prefix = gender === 'men' ? 'm_' : 'f_';
         const name = `${app[prefix + 'pref'] || app[prefix + 'first']} ${app.c_lastname}`;
-        const church = app[prefix + 'church'] || 'N/A';
+        const church = app.c_church || 'N/A';
         return `<tr><td ${styles.td}>${name}</td><td ${styles.td}>${church}</td></tr>`;
       }).join('');
 
@@ -400,15 +420,17 @@ export default function EmailReports() {
       `;
     } else if (type === 'dorm') {
       reportTitle = `${genderText}'s Dorm Team Report`;
-      const smokerCount = apps.filter(app => {
+      // Filter out withdrawn candidates (attendance = 'no')
+      const activeApps = apps.filter(app => app.attendance !== 'no');
+      const smokerCount = activeApps.filter(app => {
         const prefix = gender === 'men' ? 'm_' : 'f_';
-        return app[prefix + 'smoker'];
+        return app[prefix + 'smoke'] === 'yes';
       }).length;
 
-      const rows = apps.map(app => {
+      const rows = activeApps.map(app => {
         const prefix = gender === 'men' ? 'm_' : 'f_';
         const name = `${app[prefix + 'pref'] || app[prefix + 'first']} ${app.c_lastname}`;
-        const smoker = app[prefix + 'smoker'] ? 'YES' : 'No';
+        const smoker = app[prefix + 'smoke'] === 'yes' ? 'YES' : 'No';
         return `<tr><td ${styles.td}>${name}</td><td ${styles.td} style="text-align: center;">${smoker}</td></tr>`;
       }).join('');
 
@@ -417,7 +439,7 @@ export default function EmailReports() {
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; margin-bottom: 24px;">
           <tr>
             <td align="center" style="padding-right: 8px;">
-              <div ${styles.statCard}><div ${styles.statValue}>${apps.length}</div><div ${styles.statLabel}>Total Candidates</div></div>
+              <div ${styles.statCard}><div ${styles.statValue}>${activeApps.length}</div><div ${styles.statLabel}>Total Candidates</div></div>
             </td>
             <td align="center" style="padding-left: 8px;">
               <div ${styles.statCard}><div ${styles.statValue}>${smokerCount}</div><div ${styles.statLabel}>Smokers</div></div>
@@ -432,15 +454,18 @@ export default function EmailReports() {
       `;
     } else if (type === 'kitchen') {
       reportTitle = `${genderText}'s Kitchen Report`;
-      const dietNeeds = apps.filter(app => {
+      // Filter out withdrawn candidates (attendance = 'no')
+      const activeApps = apps.filter(app => app.attendance !== 'no');
+      const dietNeeds = activeApps.filter(app => {
         const prefix = gender === 'men' ? 'm_' : 'f_';
-        return app[prefix + 'diet'];
+        return app[prefix + 'diet'] === 'yes';
       });
 
       const dietList = dietNeeds.length > 0
         ? `<ul ${styles.ul}>${dietNeeds.map(app => {
             const prefix = gender === 'men' ? 'm_' : 'f_';
-            return `<li ${styles.li}>${app[prefix + 'diet_details'] || 'Special diet requested (no details provided)'}</li>`;
+            const name = `${app[prefix + 'pref'] || app[prefix + 'first']} ${app.c_lastname}`;
+            return `<li ${styles.li}><strong>${name}</strong>: ${app[prefix + 'diettext'] || 'Special diet requested (no details provided)'}</li>`;
           }).join('')}</ul>`
         : '<p>No special dietary needs reported.</p>';
 
@@ -449,7 +474,7 @@ export default function EmailReports() {
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; margin-bottom: 24px;">
           <tr>
             <td align="center" style="padding-right: 8px;">
-              <div ${styles.statCard}><div ${styles.statValue}>${apps.length}</div><div ${styles.statLabel}>Total Headcount</div></div>
+              <div ${styles.statCard}><div ${styles.statValue}>${activeApps.length}</div><div ${styles.statLabel}>Total Headcount</div></div>
             </td>
             <td align="center" style="padding-left: 8px;">
               <div ${styles.statCard}><div ${styles.statValue}>${dietNeeds.length}</div><div ${styles.statLabel}>Special Diets</div></div>
