@@ -86,10 +86,9 @@ const loadData = async () => {
     }
   };
 
-const openDetailPanel = (type) => {
+  const openDetailPanel = (type) => {
     setSelectedReport(type);
     setDetailTab('preview');
-    setPreviewGender(currentFilter);
   };
 
   const closeDetailPanel = () => {
@@ -481,23 +480,6 @@ const openDetailPanel = (type) => {
         {/* LEFT PANEL - Main Content */}
         <div className="list-container" style={{ overflowY: 'auto', padding: '0 24px 0 0' }}>
           <div className="card pad" style={{ marginBottom: '16px' }}>
-            <div style={{ maxWidth: '300px', marginBottom: '20px' }}>
-              <label className="label">Filter Report Data by Gender</label>
-              <div className="toggle" id="craEmailFilter">
-                <div 
-                  className={`opt ${currentFilter === 'men' ? 'active' : ''}`}
-                  onClick={() => handleFilterChange('men')}
-                >
-                  Men
-                </div>
-                <div 
-                  className={`opt ${currentFilter === 'women' ? 'active' : ''}`}
-                  onClick={() => handleFilterChange('women')}
-                >
-                  Women
-                </div>
-              </div>
-            </div>
 
             <div className="section-title">Team Email Reports</div>
             <table className="table">
