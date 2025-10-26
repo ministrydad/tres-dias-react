@@ -216,13 +216,13 @@ export default function EmailReports() {
         .from('cra_email_lists')
         .upsert({
           org_id: orgId,
-          list_name: selectedReport,
+          list_name: listName,
           emails: updatedList
         }, { onConflict: 'org_id,list_name' });
 
       if (saveError) throw saveError;
 
-      setEmailLists(prev => ({ ...prev, [selectedReport]: updatedList }));
+      setEmailLists(prev => ({ ...prev, [listName]: updatedList }));
       
       const addedCount = updatedList.length - currentList.length;
       if (addedCount > 0) {
