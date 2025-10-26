@@ -705,7 +705,7 @@ export default function EmailReports() {
                         <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>No recipients added yet.</span>
                       ) : (
                         emailLists[`${selectedReport}_${previewGender}`]?.map(email => (
-                          <span key={email} className="payment-badge" style={{ background: 'rgba(0, 163, 255, 0.2)', color: 'var(--ink)' }}>
+                          <span key={email} className="payment-badge" style={{ background: 'rgba(0, 163, 255, 0.2)', color: 'var(--ink)', textTransform: 'none' }}>
                             {email}
                             <button 
                               className="remove-payment-btn" 
