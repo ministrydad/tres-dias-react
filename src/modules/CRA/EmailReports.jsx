@@ -205,10 +205,20 @@ export default function EmailReports() {
         return;
       }
 
-      // Step 4: Add emails to recipient list (avoid duplicates)
+      // Step 4: Get current list from database (not state - to ensure fresh data)
       const newEmails = emailData.map(e => e.Email).filter(e => e && e.trim());
       const listName = `${selectedReport}_${gender}`;
-      const currentList = emailLists[listName] || [];
+      
+      const { data: existingList, error: listError } = await supabase
+        .from('cra_email_lists')
+        .select('emails')
+        .eq('org_id', orgId)
+        .eq('list_name', listName)
+        .maybeSingle();
+
+      if (listError) throw listError;
+
+      const currentList = existingList?.emails || [];
       const updatedList = [...new Set([...currentList, ...newEmails])]; // Remove duplicates
 
       // Step 5: Save to database
