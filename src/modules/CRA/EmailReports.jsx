@@ -576,7 +576,13 @@ export default function EmailReports() {
 
         {/* RIGHT PANEL - Detail View */}
         {selectedReport && (
-          <div className="detail-panel card pad" style={{ borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          <div className="detail-panel card pad" style={{ 
+            borderLeft: '1px solid var(--border)', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            overflowY: 'auto',
+            animation: 'slideInRight 0.3s ease-out'
+          }}>
             <div style={{ padding: '0 24px 24px', borderBottom: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
@@ -743,4 +749,26 @@ export default function EmailReports() {
       </div>
     </section>
   );
+}
+
+/* Slide-in animation matching AppSettings */
+const styles = `
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined' && !document.getElementById('email-reports-styles')) {
+  const styleEl = document.createElement('style');
+  styleEl.id = 'email-reports-styles';
+  styleEl.textContent = styles;
+  document.head.appendChild(styleEl);
 }
