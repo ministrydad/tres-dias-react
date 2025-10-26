@@ -349,7 +349,9 @@ export default function EmailReports() {
 
     if (type === 'rector') {
       reportTitle = `${genderText}'s Rector Report`;
-      const rows = apps.map(app => {
+      // Filter out withdrawn candidates (attendance = 'no')
+      const activeApps = apps.filter(app => app.attendance !== 'no');
+      const rows = activeApps.map(app => {
         const prefix = gender === 'men' ? 'm_' : 'f_';
         const name = `${app[prefix + 'pref'] || app[prefix + 'first']} ${app.c_lastname}`;
         const age = app[prefix + 'age'] || 'N/A';
@@ -362,7 +364,7 @@ export default function EmailReports() {
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; margin-bottom: 24px;">
           <tr>
             <td align="center">
-              <div ${styles.statCard} style="max-width: 280px; margin: auto;"><div ${styles.statValue}>${apps.length}</div><div ${styles.statLabel}>Total Candidates</div></div>
+              <div ${styles.statCard} style="max-width: 280px; margin: auto;"><div ${styles.statValue}>${activeApps.length}</div><div ${styles.statLabel}>Total Candidates</div></div>
             </td>
           </tr>
         </table>
@@ -386,7 +388,7 @@ export default function EmailReports() {
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; margin-bottom: 24px;">
           <tr>
             <td align="center">
-              <div ${styles.statCard} style="max-width: 280px; margin: auto;"><div ${styles.statValue}>${apps.length}</div><div ${styles.statLabel}>Total Candidates</div></div>
+              <div ${styles.statCard} style="max-width: 280px; margin: auto;"><div ${styles.statValue}>${activeApps.length}</div><div ${styles.statLabel}>Total Candidates</div></div>
             </td>
           </tr>
         </table>
