@@ -269,9 +269,14 @@ export default function EmailReports() {
       return;
     }
 
+    // Format email list for display
+    const emailList = recipients.length <= 5 
+      ? recipients.join(', ')
+      : `${recipients.slice(0, 5).join(', ')} and ${recipients.length - 5} more`;
+
     window.showConfirm({
       title: 'Send Report',
-      message: `Send ${selectedReport.charAt(0).toUpperCase() + selectedReport.slice(1)} Report to ${recipients.length} recipient(s)?`,
+      message: `Send ${selectedReport.charAt(0).toUpperCase() + selectedReport.slice(1)} Report to:\n\n${emailList}`,
       confirmText: 'Send',
       cancelText: 'Cancel',
       isDangerous: false,
@@ -282,7 +287,9 @@ export default function EmailReports() {
   };
 
   const executeSend = async () => {
-
+    const listName = `${selectedReport}_${previewGender}`;
+    const recipients = emailLists[listName];
+    
     setSending(true);
     try {
       const apps = applications.filter(app => 
@@ -290,7 +297,9 @@ export default function EmailReports() {
       );
 
       if (apps.length === 0) {
-        alert(`No ${previewGender} candidates for this report.`);
+        if (window.showMainStatus) {
+          window.showMainStatus(`No ${previewGender} candidates for this report.`, true);
+        }
         setSending(false);
         return;
       }
