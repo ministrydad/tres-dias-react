@@ -38,7 +38,7 @@ export default function EmailReports() {
     }
   }, [orgId]);
 
-const loadData = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
       // Load applications
