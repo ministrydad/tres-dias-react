@@ -685,15 +685,16 @@ export default function EmailReports() {
                   </div>
                   <div style={{ marginBottom: '16px' }}>
                     <label className="label">Current Recipients ({emailLists[selectedReport]?.length || 0})</label>
-                    <div id="recipientListContainer" style={{ marginTop: '8px' }}>
+                    <div id="recipientListContainer" style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                       {emailLists[selectedReport]?.length === 0 ? (
                         <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>No recipients added yet.</span>
                       ) : (
                         emailLists[selectedReport]?.map(email => (
-                          <span key={email} className="recipient-badge">
+                          <span key={email} className="payment-badge" style={{ background: 'rgba(0, 163, 255, 0.2)', color: 'var(--ink)' }}>
                             {email}
                             <button 
-                              className="btn-delete" 
+                              className="remove-payment-btn" 
+                              title="Remove recipient"
                               onClick={() => deleteRecipient(email)}
                             >
                               ×
