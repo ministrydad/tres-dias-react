@@ -846,6 +846,12 @@ export default function TeamList() {
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <table className="table">
+            <thead>
+              <tr>
+                <th style={{ width: '30%' }}>Role</th>
+                <th>Name</th>
+              </tr>
+            </thead>
             <tbody>
               {renderRow('Head', heads[0])}
               {renderRow('Asst Head', asstHeads[0])}
@@ -854,6 +860,11 @@ export default function TeamList() {
             </tbody>
           </table>
           <table className="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+              </tr>
+            </thead>
             <tbody>
               {renderRow('Head Spiritual Director', headSpirDirector[0], false)}
               {spirDirectors.length > 1 && renderRow('Spiritual Director', spirDirectors[1], false)}
@@ -921,11 +932,23 @@ export default function TeamList() {
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <table className="table">
+            <thead>
+              <tr>
+                <th style={{ width: '30%' }}>Role</th>
+                <th>Name</th>
+              </tr>
+            </thead>
             <tbody>
               {leftColumn.map(renderRow)}
             </tbody>
           </table>
           <table className="table">
+            <thead>
+              <tr>
+                <th style={{ width: '30%' }}>Role</th>
+                <th>Name</th>
+              </tr>
+            </thead>
             <tbody>
               {rightColumn.map(renderRow)}
             </tbody>
@@ -1001,11 +1024,21 @@ export default function TeamList() {
         {allMembers.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <table className="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                </tr>
+              </thead>
               <tbody>
                 {leftColumn.map(m => renderRow(m, m.roleLabel))}
               </tbody>
             </table>
             <table className="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                </tr>
+              </thead>
               <tbody>
                 {rightColumn.map(m => renderRow(m, m.roleLabel))}
               </tbody>
@@ -1049,8 +1082,6 @@ export default function TeamList() {
 
                 <div style={{ 
           padding: '15px 24px', 
-          borderTop: '1px solid var(--border)', 
-          borderBottom: '1px solid var(--border)', 
           display: 'flex', 
           justifyContent: 'space-between',
           alignItems: 'center',
