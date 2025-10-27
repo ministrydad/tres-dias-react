@@ -1297,7 +1297,6 @@ export default function TeamList() {
             minWidth: 0
           }}
         >
-        <div className="team-content" style={{ flexGrow: 1, padding: '20px 24px', overflowY: 'auto', position: 'relative' }}>
           <div id="teamListGrid">
             {pescadoresLoading ? (
               <div className="progress-bar-container">
@@ -1628,7 +1627,7 @@ export default function TeamList() {
             </div>
           </div>
         )}
-      </div>
+
       <style>{`
         @keyframes slideInRight {
           from {
@@ -1641,7 +1640,7 @@ export default function TeamList() {
           }
         }
       `}</style>
-
     </section>
+
   );
 }
