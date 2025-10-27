@@ -751,9 +751,9 @@ export default function TeamList() {
     
     return (
       <div className="rector-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="rector-title">RECTOR</div>
-          <div className="team-total-card" style={{ margin: 0 }}>
+        <div className="rector-title">RECTOR</div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px', marginBottom: '12px' }}>
+          <div className="team-total-card">
             <div className="team-total-title">Team Total</div>
             <div className="team-total-count">{teamRoster.length}</div>
           </div>
@@ -1242,7 +1242,13 @@ export default function TeamList() {
 
           {/* Action Buttons - Right Side */}
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-<button 
+<button className="btn btn-warning" onClick={handlePrintRoster}>
+              Print Report
+            </button>
+          <button className="btn btn-warning" onClick={handlePrintAllProfiles}>
+              Print All Profiles
+            </button>
+          <button 
               className="btn btn-primary" 
               onClick={handleUpdateDatabaseClick}
               disabled={!weekendIdentifier || teamRoster.length === 0 || isUpdating}
@@ -1256,16 +1262,10 @@ export default function TeamList() {
             >
               {isUpdating ? 'Processing...' : 'Update Database'}
             </button>
-          <button className="btn btn-warning" onClick={handlePrintRoster}>
-              Print Report
-            </button>
-          <button className="btn btn-warning" onClick={handlePrintAllProfiles}>
-              Print All Profiles
-            </button>
           <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
               Export for Team Book
             </button>
-          <button className="btn btn-info" onClick={handleOpenBadgePanel}>
+          <button className="btn btn-primary" onClick={handleOpenBadgePanel}>
               Export to Team Badges
             </button>
           </div>
