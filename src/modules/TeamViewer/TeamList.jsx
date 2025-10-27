@@ -17,6 +17,9 @@ export default function TeamList() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [testMode, setTestMode] = useState(true); // Start in test mode by default
+  const [showChangeRoleModal, setShowChangeRoleModal] = useState(false);
+  const [changingMember, setChangingMember] = useState(null); // { id, name, currentRole }
+  const [newRole, setNewRole] = useState('');
 
   const ROLE_CONFIG = {
     team: [
@@ -64,6 +67,18 @@ export default function TeamList() {
       { name: 'Reunion', key: 'Prof_Reunion' }
     ]
   };
+
+  // Leadership roles that typically have only 1 person
+  const LEADERSHIP_ROLES = [
+    'Rector', 'BUR', 'Rover',
+    'Head', 'Asst Head',
+    'Head Kitchen', 'Asst Head Kitchen',
+    'Head Prayer', 'Head Table', 'Head Chapel',
+    'Head Dorm', 'Head Palanca', 'Head Gopher',
+    'Head Storeroom', 'Head Floater Supply',
+    'Head Worship', 'Head Media',
+    'Head Spiritual Director'
+  ];
 
   const unifiedTeamGroups = [
     { title: 'Kitchen Team', head: 'Head Kitchen', assistantHead: 'Asst Head Kitchen', team: 'Kitchen' },
@@ -237,6 +252,67 @@ export default function TeamList() {
         }
       }
     });
+  };
+
+  const handleChangeRoleClick = (memberId, memberName, currentRole) => {
+    setChangingMember({ id: memberId, name: memberName, currentRole });
+    setNewRole('');
+    setShowChangeRoleModal(true);
+  };
+
+  const handleConfirmRoleChange = async () => {
+    if (!newRole || !changingMember) return;
+
+    // Check if new role already has someone assigned
+    const existingMembers = teamRoster.filter(m => m.role === newRole && m.id !== changingMember.id);
+    
+    if (existingMembers.length > 0 && LEADERSHIP_ROLES.includes(newRole)) {
+      // Show warning confirmation
+      const names = existingMembers.map(m => m.name).join(', ');
+      window.showConfirm({
+        title: '⚠️ Role Conflict Warning',
+        message: `${newRole} already has ${existingMembers.length} person(s) assigned: ${names}.\n\nMoving ${changingMember.name} to ${newRole} will result in multiple people in this role.\n\nThis is allowed, but you may want to remove the other person(s) afterwards if this role should only have 1 person.`,
+        confirmText: 'Continue Anyway',
+        cancelText: 'Cancel',
+        isDangerous: false,
+        onConfirm: async () => {
+          await executeRoleChange();
+        }
+      });
+    } else {
+      await executeRoleChange();
+    }
+  };
+
+  const executeRoleChange = async () => {
+    const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
+
+    try {
+      const { error } = await supabase
+        .from(rosterTable)
+        .update({ role: newRole })
+        .eq('pescadore_key', changingMember.id)
+        .eq('weekend_identifier', weekendIdentifier)
+        .eq('org_id', orgId);
+
+      if (error) throw error;
+
+      if (window.showMainStatus) {
+        window.showMainStatus(`${changingMember.name} moved to ${newRole}`, false);
+      }
+
+      // Reload the team roster
+      await loadTeamRoster(weekendIdentifier);
+      
+      setShowChangeRoleModal(false);
+      setChangingMember(null);
+      setNewRole('');
+    } catch (error) {
+      console.error('Error changing role:', error);
+      if (window.showMainStatus) {
+        window.showMainStatus('Failed to change role: ' + error.message, true);
+      }
+    }
   };
 
   // NEW: Update Database functionality
@@ -574,13 +650,23 @@ export default function TeamList() {
                 <div className="single-role-name">Head</div>
                 <div className="single-role-assigned">
                   <span className="unified-member-name">{person.name}</span>
-                  <button 
-                    className="remove-teammate-btn"
-                    onClick={() => handleRemoveTeammate(person.id, 'Head')}
-                    disabled={removingId === person.id}
-                  >
-                    ×
-                  </button>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <button 
+                      className="change-role-btn"
+                      onClick={() => handleChangeRoleClick(person.id, person.name, 'Head')}
+                      title="Change Role"
+                    >
+                      ✎
+                    </button>
+                    <button 
+                      className="remove-teammate-btn"
+                      onClick={() => handleRemoveTeammate(person.id, 'Head')}
+                      disabled={removingId === person.id}
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -601,13 +687,23 @@ export default function TeamList() {
                 <div className="single-role-name">Asst Head</div>
                 <div className="single-role-assigned">
                   <span className="unified-member-name">{person.name}</span>
-                  <button 
-                    className="remove-teammate-btn"
-                    onClick={() => handleRemoveTeammate(person.id, 'Asst Head')}
-                    disabled={removingId === person.id}
-                  >
-                    ×
-                  </button>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <button 
+                      className="change-role-btn"
+                      onClick={() => handleChangeRoleClick(person.id, person.name, 'Asst Head')}
+                      title="Change Role"
+                    >
+                      ✎
+                    </button>
+                    <button 
+                      className="remove-teammate-btn"
+                      onClick={() => handleRemoveTeammate(person.id, 'Asst Head')}
+                      disabled={removingId === person.id}
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -628,13 +724,23 @@ export default function TeamList() {
                 <div className="single-role-name">BUR</div>
                 <div className="single-role-assigned">
                   <span className="unified-member-name">{person.name}</span>
-                  <button 
-                    className="remove-teammate-btn"
-                    onClick={() => handleRemoveTeammate(person.id, 'BUR')}
-                    disabled={removingId === person.id}
-                  >
-                    ×
-                  </button>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <button 
+                      className="change-role-btn"
+                      onClick={() => handleChangeRoleClick(person.id, person.name, 'BUR')}
+                      title="Change Role"
+                    >
+                      ✎
+                    </button>
+                    <button 
+                      className="remove-teammate-btn"
+                      onClick={() => handleRemoveTeammate(person.id, 'BUR')}
+                      disabled={removingId === person.id}
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -656,13 +762,23 @@ export default function TeamList() {
                 <div className="single-role-name">Spiritual Director</div>
                 <div className="single-role-assigned">
                   <span className="unified-member-name">{spirDirectors[0].name}</span>
-                  <button 
-                    className="remove-teammate-btn"
-                    onClick={() => handleRemoveTeammate(spirDirectors[0].id, 'Spiritual Director')}
-                    disabled={removingId === spirDirectors[0].id}
-                  >
-                    ×
-                  </button>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <button 
+                      className="change-role-btn"
+                      onClick={() => handleChangeRoleClick(spirDirectors[0].id, spirDirectors[0].name, 'Spiritual Director')}
+                      title="Change Role"
+                    >
+                      ✎
+                    </button>
+                    <button 
+                      className="remove-teammate-btn"
+                      onClick={() => handleRemoveTeammate(spirDirectors[0].id, 'Spiritual Director')}
+                      disabled={removingId === spirDirectors[0].id}
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -681,13 +797,23 @@ export default function TeamList() {
                     {person.name}
                     <span className="member-role-label head">HEAD</span>
                   </span>
-                  <button 
-                    className="remove-teammate-btn"
-                    onClick={() => handleRemoveTeammate(person.id, 'Head Spiritual Director')}
-                    disabled={removingId === person.id}
-                  >
-                    ×
-                  </button>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <button 
+                      className="change-role-btn"
+                      onClick={() => handleChangeRoleClick(person.id, person.name, 'Head Spiritual Director')}
+                      title="Change Role"
+                    >
+                      ✎
+                    </button>
+                    <button 
+                      className="remove-teammate-btn"
+                      onClick={() => handleRemoveTeammate(person.id, 'Head Spiritual Director')}
+                      disabled={removingId === person.id}
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -709,13 +835,23 @@ export default function TeamList() {
                 <div className="single-role-name">Spiritual Director</div>
                 <div className="single-role-assigned">
                   <span className="unified-member-name">{spirDirectors[1].name}</span>
-                  <button 
-                    className="remove-teammate-btn"
-                    onClick={() => handleRemoveTeammate(spirDirectors[1].id, 'Spiritual Director')}
-                    disabled={removingId === spirDirectors[1].id}
-                  >
-                    ×
-                  </button>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <button 
+                      className="change-role-btn"
+                      onClick={() => handleChangeRoleClick(spirDirectors[1].id, spirDirectors[1].name, 'Spiritual Director')}
+                      title="Change Role"
+                    >
+                      ✎
+                    </button>
+                    <button 
+                      className="remove-teammate-btn"
+                      onClick={() => handleRemoveTeammate(spirDirectors[1].id, 'Spiritual Director')}
+                      disabled={removingId === spirDirectors[1].id}
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -761,13 +897,23 @@ export default function TeamList() {
                     <div className="single-role-name">{displayName}</div>
                     <div className="single-role-assigned">
                       <span className="unified-member-name">{person.name}</span>
-                      <button 
-                        className="remove-teammate-btn"
-                        onClick={() => handleRemoveTeammate(person.id, role)}
-                        disabled={removingId === person.id}
-                      >
-                        ×
-                      </button>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <button 
+                          className="change-role-btn"
+                          onClick={() => handleChangeRoleClick(person.id, person.name, role)}
+                          title="Change Role"
+                        >
+                          ✎
+                        </button>
+                        <button 
+                          className="remove-teammate-btn"
+                          onClick={() => handleRemoveTeammate(person.id, role)}
+                          disabled={removingId === person.id}
+                          title="Remove"
+                        >
+                          ×
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -810,13 +956,23 @@ export default function TeamList() {
                   {person.name}
                   <span className="member-role-label head">HEAD</span>
                 </span>
-                <button 
-                  className="remove-teammate-btn"
-                  onClick={() => handleRemoveTeammate(person.id, group.head)}
-                  disabled={removingId === person.id}
-                >
-                  ×
-                </button>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <button 
+                    className="change-role-btn"
+                    onClick={() => handleChangeRoleClick(person.id, person.name, group.head)}
+                    title="Change Role"
+                  >
+                    ✎
+                  </button>
+                  <button 
+                    className="remove-teammate-btn"
+                    onClick={() => handleRemoveTeammate(person.id, group.head)}
+                    disabled={removingId === person.id}
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -831,13 +987,23 @@ export default function TeamList() {
                   {person.name}
                   <span className="member-role-label asst-head">ASST HEAD</span>
                 </span>
-                <button 
-                  className="remove-teammate-btn"
-                  onClick={() => handleRemoveTeammate(person.id, group.assistantHead)}
-                  disabled={removingId === person.id}
-                >
-                  ×
-                </button>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <button 
+                    className="change-role-btn"
+                    onClick={() => handleChangeRoleClick(person.id, person.name, group.assistantHead)}
+                    title="Change Role"
+                  >
+                    ✎
+                  </button>
+                  <button 
+                    className="remove-teammate-btn"
+                    onClick={() => handleRemoveTeammate(person.id, group.assistantHead)}
+                    disabled={removingId === person.id}
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -849,13 +1015,23 @@ export default function TeamList() {
             >
               <div className="single-role-assigned">
                 <span className="unified-member-name">{person.name}</span>
-                <button 
-                  className="remove-teammate-btn"
-                  onClick={() => handleRemoveTeammate(person.id, group.team)}
-                  disabled={removingId === person.id}
-                >
-                  ×
-                </button>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <button 
+                    className="change-role-btn"
+                    onClick={() => handleChangeRoleClick(person.id, person.name, group.team)}
+                    title="Change Role"
+                  >
+                    ✎
+                  </button>
+                  <button 
+                    className="remove-teammate-btn"
+                    onClick={() => handleRemoveTeammate(person.id, group.team)}
+                    disabled={removingId === person.id}
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -989,6 +1165,177 @@ export default function TeamList() {
             </button>
           </div>
         </div>
+
+        {/* Change Role Modal */}
+        {showChangeRoleModal && changingMember && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000
+          }}>
+            <div style={{
+              backgroundColor: 'var(--panel)',
+              borderRadius: '16px',
+              border: '1px solid var(--border)',
+              width: '90%',
+              maxWidth: '500px',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
+              overflow: 'hidden'
+            }}>
+              {/* Header */}
+              <div style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid var(--border)',
+                background: 'var(--panel-header)'
+              }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--ink)' }}>
+                  Change Role
+                </h3>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: '24px' }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '4px' }}>Member:</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)' }}>{changingMember.name}</div>
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '4px' }}>Current Role:</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--accentB)' }}>{changingMember.currentRole}</div>
+                </div>
+
+                <div>
+                  <label className="label" style={{ display: 'block', marginBottom: '8px' }}>New Role:</label>
+                  <select 
+                    className="input"
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value)}
+                    style={{ width: '100%', padding: '10px', fontSize: '1rem' }}
+                  >
+                    <option value="">-- Select New Role --</option>
+                    
+                    <optgroup label="Leadership">
+                      <option value="Rector">Rector</option>
+                      <option value="BUR">BUR</option>
+                      <option value="Rover">Rover</option>
+                      <option value="Head">Head</option>
+                      <option value="Asst Head">Asst Head</option>
+                      <option value="Head Spiritual Director">Head Spiritual Director</option>
+                      <option value="Spiritual Director">Spiritual Director</option>
+                    </optgroup>
+                    
+                    <optgroup label="Kitchen Team">
+                      <option value="Head Kitchen">Head Kitchen</option>
+                      <option value="Asst Head Kitchen">Asst Head Kitchen</option>
+                      <option value="Kitchen">Kitchen</option>
+                    </optgroup>
+                    
+                    <optgroup label="Prayer Team">
+                      <option value="Head Prayer">Head Prayer</option>
+                      <option value="Prayer">Prayer</option>
+                    </optgroup>
+                    
+                    <optgroup label="Table Team">
+                      <option value="Head Table">Head Table</option>
+                      <option value="Table">Table</option>
+                    </optgroup>
+                    
+                    <optgroup label="Chapel Team">
+                      <option value="Head Chapel">Head Chapel</option>
+                      <option value="Chapel">Chapel</option>
+                    </optgroup>
+                    
+                    <optgroup label="Dorm Team">
+                      <option value="Head Dorm">Head Dorm</option>
+                      <option value="Dorm">Dorm</option>
+                    </optgroup>
+                    
+                    <optgroup label="Palanca Team">
+                      <option value="Head Palanca">Head Palanca</option>
+                      <option value="Palanca">Palanca</option>
+                    </optgroup>
+                    
+                    <optgroup label="Gopher Team">
+                      <option value="Head Gopher">Head Gopher</option>
+                      <option value="Gopher">Gopher</option>
+                    </optgroup>
+                    
+                    <optgroup label="Storeroom Team">
+                      <option value="Head Storeroom">Head Storeroom</option>
+                      <option value="Storeroom">Storeroom</option>
+                    </optgroup>
+                    
+                    <optgroup label="Floater Supply Team">
+                      <option value="Head Floater Supply">Head Floater Supply</option>
+                      <option value="Floater Supply">Floater Supply</option>
+                    </optgroup>
+                    
+                    <optgroup label="Worship Team">
+                      <option value="Head Worship">Head Worship</option>
+                      <option value="Worship">Worship</option>
+                    </optgroup>
+                    
+                    <optgroup label="Media Team">
+                      <option value="Head Media">Head Media</option>
+                      <option value="Media">Media</option>
+                    </optgroup>
+                    
+                    <optgroup label="Professor Team">
+                      <option value="Prof_Silent">Silent</option>
+                      <option value="Prof_Ideals">Ideals</option>
+                      <option value="Prof_Church">Church</option>
+                      <option value="Prof_Piety">Piety</option>
+                      <option value="Prof_Study">Study</option>
+                      <option value="Prof_Action">Action</option>
+                      <option value="Prof_Leaders">Leaders</option>
+                      <option value="Prof_Environments">Environments</option>
+                      <option value="Prof_CCIA">CCIA</option>
+                      <option value="Prof_Reunion">Reunion</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div style={{
+                padding: '16px 24px',
+                borderTop: '1px solid var(--border)',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px',
+                background: 'var(--panel-header)'
+              }}>
+                <button 
+                  className="btn"
+                  onClick={() => {
+                    setShowChangeRoleModal(false);
+                    setChangingMember(null);
+                    setNewRole('');
+                  }}
+                  style={{ minWidth: '100px' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn btn-primary"
+                  onClick={handleConfirmRoleChange}
+                  disabled={!newRole}
+                  style={{ minWidth: '100px' }}
+                >
+                  Change Role
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Update Database Confirmation Modal */}
         {showUpdateModal && (
