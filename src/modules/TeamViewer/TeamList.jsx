@@ -1214,10 +1214,18 @@ export default function TeamList() {
           )}
         </div>
 
-        <div className="team-list-controls">
-          <div>
-            <label className="label" style={{ display: 'block', marginBottom: '6px' }}>Select Team Roster</label>
-            <div className="toggle" id="teamListGenderToggle" style={{ maxWidth: '250px' }}>
+                <div style={{ 
+          padding: '15px 24px', 
+          borderTop: '1px solid var(--border)', 
+          borderBottom: '1px solid var(--border)', 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          flexWrap: 'wrap'
+        }}>
+          {/* Gender Toggle - Left Side */}
+          <div className="toggle" id="teamListGenderToggle" style={{ maxWidth: '250px' }}>
               <div 
                 className={`opt ${currentGender === 'men' ? 'active' : ''}`}
                 onClick={() => handleGenderToggle('men')}
@@ -1231,31 +1239,10 @@ export default function TeamList() {
                 Women
               </div>
             </div>
-          </div>
-        </div>
-          
-      </div>
-
-        <div style={{ padding: '15px 24px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          {/* Gender Toggle - Left Side */}
-          <div className="toggle" id="teamListGenderToggle" style={{ maxWidth: '250px' }}>
-            <div 
-              className={`opt ${currentGender === 'men' ? 'active' : ''}`}
-              onClick={() => handleGenderToggle('men')}
-            >
-              Men
-            </div>
-            <div 
-              className={`opt ${currentGender === 'women' ? 'active' : ''}`}
-              onClick={() => handleGenderToggle('women')}
-            >
-              Women
-            </div>
-          </div>
 
           {/* Action Buttons - Right Side */}
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button 
+<button 
               className="btn btn-primary" 
               onClick={handleUpdateDatabaseClick}
               disabled={!weekendIdentifier || teamRoster.length === 0 || isUpdating}
@@ -1282,8 +1269,11 @@ export default function TeamList() {
               Export to Team Badges
             </button>
           </div>
-          
         </div>
+          
+      </div>
+
+        
 
       <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
         <div 
