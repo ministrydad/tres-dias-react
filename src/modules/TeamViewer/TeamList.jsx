@@ -1740,7 +1740,9 @@ export default function TeamList() {
         }
         
         #badge-export-panel label span {
-          font-size: 0.85rem;
+          font-size: 13px;
+          font-weight: 400;
+          color: #333;
         }
         
         #badge-export-panel h3 {
