@@ -856,18 +856,18 @@ export default function TeamList() {
               {renderRow('Head', heads[0])}
               {renderRow('Asst Head', asstHeads[0])}
               {renderRow('BUR', burs[0])}
-              {renderRow('Spiritual Director', spirDirectors[0])}
             </tbody>
           </table>
           <table className="table">
             <thead>
               <tr>
+                <th style={{ width: '40%' }}>Role</th>
                 <th>Name</th>
               </tr>
             </thead>
             <tbody>
-              {renderRow('Head Spiritual Director', headSpirDirector[0], false)}
-              {spirDirectors.length > 1 && renderRow('Spiritual Director', spirDirectors[1], false)}
+              {renderRow('Head Spiritual Director', headSpirDirector[0])}
+              {spirDirectors.map((sd, idx) => renderRow('Spiritual Director', sd))}
             </tbody>
           </table>
         </div>
@@ -1071,7 +1071,7 @@ export default function TeamList() {
   return (
     <section id="team-list-app" className="app-panel" style={{ display: 'block', padding: 0 }}>
       <div className="card pad" style={{ marginBottom: '12px' }}>
-        <div className="section-title" id="teamListTitle" style={{ margin: '24px 24px 0', paddingBottom: '20px' }}>
+        <div className="section-title" id="teamListTitle">
           <span>{genderLabel}'s Team List</span>
           {displayId && (
             <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 400, marginLeft: '15px' }}>
@@ -1080,8 +1080,8 @@ export default function TeamList() {
           )}
         </div>
 
-                <div style={{ 
-          padding: '15px 24px', 
+        <div style={{ 
+          padding: '0 0 15px 0', 
           display: 'flex', 
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -1586,6 +1586,15 @@ export default function TeamList() {
         /* Two-column table layout */
         #team-list-app .table {
           margin-bottom: 0;
+        }
+        
+        #team-list-app .table td,
+        #team-list-app .table th {
+          height: 44px;
+        }
+        
+        #team-list-app .table tbody tr {
+          height: 44px;
         }
         
         #team-list-app .table td {
