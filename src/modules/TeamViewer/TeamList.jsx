@@ -1236,7 +1236,25 @@ export default function TeamList() {
           
       </div>
 
-        <div style={{ padding: '15px 24px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div style={{ padding: '15px 24px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          {/* Gender Toggle - Left Side */}
+          <div className="toggle" id="teamListGenderToggle" style={{ maxWidth: '250px' }}>
+            <div 
+              className={`opt ${currentGender === 'men' ? 'active' : ''}`}
+              onClick={() => handleGenderToggle('men')}
+            >
+              Men
+            </div>
+            <div 
+              className={`opt ${currentGender === 'women' ? 'active' : ''}`}
+              onClick={() => handleGenderToggle('women')}
+            >
+              Women
+            </div>
+          </div>
+
+          {/* Action Buttons - Right Side */}
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button 
               className="btn btn-primary" 
               onClick={handleUpdateDatabaseClick}
@@ -1249,7 +1267,7 @@ export default function TeamList() {
               }}
               title='Update database with service records'
             >
-              {isUpdating ? 'Processing...' : '⚡ Update Database'}
+              {isUpdating ? 'Processing...' : 'Update Database'}
             </button>
           <button className="btn btn-warning" onClick={handlePrintRoster}>
               Print Report
@@ -1263,9 +1281,8 @@ export default function TeamList() {
           <button className="btn btn-info" onClick={handleOpenBadgePanel}>
               Export to Team Badges
             </button>
-          <button className="btn btn-danger" onClick={() => console.log('Clear All')}>
-              Clear All
-            </button>
+          </div>
+          
         </div>
 
       <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
