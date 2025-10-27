@@ -268,7 +268,7 @@ body.light-theme .nav-item a:hover {
 }
 
 .nav-item.has-submenu > a::after {
-    content: '›';
+    content: 'â€º';
     font-size: 1.5rem;
     transition: transform 0.2s;
 }
@@ -1146,8 +1146,8 @@ body.light-theme .toggle .opt.active {
     color: #333;
     margin: 0;
     padding: 0;
-    height: 100vh;  /* ← ADD THIS */
-    overflow: hidden;  /* ← ADD THIS */
+    height: 100vh;  /* â† ADD THIS */
+    overflow: hidden;  /* â† ADD THIS */
 }
 
 #team-viewer-app .container {
@@ -1176,7 +1176,7 @@ body.light-theme .toggle .opt.active {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    height: calc(100vh - 120px); /* ← Changed from 48px to 120px */
+    height: calc(100vh - 120px); /* â† Changed from 48px to 120px */
     overflow: hidden;
 }
 
@@ -1190,7 +1190,7 @@ body.light-theme .toggle .opt.active {
 #team-viewer-app .directory-container > .card:last-child {
     flex: 1;
     min-height: 0;
-    max-height: calc(100vh - 300px); /* ← ADD THIS - adjust the 300px value */
+    max-height: calc(100vh - 300px); /* â† ADD THIS - adjust the 300px value */
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1380,7 +1380,7 @@ body.light-theme .toggle .opt.active {
 }
 
 #team-viewer-app .dropdown-btn::after {
-    content: '▼';
+    content: 'â–¼';
     font-size: 10px;
     margin-left: 8px;
 }
@@ -1505,12 +1505,12 @@ body.light-theme .toggle .opt.active {
 #team-viewer-app .names-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    grid-auto-flow: column; /* ← Fill column-by-column */
+    grid-auto-flow: column; /* â† Fill column-by-column */
     gap: 6px;
     padding: 6px;
     overflow-y: auto;
     min-height: 0;
-    align-content: start; /* ← Prevent stretching */
+    align-content: start; /* â† Prevent stretching */
 }
 
 #team-viewer-app .name-box {
@@ -1580,8 +1580,8 @@ body.light-theme .toggle .opt.active {
      display: block;
     padding-bottom: 40px;
     min-height: calc(100vh - 48px);
-    overflow-y: auto; /* ← Add this */
-    max-height: calc(100vh - 48px); /* ← Add this */
+    overflow-y: auto; /* â† Add this */
+    max-height: calc(100vh - 48px); /* â† Add this */
 }
 
 #team-viewer-app .navigation {
@@ -2374,26 +2374,34 @@ body.light-theme #team-list-app .unified-team-section {
     flex-grow: 1;
 }
 
+#team-list-app .change-role-btn,
 #team-list-app .remove-teammate-btn {
-    background-color: #dc3545;
-    color: white;
-    border: 1px solid #dc3545;
-    border-radius: 50%;
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    width: 22px;
-    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
     transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+#team-list-app .change-role-btn:hover {
+    background: var(--accentB);
+    color: white;
+    transform: scale(1.1);
 }
 
 #team-list-app .remove-teammate-btn:hover {
-    transform: scale(1.1) translateY(-2px);
-    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+    background: var(--accentC);
+    color: white;
+    transform: scale(1.1);
 }
 
 /* Team List Remove Animation */
@@ -3863,4 +3871,66 @@ body.light-theme .date-picker-dropdown {
         display: none !important;
     }
 
+}
+/* Slide-in animation for detail panels */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+
+.change-role-btn:hover {
+  background: var(--accentA);
+  transform: scale(1.1);
+}
+
+.change-role-btn:active {
+  transform: scale(0.95);
+}
+
+/* Member Action Buttons - Unified Design */
+.member-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.change-role-btn,
+.remove-teammate-btn {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.change-role-btn:hover {
+  background: var(--accentB);
+  color: white;
+  transform: scale(1.1);
+}
+
+.remove-teammate-btn:hover {
+  background: var(--accentC);
+  color: white;
+  transform: scale(1.1);
+}
+
+.change-role-btn:active,
+.remove-teammate-btn:active {
+  transform: scale(0.95);
 }
