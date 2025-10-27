@@ -750,34 +750,42 @@ export default function TeamList() {
     const rector = teamRoster.find(m => m.role === 'Rector');
     
     return (
-      <div className="rector-section">
-        <div className="rector-title">RECTOR</div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px', marginBottom: '12px' }}>
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>Rector</h3>
           <div className="team-total-card">
             <div className="team-total-title">Team Total</div>
             <div className="team-total-count">{teamRoster.length}</div>
           </div>
         </div>
-        <div id="rectorContainer">
-          {rector ? (
-            <div 
-              className={`rector-badge ${removingId === rector.id ? 'removing' : ''}`}
-              onClick={() => handleRemoveTeammate(rector.id, 'Rector')}
-            >
-              <span className="rector-name">{rector.name}</span>
-              <span className="remove-rector-btn">Remove</span>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '14px', padding: '10px' }}>
-              No Rector Assigned
-            </div>
-          )}
-        </div>
+        <table className="table">
+          <tbody>
+            <tr>
+              <td style={{ fontWeight: 600 }}>
+                {rector ? (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>{rector.name}</span>
+                    <button 
+                      className="btn btn-small btn-danger"
+                      onClick={() => handleRemoveTeammate(rector.id, 'Rector')}
+                      disabled={removingId === rector.id}
+                      style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>No Rector Assigned</span>
+                )}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     );
   };
 
-  const renderLeadershipSection = () => {
+    const renderLeadershipSection = () => {
     const headSpirDirector = teamRoster.filter(m => m.role === 'Head Spiritual Director');
     const spirDirectors = teamRoster.filter(m => m.role === 'Spiritual Director');
     const heads = teamRoster.filter(m => m.role === 'Head');
@@ -786,243 +794,77 @@ export default function TeamList() {
 
     const totalCount = headSpirDirector.length + spirDirectors.length + heads.length + asstHeads.length + burs.length;
 
+    const renderRow = (role, person, showLabel = true) => (
+      <tr key={person ? person.id : `empty-${role}`} className={removingId === person?.id ? 'removing' : ''}>
+        {showLabel && <td style={{ fontWeight: 500, width: '30%' }}>{role}</td>}
+        <td style={{ fontWeight: 600 }}>
+          {person ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>
+                {person.name}
+                {role === 'Head Spiritual Director' && (
+                  <span style={{ 
+                    marginLeft: '8px', 
+                    padding: '2px 8px', 
+                    borderRadius: '12px', 
+                    fontSize: '11px', 
+                    fontWeight: 'bold',
+                    backgroundColor: '#28a745',
+                    color: 'white'
+                  }}>HEAD</span>
+                )}
+              </span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button 
+                  className="btn btn-small"
+                  onClick={() => handleChangeRoleClick(person.id, person.name, person.role)}
+                  style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                >
+                  Change
+                </button>
+                <button 
+                  className="btn btn-small btn-danger"
+                  onClick={() => handleRemoveTeammate(person.id, person.role)}
+                  disabled={removingId === person.id}
+                  style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>Not Assigned</span>
+          )}
+        </td>
+      </tr>
+    );
+
     return (
-      <div className="unified-team-section">
-        <div className="unified-team-header">
-          <span>Leadership Team</span>
-          {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
-        </div>
-        <div className="unified-team-members two-column">
-          {/* Column 1: Head, Asst Head, BUR, First Spiritual Director */}
-          <div>
-            {heads.map(person => (
-              <div 
-                key={person.id} 
-                className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-              >
-                <div className="single-role-name">Head</div>
-                <div className="single-role-assigned">
-                  <span className="unified-member-name">{person.name}</span>
-                  <div className="member-actions">
-                    <button 
-                      className="change-role-btn"
-                      onClick={() => handleChangeRoleClick(person.id, person.name, 'Head')}
-                      title="Change Role"
-                    >
-                      ↔
-                    </button>
-                    <button 
-                      className="remove-teammate-btn"
-                      onClick={() => handleRemoveTeammate(person.id, 'Head')}
-                      disabled={removingId === person.id}
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {heads.length === 0 && (
-              <div className="unified-member-item">
-                <div className="single-role-name">Head</div>
-                <div className="single-role-assigned">
-                  <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
-                </div>
-              </div>
-            )}
-
-            {asstHeads.map(person => (
-              <div 
-                key={person.id} 
-                className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-              >
-                <div className="single-role-name">Asst Head</div>
-                <div className="single-role-assigned">
-                  <span className="unified-member-name">{person.name}</span>
-                  <div className="member-actions">
-                    <button 
-                      className="change-role-btn"
-                      onClick={() => handleChangeRoleClick(person.id, person.name, 'Asst Head')}
-                      title="Change Role"
-                    >
-                      ↔
-                    </button>
-                    <button 
-                      className="remove-teammate-btn"
-                      onClick={() => handleRemoveTeammate(person.id, 'Asst Head')}
-                      disabled={removingId === person.id}
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {asstHeads.length === 0 && (
-              <div className="unified-member-item">
-                <div className="single-role-name">Asst Head</div>
-                <div className="single-role-assigned">
-                  <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
-                </div>
-              </div>
-            )}
-
-            {burs.map(person => (
-              <div 
-                key={person.id} 
-                className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-              >
-                <div className="single-role-name">BUR</div>
-                <div className="single-role-assigned">
-                  <span className="unified-member-name">{person.name}</span>
-                  <div className="member-actions">
-                    <button 
-                      className="change-role-btn"
-                      onClick={() => handleChangeRoleClick(person.id, person.name, 'BUR')}
-                      title="Change Role"
-                    >
-                      ↔
-                    </button>
-                    <button 
-                      className="remove-teammate-btn"
-                      onClick={() => handleRemoveTeammate(person.id, 'BUR')}
-                      disabled={removingId === person.id}
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {burs.length === 0 && (
-              <div className="unified-member-item">
-                <div className="single-role-name">BUR</div>
-                <div className="single-role-assigned">
-                  <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
-                </div>
-              </div>
-            )}
-
-            {/* First Spiritual Director (non-head) in column 1 */}
-            {spirDirectors.length > 0 && (
-              <div 
-                key={spirDirectors[0].id} 
-                className={`unified-member-item ${removingId === spirDirectors[0].id ? 'removing' : ''}`}
-              >
-                <div className="single-role-name">Spiritual Director</div>
-                <div className="single-role-assigned">
-                  <span className="unified-member-name">{spirDirectors[0].name}</span>
-                  <div className="member-actions">
-                    <button 
-                      className="change-role-btn"
-                      onClick={() => handleChangeRoleClick(spirDirectors[0].id, spirDirectors[0].name, 'Spiritual Director')}
-                      title="Change Role"
-                    >
-                      ↔
-                    </button>
-                    <button 
-                      className="remove-teammate-btn"
-                      onClick={() => handleRemoveTeammate(spirDirectors[0].id, 'Spiritual Director')}
-                      disabled={removingId === spirDirectors[0].id}
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Column 2: Head Spiritual Director + Second Spiritual Director */}
-          <div>
-            {/* Head Spiritual Director with HEAD pill */}
-            {headSpirDirector.map(person => (
-              <div 
-                key={person.id} 
-                className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-              >
-                <div className="single-role-assigned">
-                  <span className="unified-member-name">
-                    {person.name}
-                    <span className="member-role-label head">HEAD</span>
-                  </span>
-                  <div className="member-actions">
-                    <button 
-                      className="change-role-btn"
-                      onClick={() => handleChangeRoleClick(person.id, person.name, 'Head Spiritual Director')}
-                      title="Change Role"
-                    >
-                      ↔
-                    </button>
-                    <button 
-                      className="remove-teammate-btn"
-                      onClick={() => handleRemoveTeammate(person.id, 'Head Spiritual Director')}
-                      disabled={removingId === person.id}
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {headSpirDirector.length === 0 && (
-              <div className="unified-member-item">
-                <div className="single-role-name">Spiritual Director</div>
-                <div className="single-role-assigned">
-                  <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
-                </div>
-              </div>
-            )}
-
-            {/* Second Spiritual Director (non-head) in column 2 */}
-            {spirDirectors.length > 1 && (
-              <div 
-                key={spirDirectors[1].id} 
-                className={`unified-member-item ${removingId === spirDirectors[1].id ? 'removing' : ''}`}
-              >
-                <div className="single-role-name">Spiritual Director</div>
-                <div className="single-role-assigned">
-                  <span className="unified-member-name">{spirDirectors[1].name}</span>
-                  <div className="member-actions">
-                    <button 
-                      className="change-role-btn"
-                      onClick={() => handleChangeRoleClick(spirDirectors[1].id, spirDirectors[1].name, 'Spiritual Director')}
-                      title="Change Role"
-                    >
-                      ↔
-                    </button>
-                    <button 
-                      className="remove-teammate-btn"
-                      onClick={() => handleRemoveTeammate(spirDirectors[1].id, 'Spiritual Director')}
-                      disabled={removingId === spirDirectors[1].id}
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-            {spirDirectors.length < 2 && (
-              <div className="unified-member-item">
-                <div className="single-role-name">Spiritual Director</div>
-                <div className="single-role-assigned">
-                  <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
-                </div>
-              </div>
-            )}
-          </div>
+      <div style={{ marginBottom: '20px' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px' }}>
+          Leadership Team {totalCount > 0 && <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 400 }}>({totalCount})</span>}
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <table className="table">
+            <tbody>
+              {renderRow('Head', heads[0])}
+              {renderRow('Asst Head', asstHeads[0])}
+              {renderRow('BUR', burs[0])}
+              {renderRow('Spiritual Director', spirDirectors[0])}
+            </tbody>
+          </table>
+          <table className="table">
+            <tbody>
+              {renderRow('Head Spiritual Director', headSpirDirector[0], false)}
+              {spirDirectors.length > 1 && renderRow('Spiritual Director', spirDirectors[1], false)}
+            </tbody>
+          </table>
         </div>
       </div>
     );
   };
 
-  const renderProfessorSection = () => {
+    const renderProfessorSection = () => {
     const professorRoles = ROLE_CONFIG.professor.map(r => r.key);
     const professors = professorRoles.map(role => ({
       role,
@@ -1032,163 +874,154 @@ export default function TeamList() {
 
     const totalCount = professors.reduce((sum, p) => sum + p.members.length, 0);
 
-    return (
-      <div className="unified-team-section">
-        <div className="unified-team-header">
-          <span>Professor Team</span>
-          {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
-        </div>
-        <div className="unified-team-members two-column">
-          {professors.map(({ role, displayName, members }) => (
-            <div key={role}>
-              {members.length > 0 ? (
-                members.map(person => (
-                  <div 
-                    key={person.id} 
-                    className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
+    const renderRow = (prof) => {
+      const person = prof.members[0];
+      return (
+        <tr key={prof.role} className={removingId === person?.id ? 'removing' : ''}>
+          <td style={{ fontWeight: 500, width: '30%' }}>{prof.displayName}</td>
+          <td style={{ fontWeight: 600 }}>
+            {person ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{person.name}</span>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button 
+                    className="btn btn-small"
+                    onClick={() => handleChangeRoleClick(person.id, person.name, prof.role)}
+                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
                   >
-                    <div className="single-role-name">{displayName}</div>
-                    <div className="single-role-assigned">
-                      <span className="unified-member-name">{person.name}</span>
-                      <div className="member-actions">
-                        <button 
-                          className="change-role-btn"
-                          onClick={() => handleChangeRoleClick(person.id, person.name, role)}
-                          title="Change Role"
-                        >
-                          ↔
-                        </button>
-                        <button 
-                          className="remove-teammate-btn"
-                          onClick={() => handleRemoveTeammate(person.id, role)}
-                          disabled={removingId === person.id}
-                          title="Remove"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="unified-member-item">
-                  <div className="single-role-name">{displayName}</div>
-                  <div className="single-role-assigned">
-                    <span style={{ color: 'var(--muted)', fontSize: '13px' }}>Not Assigned</span>
-                  </div>
+                    Change
+                  </button>
+                  <button 
+                    className="btn btn-small btn-danger"
+                    onClick={() => handleRemoveTeammate(person.id, prof.role)}
+                    disabled={removingId === person.id}
+                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                  >
+                    Remove
+                  </button>
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            ) : (
+              <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>Not Assigned</span>
+            )}
+          </td>
+        </tr>
+      );
+    };
+
+    // Split professors into two columns
+    const midpoint = Math.ceil(professors.length / 2);
+    const leftColumn = professors.slice(0, midpoint);
+    const rightColumn = professors.slice(midpoint);
+
+    return (
+      <div style={{ marginBottom: '20px' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px' }}>
+          Professor Team {totalCount > 0 && <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 400 }}>({totalCount})</span>}
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <table className="table">
+            <tbody>
+              {leftColumn.map(renderRow)}
+            </tbody>
+          </table>
+          <table className="table">
+            <tbody>
+              {rightColumn.map(renderRow)}
+            </tbody>
+          </table>
         </div>
       </div>
     );
   };
 
-  const renderUnifiedTeamSection = (group) => {
+    const renderUnifiedTeamSection = (group) => {
     const headMembers = teamRoster.filter(m => m.role === group.head);
     const assistantHeadMembers = group.assistantHead ? teamRoster.filter(m => m.role === group.assistantHead) : [];
     const teamMembers = teamRoster.filter(m => m.role === group.team);
 
     const totalCount = headMembers.length + assistantHeadMembers.length + teamMembers.length;
 
+    const renderRow = (person, roleLabel) => (
+      <tr key={person.id} className={removingId === person.id ? 'removing' : ''}>
+        <td style={{ fontWeight: 600 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>
+              {person.name}
+              {roleLabel && (
+                <span style={{ 
+                  marginLeft: '8px', 
+                  padding: '2px 8px', 
+                  borderRadius: '12px', 
+                  fontSize: '11px', 
+                  fontWeight: 'bold',
+                  backgroundColor: roleLabel === 'HEAD' ? '#28a745' : '#ffc107',
+                  color: roleLabel === 'HEAD' ? 'white' : '#333'
+                }}>{roleLabel}</span>
+              )}
+            </span>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button 
+                className="btn btn-small"
+                onClick={() => handleChangeRoleClick(person.id, person.name, person.role)}
+                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+              >
+                Change
+              </button>
+              <button 
+                className="btn btn-small btn-danger"
+                onClick={() => handleRemoveTeammate(person.id, person.role)}
+                disabled={removingId === person.id}
+                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
+
+    // Combine all members for two-column layout
+    const allMembers = [
+      ...headMembers.map(m => ({ ...m, roleLabel: 'HEAD' })),
+      ...assistantHeadMembers.map(m => ({ ...m, roleLabel: 'ASST HEAD' })),
+      ...teamMembers.map(m => ({ ...m, roleLabel: null }))
+    ];
+
+    const midpoint = Math.ceil(allMembers.length / 2);
+    const leftColumn = allMembers.slice(0, midpoint);
+    const rightColumn = allMembers.slice(midpoint);
+
     return (
-      <div key={group.title} className="unified-team-section">
-        <div className="unified-team-header">
-          <span>{group.title}</span>
-          {totalCount > 0 && <span className="team-header-count-badge">{totalCount}</span>}
-        </div>
-        <div className="unified-team-members two-column">
-          {headMembers.map(person => (
-            <div 
-              key={person.id} 
-              className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-            >
-              <div className="single-role-assigned">
-                <span className="unified-member-name">
-                  {person.name}
-                  <span className="member-role-label head">HEAD</span>
-                </span>
-                <div className="member-actions">
-                  <button 
-                    className="change-role-btn"
-                    onClick={() => handleChangeRoleClick(person.id, person.name, group.head)}
-                    title="Change Role"
-                  >
-                    ↔
-                  </button>
-                  <button 
-                    className="remove-teammate-btn"
-                    onClick={() => handleRemoveTeammate(person.id, group.head)}
-                    disabled={removingId === person.id}
-                    title="Remove"
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {assistantHeadMembers.map(person => (
-            <div 
-              key={person.id} 
-              className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-            >
-              <div className="single-role-assigned">
-                <span className="unified-member-name">
-                  {person.name}
-                  <span className="member-role-label asst-head">ASST HEAD</span>
-                </span>
-                <div className="member-actions">
-                  <button 
-                    className="change-role-btn"
-                    onClick={() => handleChangeRoleClick(person.id, person.name, group.assistantHead)}
-                    title="Change Role"
-                  >
-                    ↔
-                  </button>
-                  <button 
-                    className="remove-teammate-btn"
-                    onClick={() => handleRemoveTeammate(person.id, group.assistantHead)}
-                    disabled={removingId === person.id}
-                    title="Remove"
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {teamMembers.map(person => (
-            <div 
-              key={person.id} 
-              className={`unified-member-item ${removingId === person.id ? 'removing' : ''}`}
-            >
-              <div className="single-role-assigned">
-                <span className="unified-member-name">{person.name}</span>
-                <div className="member-actions">
-                  <button 
-                    className="change-role-btn"
-                    onClick={() => handleChangeRoleClick(person.id, person.name, group.team)}
-                    title="Change Role"
-                  >
-                    ↔
-                  </button>
-                  <button 
-                    className="remove-teammate-btn"
-                    onClick={() => handleRemoveTeammate(person.id, group.team)}
-                    disabled={removingId === person.id}
-                    title="Remove"
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div key={group.title} style={{ marginBottom: '20px' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px' }}>
+          {group.title} {totalCount > 0 && <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 400 }}>({totalCount})</span>}
+        </h3>
+        {allMembers.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <table className="table">
+              <tbody>
+                {leftColumn.map(m => renderRow(m, m.roleLabel))}
+              </tbody>
+            </table>
+            <table className="table">
+              <tbody>
+                {rightColumn.map(m => renderRow(m, m.roleLabel))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <table className="table">
+            <tbody>
+              <tr>
+                <td style={{ color: 'var(--muted)', fontStyle: 'italic', textAlign: 'center' }}>
+                  No team members assigned
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        )}
       </div>
     );
   };
@@ -1718,7 +1551,27 @@ export default function TeamList() {
             transform: translateX(0);
           }
         }
-      
+        
+        /* Two-column table layout */
+        #team-list-app .table {
+          margin-bottom: 0;
+        }
+        
+        #team-list-app .table td {
+          font-size: 0.85rem;
+        }
+        
+        /* Remove animation for table rows */
+        #team-list-app tr.removing {
+          animation: fadeOut 0.3s ease-in-out forwards;
+        }
+        
+        @keyframes fadeOut {
+          to {
+            opacity: 0;
+            transform: translateX(20px);
+          }
+        }
         
         /* Badge Export Panel - Compact styling to match team list */
         #badge-export-panel .field {
@@ -1747,8 +1600,7 @@ export default function TeamList() {
         
         #badge-export-panel h3 {
           font-size: 1rem !important;
-        }`}</style>
-    </section>
+        }`}</style>    </section>
 
   );
 }
