@@ -1307,6 +1307,7 @@ export default function TeamList() {
 
         {showBadgePanel && (
           <div 
+            id="badge-export-panel"
             className="card pad"
             style={{
               width: '30%',
@@ -1315,7 +1316,14 @@ export default function TeamList() {
               overflowY: 'auto'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '2px solid var(--accentB)' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '20px',
+              paddingBottom: '16px',
+              borderBottom: '2px solid var(--accentB)'
+            }}>
               <h3 style={{ margin: 0, color: 'var(--accentB)', fontSize: '1.1rem' }}>Export Badge CSV</h3>
               <button className="btn btn-small" onClick={handleCloseBadgePanel} style={{ padding: '4px 12px', fontSize: '0.9rem' }}>Close ✕</button>
             </div>
@@ -1710,7 +1718,34 @@ export default function TeamList() {
             transform: translateX(0);
           }
         }
-      `}</style>
+      
+        
+        /* Badge Export Panel - Compact styling to match team list */
+        #badge-export-panel .field {
+          margin-bottom: 14px;
+        }
+        
+        #badge-export-panel .label {
+          font-size: 0.8rem;
+          margin-bottom: 4px;
+        }
+        
+        #badge-export-panel .field > div {
+          font-size: 0.85rem;
+        }
+        
+        #badge-export-panel input.input {
+          font-size: 0.85rem;
+          padding: 8px 10px;
+        }
+        
+        #badge-export-panel label span {
+          font-size: 0.85rem;
+        }
+        
+        #badge-export-panel h3 {
+          font-size: 1rem !important;
+        }`}</style>
     </section>
 
   );
