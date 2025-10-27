@@ -1288,7 +1288,7 @@ export default function TeamList() {
             </button>
         </div>
 
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'stretch' }}>
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
         <div 
           className="card pad" 
           style={{ 
@@ -1324,7 +1324,6 @@ export default function TeamList() {
             className="card pad"
             style={{
               width: '30%',
-              minHeight: 'calc(100vh - 300px)',
               animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
               maxHeight: 'calc(100vh - 200px)',
               overflowY: 'auto'
