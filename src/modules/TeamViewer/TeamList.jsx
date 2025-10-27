@@ -1198,7 +1198,7 @@ export default function TeamList() {
 
   return (
     <section id="team-list-app" className="app-panel" style={{ display: 'block', padding: 0 }}>
-      <div className="card">
+      <div className="card pad" style={{ marginBottom: '12px' }}>
         <div className="section-title" id="teamListTitle" style={{ margin: '24px 24px 0', paddingBottom: '20px' }}>
           <span>{genderLabel}'s Team List</span>
           {displayId && (
@@ -1254,6 +1254,17 @@ export default function TeamList() {
           </div>
         </div>
 
+      </div>
+
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+        <div 
+          className="card pad" 
+          style={{ 
+            width: showBadgePanel ? '45%' : '100%',
+            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            minWidth: 0
+          }}
+        >
         <div className="team-content" style={{ flexGrow: 1, padding: '20px 24px', overflowY: 'auto', position: 'relative' }}>
           <div id="teamListGrid">
             {pescadoresLoading ? (
@@ -1313,6 +1324,53 @@ export default function TeamList() {
           </div>
         </div>
 
+        {showBadgePanel && (
+          <div 
+            className="card pad"
+            style={{
+              width: '53%',
+              animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              maxHeight: 'calc(100vh - 200px)',
+              overflowY: 'auto'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '2px solid var(--accentB)' }}>
+              <h3 style={{ margin: 0, color: 'var(--accentB)', fontSize: '1.1rem' }}>Export Badge CSV</h3>
+              <button className="btn btn-small" onClick={handleCloseBadgePanel} style={{ padding: '4px 12px', fontSize: '0.9rem' }}>Close ✕</button>
+            </div>
+
+            <div className="field"><label className="label">Weekend</label><div style={{ fontWeight: 600 }}>{weekendIdentifier}</div></div>
+            <div className="field"><label className="label">Community</label><div style={{ fontWeight: 600 }}>{badgeCommunity}</div></div>
+
+            <div className="field">
+              <label className="label">Export Type</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}><input type="radio" name="exportType" value="team" checked={badgeExportType === 'team'} onChange={(e) => setBadgeExportType(e.target.value)} style={{ marginRight: '8px' }} /><span>Team Only ({teamRoster.length})</span></label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}><input type="radio" name="exportType" value="candidates" checked={badgeExportType === 'candidates'} onChange={(e) => setBadgeExportType(e.target.value)} style={{ marginRight: '8px' }} /><span>Candidates Only ({candidates.length})</span></label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}><input type="radio" name="exportType" value="both" checked={badgeExportType === 'both'} onChange={(e) => setBadgeExportType(e.target.value)} style={{ marginRight: '8px' }} /><span>Team + Candidates ({teamRoster.length + candidates.length})</span></label>
+              </div>
+            </div>
+
+            <div className="field"><label className="label">Scripture Verse</label><input type="text" className="input" placeholder="e.g., John 3:16" value={badgeScripture} onChange={(e) => setBadgeScripture(e.target.value)} /></div>
+            <div className="field"><label className="label">Weekend Theme</label><input type="text" className="input" placeholder="e.g., Stand Firm" value={badgeTheme} onChange={(e) => setBadgeTheme(e.target.value)} /></div>
+
+            <div className="field">
+              <label className="label">Professor Positions</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}><input type="radio" name="profPosition" value="show" checked={badgeProfPosition === 'show'} onChange={(e) => setBadgeProfPosition(e.target.value)} style={{ marginRight: '8px' }} /><span>Show Position (Silent, Ideals, etc.)</span></label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}><input type="radio" name="profPosition" value="blank" checked={badgeProfPosition === 'blank'} onChange={(e) => setBadgeProfPosition(e.target.value)} style={{ marginRight: '8px' }} /><span>Leave Blank</span></label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}><input type="radio" name="profPosition" value="table-leader" checked={badgeProfPosition === 'table-leader'} onChange={(e) => setBadgeProfPosition(e.target.value)} style={{ marginRight: '8px' }} /><span>Show "Table Leader"</span></label>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+              <button className="btn" onClick={handleCloseBadgePanel}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleGenerateBadgeCSV}>Generate CSV</button>
+            </div>
+          </div>
+        )}
+
+      </div>
         {/* Change Role Modal */}
         {showChangeRoleModal && changingMember && (
           <div style={{
