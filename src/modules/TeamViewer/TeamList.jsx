@@ -20,6 +20,13 @@ export default function TeamList() {
   const [showChangeRoleModal, setShowChangeRoleModal] = useState(false);
   const [changingMember, setChangingMember] = useState(null); // { id, name, currentRole }
   const [newRole, setNewRole] = useState('');
+  const [showBadgePanel, setShowBadgePanel] = useState(false);
+  const [badgeExportType, setBadgeExportType] = useState('team');
+  const [badgeCommunity, setBadgeCommunity] = useState('');
+  const [badgeScripture, setBadgeScripture] = useState('');
+  const [badgeTheme, setBadgeTheme] = useState('');
+  const [badgeProfPosition, setBadgeProfPosition] = useState('blank');
+  const [candidates, setCandidates] = useState([]);
 
   const ROLE_CONFIG = {
     team: [
@@ -599,6 +606,146 @@ export default function TeamList() {
       printWindow.print();
     }
   };
+
+  const handleOpenBadgePanel = async () => {
+    setShowBadgePanel(true);
+    
+    // Load organization name and candidates
+    try {
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('name')
+        .eq('id', orgId)
+        .single();
+
+      if (orgError) throw orgError;
+      setBadgeCommunity(orgData.name || '');
+
+      // Load candidates
+      const { data: candidatesData, error: candidatesError} = await supabase
+        .from('cra_applications')
+        .select('m_first, m_pref, f_first, f_pref, c_lastname')
+        .eq('org_id', orgId);
+
+      if (candidatesError) throw candidatesError;
+
+      // Filter by gender and format
+      const formattedCandidates = (candidatesData || []).map(c => {
+        if (currentGender === 'men') {
+          return {
+            firstName: c.m_pref || c.m_first || '',
+            lastName: c.c_lastname || ''
+          };
+        } else {
+          return {
+            firstName: c.f_pref || c.f_first || '',
+            lastName: c.c_lastname || ''
+          };
+        }
+      }).filter(c => c.firstName && c.lastName);
+
+      setCandidates(formattedCandidates);
+    } catch (error) {
+      console.error('Error loading badge data:', error);
+      if (window.showMainStatus) {
+        window.showMainStatus('Failed to load badge data: ' + error.message, true);
+      }
+    }
+  };
+
+  const handleCloseBadgePanel = () => {
+    setShowBadgePanel(false);
+    setBadgeScripture('');
+    setBadgeTheme('');
+    setBadgeExportType('team');
+    setBadgeProfPosition('blank');
+  };
+
+  const handleGenerateBadgeCSV = () => {
+    if (!badgeScripture.trim() || !badgeTheme.trim()) {
+      if (window.showMainStatus) {
+        window.showMainStatus('Please enter Scripture and Theme', true);
+      }
+      return;
+    }
+
+    const csvRows = [];
+    csvRows.push(['FirstName', 'LastName', 'Organization', 'WeekendInfo', 'Scripture', 'Theme', 'Position']);
+
+    const rawTableData = allPescadores[currentGender];
+    const weekendInfo = weekendIdentifier;
+
+    // Add team members
+    if (badgeExportType === 'team' || badgeExportType === 'both') {
+      teamRoster.forEach(member => {
+        const profile = rawTableData.find(p => p.PescadoreKey === member.id);
+        if (profile) {
+          const firstName = profile.Preferred || profile.First || '';
+          const lastName = profile.Last || '';
+          let position = member.role;
+
+          // Handle professor positions
+          if (position.startsWith('Prof_')) {
+            if (badgeProfPosition === 'blank') {
+              position = '';
+            } else if (badgeProfPosition === 'table-leader') {
+              position = 'Table Leader';
+            } else {
+              // Keep the role but remove Prof_ prefix
+              position = position.replace('Prof_', '');
+            }
+          }
+
+          csvRows.push([
+            firstName,
+            lastName,
+            badgeCommunity,
+            weekendInfo,
+            badgeScripture,
+            badgeTheme,
+            position
+          ]);
+        }
+      });
+    }
+
+    // Add candidates
+    if (badgeExportType === 'candidates' || badgeExportType === 'both') {
+      candidates.forEach(candidate => {
+        csvRows.push([
+          candidate.firstName,
+          candidate.lastName,
+          badgeCommunity,
+          weekendInfo,
+          badgeScripture,
+          badgeTheme,
+          '' // No position for candidates
+        ]);
+      });
+    }
+
+    // Convert to CSV string
+    const csvContent = csvRows.map(row => 
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${weekendIdentifier}_Badges.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    if (window.showMainStatus) {
+      window.showMainStatus(`Badge CSV exported with ${csvRows.length - 1} entries`, false);
+    }
+
+    handleCloseBadgePanel();
+  };
   const renderRectorSection = () => {
     const rector = teamRoster.find(m => m.role === 'Rector');
     
@@ -1157,7 +1304,7 @@ export default function TeamList() {
             <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
               Export for Team Book
             </button>
-            <button className="btn btn-info" onClick={() => console.log('Export to Team Badges')}>
+            <button className="btn btn-info" onClick={handleOpenBadgePanel}>
               Export to Team Badges
             </button>
             <button className="btn btn-danger" onClick={() => console.log('Clear All')}>
@@ -1335,6 +1482,215 @@ export default function TeamList() {
               </div>
             </div>
           </div>
+        )}
+
+
+        {/* Badge Export Slide-In Panel */}
+        {showBadgePanel && (
+          <>
+            {/* Overlay */}
+            <div 
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                zIndex: 999
+              }}
+              onClick={handleCloseBadgePanel}
+            />
+            
+            {/* Slide-in Panel */}
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: '400px',
+              maxWidth: '90%',
+              backgroundColor: 'var(--panel)',
+              boxShadow: '-4px 0 20px rgba(0, 0, 0, 0.2)',
+              zIndex: 1000,
+              display: 'flex',
+              flexDirection: 'column',
+              animation: 'slideInRight 0.3s ease-out'
+            }}>
+              {/* Header */}
+              <div style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>Export Badge CSV</h3>
+                <button 
+                  onClick={handleCloseBadgePanel}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: 'var(--muted)',
+                    padding: '0 8px'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Body */}
+              <div style={{ 
+                padding: '24px', 
+                overflowY: 'auto',
+                flexGrow: 1
+              }}>
+                {/* Weekend Info */}
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '4px' }}>Weekend:</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 600 }}>{weekendIdentifier}</div>
+                </div>
+
+                {/* Community */}
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '4px' }}>Community:</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 600 }}>{badgeCommunity}</div>
+                </div>
+
+                {/* Export Type */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label className="label" style={{ display: 'block', marginBottom: '12px' }}>Export Type:</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                      <input 
+                        type="radio" 
+                        name="exportType"
+                        value="team"
+                        checked={badgeExportType === 'team'}
+                        onChange={(e) => setBadgeExportType(e.target.value)}
+                        style={{ marginRight: '8px' }}
+                      />
+                      <span>Team Only ({teamRoster.length})</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                      <input 
+                        type="radio" 
+                        name="exportType"
+                        value="candidates"
+                        checked={badgeExportType === 'candidates'}
+                        onChange={(e) => setBadgeExportType(e.target.value)}
+                        style={{ marginRight: '8px' }}
+                      />
+                      <span>Candidates Only ({candidates.length})</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                      <input 
+                        type="radio" 
+                        name="exportType"
+                        value="both"
+                        checked={badgeExportType === 'both'}
+                        onChange={(e) => setBadgeExportType(e.target.value)}
+                        style={{ marginRight: '8px' }}
+                      />
+                      <span>Team + Candidates ({teamRoster.length + candidates.length})</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Scripture */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label className="label" style={{ display: 'block', marginBottom: '8px' }}>Scripture Verse:</label>
+                  <input 
+                    type="text"
+                    className="input"
+                    placeholder="e.g., John 3:16"
+                    value={badgeScripture}
+                    onChange={(e) => setBadgeScripture(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                {/* Theme */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label className="label" style={{ display: 'block', marginBottom: '8px' }}>Weekend Theme:</label>
+                  <input 
+                    type="text"
+                    className="input"
+                    placeholder="e.g., Stand Firm"
+                    value={badgeTheme}
+                    onChange={(e) => setBadgeTheme(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                {/* Professor Positions */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label className="label" style={{ display: 'block', marginBottom: '12px' }}>Professor Positions:</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                      <input 
+                        type="radio" 
+                        name="profPosition"
+                        value="show"
+                        checked={badgeProfPosition === 'show'}
+                        onChange={(e) => setBadgeProfPosition(e.target.value)}
+                        style={{ marginRight: '8px' }}
+                      />
+                      <span>Show Position (Silent, Ideals, etc.)</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                      <input 
+                        type="radio" 
+                        name="profPosition"
+                        value="blank"
+                        checked={badgeProfPosition === 'blank'}
+                        onChange={(e) => setBadgeProfPosition(e.target.value)}
+                        style={{ marginRight: '8px' }}
+                      />
+                      <span>Leave Blank</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                      <input 
+                        type="radio" 
+                        name="profPosition"
+                        value="table-leader"
+                        checked={badgeProfPosition === 'table-leader'}
+                        onChange={(e) => setBadgeProfPosition(e.target.value)}
+                        style={{ marginRight: '8px' }}
+                      />
+                      <span>Show "Table Leader"</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div style={{
+                padding: '16px 24px',
+                borderTop: '1px solid var(--border)',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px'
+              }}>
+                <button 
+                  className="btn"
+                  onClick={handleCloseBadgePanel}
+                  style={{ minWidth: '100px' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn btn-primary"
+                  onClick={handleGenerateBadgeCSV}
+                  style={{ minWidth: '120px' }}
+                >
+                  Generate CSV
+                </button>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Update Database Confirmation Modal */}
