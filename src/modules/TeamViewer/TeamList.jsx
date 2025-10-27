@@ -750,9 +750,13 @@ export default function TeamList() {
     const rector = teamRoster.find(m => m.role === 'Rector');
     
     return (
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>Rector</h3>
+      <div className="card pad" style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="small-card-header" style={{ flex: 1, margin: '-24px -24px 16px -24px' }}>
+            Rector
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', marginTop: '-8px' }}>
           <div className="team-total-card">
             <div className="team-total-title">Team Total</div>
             <div className="team-total-count">{teamRoster.length}</div>
@@ -840,10 +844,10 @@ export default function TeamList() {
     );
 
     return (
-      <div style={{ marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px' }}>
-          Leadership Team {totalCount > 0 && <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 400 }}>({totalCount})</span>}
-        </h3>
+      <div className="card pad" style={{ marginBottom: '20px' }}>
+        <div className="small-card-header">
+          Leadership Team {totalCount > 0 && <span style={{ marginLeft: '8px' }}>({totalCount})</span>}
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <table className="table">
             <thead>
@@ -926,10 +930,10 @@ export default function TeamList() {
     const rightColumn = professors.slice(midpoint);
 
     return (
-      <div style={{ marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px' }}>
-          Professor Team {totalCount > 0 && <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 400 }}>({totalCount})</span>}
-        </h3>
+      <div className="card pad" style={{ marginBottom: '20px' }}>
+        <div className="small-card-header">
+          Professor Team {totalCount > 0 && <span style={{ marginLeft: '8px' }}>({totalCount})</span>}
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <table className="table">
             <thead>
@@ -1017,10 +1021,10 @@ export default function TeamList() {
     const rightColumn = allMembers.slice(midpoint);
 
     return (
-      <div key={group.title} style={{ marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px' }}>
-          {group.title} {totalCount > 0 && <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 400 }}>({totalCount})</span>}
-        </h3>
+      <div key={group.title} className="card pad" style={{ marginBottom: '20px' }}>
+        <div className="small-card-header">
+          {group.title} {totalCount > 0 && <span style={{ marginLeft: '8px' }}>({totalCount})</span>}
+        </div>
         {allMembers.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <table className="table">
@@ -1141,14 +1145,13 @@ export default function TeamList() {
 
       <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
         <div 
-          className="card pad" 
           style={{ 
             width: showBadgePanel ? '70%' : '100%',
             transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             minWidth: 0
           }}
         >
-          <div id="teamListGrid">
+          <div id="teamListGrid" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {pescadoresLoading ? (
               <div className="progress-bar-container">
                 <div className="progress-bar-label">Loading Data...</div>
