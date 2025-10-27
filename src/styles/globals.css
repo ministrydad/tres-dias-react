@@ -2374,11 +2374,10 @@ body.light-theme #team-list-app .unified-team-section {
     flex-grow: 1;
 }
 
-#team-list-app .change-role-btn,
-#team-list-app .remove-teammate-btn {
-    background: var(--bg);
-    color: var(--ink);
-    border: 1px solid var(--border);
+#team-list-app .change-role-btn {
+    background: #ffc107;
+    border: 1px solid #ffc107;
+    color: #333;
     border-radius: 4px;
     width: 26px;
     height: 26px;
@@ -2388,21 +2387,29 @@ body.light-theme #team-list-app .unified-team-section {
     align-items: center;
     justify-content: center;
     line-height: 1;
-    transition: all 0.2s ease;
+    transition: transform 0.1s ease;
     flex-shrink: 0;
 }
 
-#team-list-app .change-role-btn:hover {
-    background: #ffc107;
-    border-color: #ffc107;
-    color: #333;
-    transform: scale(1.05);
+#team-list-app .remove-teammate-btn {
+    background: var(--accentC);
+    border: 1px solid var(--accentC);
+    color: white;
+    border-radius: 4px;
+    width: 26px;
+    height: 26px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: transform 0.1s ease;
+    flex-shrink: 0;
 }
 
+#team-list-app .change-role-btn:hover,
 #team-list-app .remove-teammate-btn:hover {
-    background: var(--accentC);
-    border-color: var(--accentC);
-    color: white;
     transform: scale(1.05);
 }
 
@@ -3903,11 +3910,10 @@ body.light-theme .date-picker-dropdown {
   align-items: center;
 }
 
-.change-role-btn,
-.remove-teammate-btn {
-  background: var(--bg);
-  color: var(--ink);
-  border: 1px solid var(--border);
+.change-role-btn {
+  background: #ffc107;
+  border: 1px solid #ffc107;
+  color: #333;
   border-radius: 4px;
   width: 26px;
   height: 26px;
@@ -3916,21 +3922,28 @@ body.light-theme .date-picker-dropdown {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: transform 0.1s;
   flex-shrink: 0;
 }
 
-.change-role-btn:hover {
-  background: #ffc107;
-  border-color: #ffc107;
-  color: #333;
-  transform: scale(1.05);
+.remove-teammate-btn {
+  background: var(--accentC);
+  border: 1px solid var(--accentC);
+  color: white;
+  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+  flex-shrink: 0;
 }
 
+.change-role-btn:hover,
 .remove-teammate-btn:hover {
-  background: var(--accentC);
-  border-color: var(--accentC);
-  color: white;
   transform: scale(1.05);
 }
 
