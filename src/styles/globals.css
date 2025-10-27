@@ -2376,12 +2376,12 @@ body.light-theme #team-list-app .unified-team-section {
 
 #team-list-app .change-role-btn,
 #team-list-app .remove-teammate-btn {
-    background: transparent;
-    color: var(--muted);
-    border: none;
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid var(--border);
     border-radius: 4px;
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     font-size: 16px;
     cursor: pointer;
     display: flex;
@@ -2393,15 +2393,17 @@ body.light-theme #team-list-app .unified-team-section {
 }
 
 #team-list-app .change-role-btn:hover {
-    background: var(--accentB);
-    color: white;
-    transform: scale(1.1);
+    background: #ffc107;
+    border-color: #ffc107;
+    color: #333;
+    transform: scale(1.05);
 }
 
 #team-list-app .remove-teammate-btn:hover {
     background: var(--accentC);
+    border-color: var(--accentC);
     color: white;
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
 /* Team List Remove Animation */
@@ -3903,12 +3905,12 @@ body.light-theme .date-picker-dropdown {
 
 .change-role-btn,
 .remove-teammate-btn {
-  background: transparent;
-  color: var(--muted);
-  border: none;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--border);
   border-radius: 4px;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   font-size: 16px;
   cursor: pointer;
   display: flex;
@@ -3919,15 +3921,17 @@ body.light-theme .date-picker-dropdown {
 }
 
 .change-role-btn:hover {
-  background: var(--accentB);
-  color: white;
-  transform: scale(1.1);
+  background: #ffc107;
+  border-color: #ffc107;
+  color: #333;
+  transform: scale(1.05);
 }
 
 .remove-teammate-btn:hover {
   background: var(--accentC);
+  border-color: var(--accentC);
   color: white;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .change-role-btn:active,
