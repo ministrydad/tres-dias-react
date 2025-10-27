@@ -1256,7 +1256,39 @@ export default function TeamList() {
 
       </div>
 
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+        <div style={{ padding: '15px 24px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <button 
+              className="btn btn-primary" 
+              onClick={handleUpdateDatabaseClick}
+              disabled={!weekendIdentifier || teamRoster.length === 0 || isUpdating}
+              style={{
+                backgroundColor: testMode ? '#ffc107' : '#28a745',
+                borderColor: testMode ? '#ffc107' : '#28a745',
+                color: testMode ? '#333' : 'white',
+                fontWeight: 'bold'
+              }}
+              title={testMode ? 'Test mode: No actual changes will be made' : 'Live mode: Will update database'}
+            >
+              {isUpdating ? 'Processing...' : testMode ? '🧪 Test Update' : '⚡ Update Database'}
+            </button>
+          <button className="btn btn-warning" onClick={handlePrintRoster}>
+              Print Report
+            </button>
+          <button className="btn btn-warning" onClick={handlePrintAllProfiles}>
+              Print All Profiles
+            </button>
+          <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
+              Export for Team Book
+            </button>
+          <button className="btn btn-info" onClick={handleOpenBadgePanel}>
+              Export to Team Badges
+            </button>
+          <button className="btn btn-danger" onClick={() => console.log('Clear All')}>
+              Clear All
+            </button>
+        </div>
+
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'stretch' }}>
         <div 
           className="card pad" 
           style={{ 
@@ -1285,50 +1317,14 @@ export default function TeamList() {
           </div>
         </div>
 
-        <div className="team-actions" style={{ padding: '15px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <span style={{ fontSize: '14px', color: 'var(--muted)' }}>
-              Team for: <strong id="teamGenderDisplayPanel">{genderLabel}</strong>
-            </span>
-          </div>
-          <div className="team-action-buttons" style={{ display: 'flex', gap: '10px' }}>
-            <button 
-              className="btn btn-primary" 
-              onClick={handleUpdateDatabaseClick}
-              disabled={!weekendIdentifier || teamRoster.length === 0 || isUpdating}
-              style={{
-                backgroundColor: testMode ? '#ffc107' : '#28a745',
-                borderColor: testMode ? '#ffc107' : '#28a745',
-                color: testMode ? '#333' : 'white',
-                fontWeight: 'bold'
-              }}
-              title={testMode ? 'Test mode: No actual changes will be made' : 'Live mode: Will update database'}
-            >
-              {isUpdating ? 'Processing...' : testMode ? '🧪 Test Update' : '⚡ Update Database'}
-            </button>
-            <button className="btn btn-warning" onClick={handlePrintRoster}>
-              Print Report
-            </button>
-            <button className="btn btn-warning" onClick={handlePrintAllProfiles}>
-              Print All Profiles
-            </button>
-            <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
-              Export for Team Book
-            </button>
-            <button className="btn btn-info" onClick={handleOpenBadgePanel}>
-              Export to Team Badges
-            </button>
-            <button className="btn btn-danger" onClick={() => console.log('Clear All')}>
-              Clear All
-            </button>
-          </div>
-        </div>
+        
 
         {showBadgePanel && (
           <div 
             className="card pad"
             style={{
               width: '30%',
+              minHeight: 'calc(100vh - 300px)',
               animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
               maxHeight: 'calc(100vh - 200px)',
               overflowY: 'auto'
