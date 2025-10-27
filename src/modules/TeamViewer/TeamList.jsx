@@ -1515,7 +1515,7 @@ export default function TeamList() {
               zIndex: 1000,
               display: 'flex',
               flexDirection: 'column',
-              animation: 'slideInRight 0.3s ease-out'
+              animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
             }}>
               {/* Header */}
               <div style={{
@@ -1784,6 +1784,19 @@ export default function TeamList() {
           </div>
         )}
       </div>
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
+
     </section>
   );
 }
