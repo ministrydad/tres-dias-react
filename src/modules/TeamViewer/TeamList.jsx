@@ -751,7 +751,13 @@ export default function TeamList() {
     
     return (
       <div className="rector-section">
-        <div className="rector-title">RECTOR</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="rector-title">RECTOR</div>
+          <div className="team-total-card" style={{ margin: 0 }}>
+            <div className="team-total-title">Team Total</div>
+            <div className="team-total-count">{teamRoster.length}</div>
+          </div>
+        </div>
         <div id="rectorContainer">
           {rector ? (
             <div 
@@ -1226,34 +1232,8 @@ export default function TeamList() {
               </div>
             </div>
           </div>
-          
-          {/* Test Mode Toggle */}
-          <div>
-            <label className="label" style={{ display: 'block', marginBottom: '6px' }}>Update Mode</label>
-            <div className="toggle" style={{ maxWidth: '250px' }}>
-              <div 
-                className={`opt ${testMode ? 'active' : ''}`}
-                onClick={() => setTestMode(true)}
-                style={{ backgroundColor: testMode ? '#ffc107' : '' }}
-              >
-                🧪 Test
-              </div>
-              <div 
-                className={`opt ${!testMode ? 'active' : ''}`}
-                onClick={() => setTestMode(false)}
-                style={{ backgroundColor: !testMode ? '#dc3545' : '' }}
-              >
-                ⚡ Live
-              </div>
-            </div>
-          </div>
-          
-          <div className="team-total-card">
-            <div className="team-total-title">Team Total</div>
-            <div className="team-total-count">{teamRoster.length}</div>
-          </div>
         </div>
-
+          
       </div>
 
         <div style={{ padding: '15px 24px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -1262,14 +1242,14 @@ export default function TeamList() {
               onClick={handleUpdateDatabaseClick}
               disabled={!weekendIdentifier || teamRoster.length === 0 || isUpdating}
               style={{
-                backgroundColor: testMode ? '#ffc107' : '#28a745',
-                borderColor: testMode ? '#ffc107' : '#28a745',
-                color: testMode ? '#333' : 'white',
+                backgroundColor: '#28a745',
+                borderColor: '#28a745',
+                color: 'white',
                 fontWeight: 'bold'
               }}
-              title={testMode ? 'Test mode: No actual changes will be made' : 'Live mode: Will update database'}
+              title='Update database with service records'
             >
-              {isUpdating ? 'Processing...' : testMode ? '🧪 Test Update' : '⚡ Update Database'}
+              {isUpdating ? 'Processing...' : '⚡ Update Database'}
             </button>
           <button className="btn btn-warning" onClick={handlePrintRoster}>
               Print Report
@@ -1560,9 +1540,9 @@ export default function TeamList() {
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
             }}>
               <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>
-                {testMode ? '🧪 TEST MODE: Preview Changes' : 'Update Database'} for {weekendIdentifier}?
+                Update Database for {weekendIdentifier}?
               </h3>
-              {testMode && (
+              {false && (
                 <div style={{
                   backgroundColor: '#fff3cd',
                   border: '1px solid #ffc107',
@@ -1611,8 +1591,8 @@ export default function TeamList() {
                   disabled={isUpdating}
                   style={{
                     padding: '8px 20px',
-                    backgroundColor: testMode ? '#ffc107' : '#28a745',
-                    color: testMode ? '#333' : 'white',
+                    backgroundColor: '#28a745',
+                    color: 'white',
                     border: 'none',
                     borderRadius: '4px',
                     cursor: isUpdating ? 'not-allowed' : 'pointer',
