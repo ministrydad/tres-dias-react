@@ -962,7 +962,7 @@ export default function TeamList() {
                     onClick={() => handleChangeRoleClick(person.id, person.name, group.head)}
                     title="Change Role"
                   >
-                    ✎
+                    ↔
                   </button>
                   <button 
                     className="remove-teammate-btn"
@@ -993,7 +993,7 @@ export default function TeamList() {
                     onClick={() => handleChangeRoleClick(person.id, person.name, group.assistantHead)}
                     title="Change Role"
                   >
-                    ✎
+                    ↔
                   </button>
                   <button 
                     className="remove-teammate-btn"
@@ -1021,7 +1021,7 @@ export default function TeamList() {
                     onClick={() => handleChangeRoleClick(person.id, person.name, group.team)}
                     title="Change Role"
                   >
-                    ✎
+                    ↔
                   </button>
                   <button 
                     className="remove-teammate-btn"
