@@ -268,7 +268,7 @@ body.light-theme .nav-item a:hover {
 }
 
 .nav-item.has-submenu > a::after {
-    content: 'â€º';
+    content: '\203A';
     font-size: 1.5rem;
     transition: transform 0.2s;
 }
