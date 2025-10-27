@@ -650,13 +650,13 @@ export default function TeamList() {
                 <div className="single-role-name">Head</div>
                 <div className="single-role-assigned">
                   <span className="unified-member-name">{person.name}</span>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <div className="member-actions">
                     <button 
                       className="change-role-btn"
                       onClick={() => handleChangeRoleClick(person.id, person.name, 'Head')}
                       title="Change Role"
                     >
-                      ✎
+                      ↔
                     </button>
                     <button 
                       className="remove-teammate-btn"
@@ -687,13 +687,13 @@ export default function TeamList() {
                 <div className="single-role-name">Asst Head</div>
                 <div className="single-role-assigned">
                   <span className="unified-member-name">{person.name}</span>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <div className="member-actions">
                     <button 
                       className="change-role-btn"
                       onClick={() => handleChangeRoleClick(person.id, person.name, 'Asst Head')}
                       title="Change Role"
                     >
-                      ✎
+                      ↔
                     </button>
                     <button 
                       className="remove-teammate-btn"
@@ -724,13 +724,13 @@ export default function TeamList() {
                 <div className="single-role-name">BUR</div>
                 <div className="single-role-assigned">
                   <span className="unified-member-name">{person.name}</span>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <div className="member-actions">
                     <button 
                       className="change-role-btn"
                       onClick={() => handleChangeRoleClick(person.id, person.name, 'BUR')}
                       title="Change Role"
                     >
-                      ✎
+                      ↔
                     </button>
                     <button 
                       className="remove-teammate-btn"
@@ -762,13 +762,13 @@ export default function TeamList() {
                 <div className="single-role-name">Spiritual Director</div>
                 <div className="single-role-assigned">
                   <span className="unified-member-name">{spirDirectors[0].name}</span>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <div className="member-actions">
                     <button 
                       className="change-role-btn"
                       onClick={() => handleChangeRoleClick(spirDirectors[0].id, spirDirectors[0].name, 'Spiritual Director')}
                       title="Change Role"
                     >
-                      ✎
+                      ↔
                     </button>
                     <button 
                       className="remove-teammate-btn"
@@ -797,13 +797,13 @@ export default function TeamList() {
                     {person.name}
                     <span className="member-role-label head">HEAD</span>
                   </span>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <div className="member-actions">
                     <button 
                       className="change-role-btn"
                       onClick={() => handleChangeRoleClick(person.id, person.name, 'Head Spiritual Director')}
                       title="Change Role"
                     >
-                      ✎
+                      ↔
                     </button>
                     <button 
                       className="remove-teammate-btn"
@@ -835,13 +835,13 @@ export default function TeamList() {
                 <div className="single-role-name">Spiritual Director</div>
                 <div className="single-role-assigned">
                   <span className="unified-member-name">{spirDirectors[1].name}</span>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <div className="member-actions">
                     <button 
                       className="change-role-btn"
                       onClick={() => handleChangeRoleClick(spirDirectors[1].id, spirDirectors[1].name, 'Spiritual Director')}
                       title="Change Role"
                     >
-                      ✎
+                      ↔
                     </button>
                     <button 
                       className="remove-teammate-btn"
@@ -897,13 +897,13 @@ export default function TeamList() {
                     <div className="single-role-name">{displayName}</div>
                     <div className="single-role-assigned">
                       <span className="unified-member-name">{person.name}</span>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <div className="member-actions">
                         <button 
                           className="change-role-btn"
                           onClick={() => handleChangeRoleClick(person.id, person.name, role)}
                           title="Change Role"
                         >
-                          ✎
+                          ↔
                         </button>
                         <button 
                           className="remove-teammate-btn"
@@ -956,7 +956,7 @@ export default function TeamList() {
                   {person.name}
                   <span className="member-role-label head">HEAD</span>
                 </span>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <div className="member-actions">
                   <button 
                     className="change-role-btn"
                     onClick={() => handleChangeRoleClick(person.id, person.name, group.head)}
@@ -987,7 +987,7 @@ export default function TeamList() {
                   {person.name}
                   <span className="member-role-label asst-head">ASST HEAD</span>
                 </span>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <div className="member-actions">
                   <button 
                     className="change-role-btn"
                     onClick={() => handleChangeRoleClick(person.id, person.name, group.assistantHead)}
@@ -1015,7 +1015,7 @@ export default function TeamList() {
             >
               <div className="single-role-assigned">
                 <span className="unified-member-name">{person.name}</span>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <div className="member-actions">
                   <button 
                     className="change-role-btn"
                     onClick={() => handleChangeRoleClick(person.id, person.name, group.team)}
