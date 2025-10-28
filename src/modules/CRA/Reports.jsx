@@ -32,7 +32,7 @@ export default function Reports() {
     try {
       const { data, error } = await supabase
         .from('app_settings')
-        .select('weekend_fee, team_fee')
+        .select('weekend_fee, sponsor_fee')
         .eq('org_id', orgId)
         .single();
 
@@ -40,7 +40,7 @@ export default function Reports() {
 
       if (data) {
         setWeekendFee(parseFloat(data.weekend_fee) || 150);
-        setSponsorFee(parseFloat(data.team_fee) || 50);
+        setSponsorFee(parseFloat(data.sponsor_fee) || 50);
       }
     } catch (error) {
       console.error('Error loading app settings:', error);
