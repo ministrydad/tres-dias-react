@@ -20,6 +20,62 @@ export default function TeamList() {
   const [showChangeRoleModal, setShowChangeRoleModal] = useState(false);
   const [changingMember, setChangingMember] = useState(null); // { id, name, currentRole }
   const [expandedRows, setExpandedRows] = useState(new Set()); // Track expanded rows by ID
+  const [showTour, setShowTour] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+
+  const tourSteps = [
+    {
+      target: 'weekend-selector',
+      title: 'Select Weekend',
+      content: 'Choose which weekend to view. The most recent weekend loads automatically.',
+      position: 'bottom'
+    },
+    {
+      target: 'gender-toggle',
+      title: 'Switch Gender',
+      content: 'Toggle between Men\'s and Women\'s team rosters.',
+      position: 'bottom'
+    },
+    {
+      target: 'team-total-card',
+      title: 'Team Count',
+      content: 'See the total number of team members at a glance.',
+      position: 'left'
+    },
+    {
+      target: 'export-badge-btn',
+      title: 'Export Badges',
+      content: 'Generate a CSV file for printing name badges.',
+      position: 'bottom'
+    }
+  ];
+
+  const startTour = () => {
+    setShowTour(true);
+    setTourStep(0);
+  };
+
+  const nextTourStep = () => {
+    if (tourStep < tourSteps.length - 1) {
+      setTourStep(tourStep + 1);
+    } else {
+      closeTour();
+    }
+  };
+
+  const closeTour = () => {
+    setShowTour(false);
+    setTourStep(0);
+    localStorage.setItem('teamListTourCompleted', 'true');
+  };
+
+  useEffect(() => {
+    const tourCompleted = localStorage.getItem('teamListTourCompleted');
+    if (!tourCompleted && teamRoster.length > 0) {
+      // Auto-start tour after data loads (only first time)
+      setTimeout(() => setShowTour(true), 1000);
+    }
+  }, [teamRoster]);
   const [newRole, setNewRole] = useState('');
   const [showBadgePanel, setShowBadgePanel] = useState(false);
   const [badgeExportType, setBadgeExportType] = useState('team');
@@ -773,7 +829,7 @@ export default function TeamList() {
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', marginTop: '-8px' }}>
-          <div className="team-total-card">
+          <div className="team-total-card" id="team-total-card">
             <div className="team-total-title">Team Total</div>
             <div className="team-total-count">{teamRoster.length}</div>
           </div>
@@ -1260,7 +1316,7 @@ export default function TeamList() {
   return (
     <section id="team-list-app" className="app-panel" style={{ display: 'block', padding: 0 }}>
       <div className="card pad" style={{ marginBottom: '12px' }}>
-        <div className="section-title" id="teamListTitle">
+        <div className="section-title" id="weekend-selector">
           <span>{genderLabel}'s Team List</span>
           {displayId && (
             <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 400, marginLeft: '15px' }}>
@@ -1278,7 +1334,7 @@ export default function TeamList() {
           flexWrap: 'wrap'
         }}>
           {/* Gender Toggle - Left Side */}
-          <div className="toggle" id="teamListGenderToggle" style={{ maxWidth: '250px' }}>
+          <div className="toggle" id="gender-toggle" style={{ maxWidth: '250px' }}>
               <div 
                 className={`opt ${currentGender === 'men' ? 'active' : ''}`}
                 onClick={() => handleGenderToggle('men')}
@@ -1318,7 +1374,7 @@ export default function TeamList() {
           <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
               Export for Team Book
             </button>
-          <button className="btn btn-primary" onClick={handleOpenBadgePanel}>
+          <button className="btn btn-primary" id="export-badge-btn" onClick={handleOpenBadgePanel}>
               Export to Team Badges
             </button>
           </div>
@@ -2074,7 +2130,149 @@ export default function TeamList() {
         
         #badge-export-panel h3 {
           font-size: 1rem !important;
-        }`}</style>    </section>
+        }
+
+        /* Tour Styles */
+        .tour-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          z-index: 9998;
+        }
+
+        .tour-spotlight {
+          position: fixed;
+          border: 3px solid var(--accentB);
+          border-radius: 8px;
+          box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+          z-index: 9999;
+          pointer-events: none;
+          transition: all 0.3s ease;
+        }
+
+        .tour-tooltip {
+          position: fixed;
+          background: white;
+          border-radius: 12px;
+          padding: 20px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          max-width: 320px;
+          z-index: 10000;
+          animation: tourFadeIn 0.3s ease;
+        }
+
+        @keyframes tourFadeIn {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        .tour-tooltip h3 {
+          margin: 0 0 8px 0;
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: var(--accentB);
+        }
+
+        .tour-tooltip p {
+          margin: 0 0 16px 0;
+          font-size: 0.9rem;
+          line-height: 1.5;
+          color: var(--ink);
+        }
+
+        .tour-tooltip-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .tour-progress {
+          font-size: 0.8rem;
+          color: var(--muted);
+        }
+
+        .help-button {
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
+          background: var(--accentB);
+          color: white;
+          border: none;
+          font-size: 24px;
+          font-weight: bold;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          z-index: 1000;
+          transition: all 0.2s ease;
+        }
+
+        .help-button:hover {
+          transform: scale(1.1);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+      `}</style>
+
+      {/* Help Button */}
+      <button className="help-button" onClick={startTour} title="Start Tour">
+        ?
+      </button>
+
+      {/* Tour Overlay */}
+      {showTour && (() => {
+        const currentStep = tourSteps[tourStep];
+        const targetElement = document.getElementById(currentStep.target);
+        
+        if (!targetElement) return null;
+        
+        const rect = targetElement.getBoundingClientRect();
+        const spotlightStyle = {
+          top: `${rect.top - 4}px`,
+          left: `${rect.left - 4}px`,
+          width: `${rect.width + 8}px`,
+          height: `${rect.height + 8}px`
+        };
+
+        // Position tooltip
+        let tooltipStyle = {
+          top: currentStep.position === 'bottom' ? `${rect.bottom + 16}px` : 
+               currentStep.position === 'top' ? `${rect.top - 200}px` :
+               `${rect.top}px`,
+          left: currentStep.position === 'left' ? `${rect.left - 340}px` :
+                currentStep.position === 'right' ? `${rect.right + 16}px` :
+                `${rect.left}px`
+        };
+
+        return (
+          <>
+            <div className="tour-overlay" onClick={closeTour} />
+            <div className="tour-spotlight" style={spotlightStyle} />
+            <div className="tour-tooltip" style={tooltipStyle}>
+              <h3>{currentStep.title}</h3>
+              <p>{currentStep.content}</p>
+              <div className="tour-tooltip-footer">
+                <span className="tour-progress">
+                  {tourStep + 1} of {tourSteps.length}
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn btn-small" onClick={closeTour}>
+                    Skip
+                  </button>
+                  <button className="btn btn-small btn-primary" onClick={nextTourStep}>
+                    {tourStep < tourSteps.length - 1 ? 'Next' : 'Done'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      })()}
+    </section>
 
   );
 }
