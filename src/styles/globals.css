@@ -402,7 +402,7 @@ body.light-theme .card {
     background: var(--panel-header);
     padding: 10px 16px;
     margin: -24px -24px 16px;
-    border-radius: 16px 16px 0 0;
+    border-radius: 15px 15px 0 0;
     font-size: 0.9rem;
     font-weight: 700;
     color: var(--ink);
