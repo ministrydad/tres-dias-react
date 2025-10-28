@@ -227,7 +227,7 @@ export default function Reports() {
         {/* Detailed Financial Breakdown */}
         <div className="card pad">
           <div className="section-title">Financial Breakdown</div>
-          <div className="grid grid-3">
+          <div className="grid grid-2">
             <div className="card pad">
               <div className="small-card-header">Weekend Fees</div>
               <div className="financial-line">
@@ -249,6 +249,18 @@ export default function Reports() {
                   }}
                 >
                   {formatCurrency(totals.weekendExpected - totals.weekendCollected)}
+                </span>
+              </div>
+              <div className="financial-line" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--border)' }}>
+                <span>Cash:</span>
+                <span id="cra_weekendCashCollected" style={{ color: 'var(--accentA)' }}>
+                  {formatCurrency(totals.weekendCashCollected)}
+                </span>
+              </div>
+              <div className="financial-line">
+                <span>Check:</span>
+                <span id="cra_weekendCheckCollected" style={{ color: 'var(--accentB)' }}>
+                  {formatCurrency(totals.weekendCheckCollected)}
                 </span>
               </div>
             </div>
@@ -276,45 +288,20 @@ export default function Reports() {
                   {formatCurrency(totals.sponsorExpected - totals.sponsorCollected)}
                 </span>
               </div>
+              <div className="financial-line" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--border)' }}>
+                <span>Cash:</span>
+                <span id="cra_sponsorCashCollected" style={{ color: 'var(--accentA)' }}>
+                  {formatCurrency(totals.sponsorCashCollected)}
+                </span>
+              </div>
+              <div className="financial-line">
+                <span>Check:</span>
+                <span id="cra_sponsorCheckCollected" style={{ color: 'var(--accentB)' }}>
+                  {formatCurrency(totals.sponsorCheckCollected)}
+                </span>
+              </div>
             </div>
 
-            <div className="card pad">
-              <div className="small-card-header">Payment Methods</div>
-              <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '6px' }}>
-                  Weekend Fee
-                </div>
-                <div className="financial-line">
-                  <span>Cash:</span>
-                  <span id="cra_weekendCashCollected" style={{ color: 'var(--accentA)' }}>
-                    {formatCurrency(totals.weekendCashCollected)}
-                  </span>
-                </div>
-                <div className="financial-line">
-                  <span>Check:</span>
-                  <span id="cra_weekendCheckCollected" style={{ color: 'var(--accentB)' }}>
-                    {formatCurrency(totals.weekendCheckCollected)}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '6px' }}>
-                  Sponsor Fee
-                </div>
-                <div className="financial-line">
-                  <span>Cash:</span>
-                  <span id="cra_sponsorCashCollected" style={{ color: 'var(--accentA)' }}>
-                    {formatCurrency(totals.sponsorCashCollected)}
-                  </span>
-                </div>
-                <div className="financial-line">
-                  <span>Check:</span>
-                  <span id="cra_sponsorCheckCollected" style={{ color: 'var(--accentB)' }}>
-                    {formatCurrency(totals.sponsorCheckCollected)}
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
