@@ -431,17 +431,20 @@ export default function ViewRoster({ onNavigate }) {
                                 WEEKEND FEE
                               </div>
                               {app.payment_wk_scholarship ? (
-                                <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
-                                  {app.payment_wk_scholarshiptype === 'full' 
+                                <div style={{ fontSize: '0.85rem', color: '#28a745', fontWeight: 600 }}>
+                                  Paid - {app.payment_wk_scholarshiptype === 'full' 
                                     ? 'Full Scholarship' 
-                                    : `Partial ($${app.payment_wk_partialamount})`}
+                                    : `Partial Scholarship ($${app.payment_wk_partialamount})`}
+                                </div>
+                              ) : (app.payment_wk_cash || app.payment_wk_check) ? (
+                                <div style={{ fontSize: '0.85rem', color: '#28a745', fontWeight: 600 }}>
+                                  Paid - {[
+                                    app.payment_wk_cash ? 'Cash' : null,
+                                    app.payment_wk_check ? 'Check' : null
+                                  ].filter(Boolean).join(', ')}
                                 </div>
                               ) : (
-                                <>
-                                  {app.payment_wk_cash && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Cash</div>}
-                                  {app.payment_wk_check && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Check</div>}
-                                  {!app.payment_wk_cash && !app.payment_wk_check && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Not Paid</div>}
-                                </>
+                                <div style={{ fontSize: '0.85rem', color: '#dc3545', fontWeight: 600 }}>Due</div>
                               )}
                             </div>
 
@@ -450,9 +453,16 @@ export default function ViewRoster({ onNavigate }) {
                               <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 SPONSOR FEE
                               </div>
-                              {app.payment_sp_cash && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Cash</div>}
-                              {app.payment_sp_check && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Check</div>}
-                              {!app.payment_sp_cash && !app.payment_sp_check && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Not Paid</div>}
+                              {(app.payment_sp_cash || app.payment_sp_check) ? (
+                                <div style={{ fontSize: '0.85rem', color: '#28a745', fontWeight: 600 }}>
+                                  Paid - {[
+                                    app.payment_sp_cash ? 'Cash' : null,
+                                    app.payment_sp_check ? 'Check' : null
+                                  ].filter(Boolean).join(', ')}
+                                </div>
+                              ) : (
+                                <div style={{ fontSize: '0.85rem', color: '#dc3545', fontWeight: 600 }}>Due</div>
+                              )}
                             </div>
 
                             {/* Diet */}
