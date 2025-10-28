@@ -31,9 +31,9 @@ export default function TeamList() {
       position: 'bottom'
     },
     {
-      target: 'tour-team-section',
-      title: 'Team Sections',
-      content: 'Each section shows the team head and members. You can see role assignments and manage team members here.',
+      target: 'tour-team-column',
+      title: 'Team Roles & Members',
+      content: 'Each column shows team roles with assigned members. You can see the head, team members, and options to remove or change positions.',
       position: 'right'
     },
     {
@@ -43,9 +43,15 @@ export default function TeamList() {
       position: 'left'
     },
     {
-      target: 'export-badge-btn',
-      title: 'Export Options',
-      content: 'Use these buttons to export your team list for printing badges or creating team books.',
+      target: 'tour-export-buttons',
+      title: 'Export & Print Options',
+      content: 'Use these buttons to export your team data and print profiles for team records.',
+      position: 'bottom'
+    },
+    {
+      target: 'tour-update-database',
+      title: 'Update Database',
+      content: 'Click this to save the current team roster to the database, updating service records for all team members.',
       position: 'bottom'
     }
   ];
@@ -1003,7 +1009,7 @@ export default function TeamList() {
           Leadership Team {totalCount > 0 && <span style={{ marginLeft: '8px' }}>({totalCount})</span>}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
-          <table className="table">
+          <table className="table" id="tour-team-column">
             <thead>
               <tr>
                 <th style={{ width: '30%' }}>Role</th>
@@ -1350,7 +1356,7 @@ export default function TeamList() {
             </div>
 
           {/* Action Buttons - Right Side */}
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div id="tour-export-buttons" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
 <button className="btn btn-warning" onClick={handlePrintRoster}>
               Print Report
             </button>
@@ -1358,6 +1364,7 @@ export default function TeamList() {
               Print All Profiles
             </button>
           <button 
+              id="tour-update-database"
               className="btn btn-primary" 
               onClick={handleUpdateDatabaseClick}
               disabled={!weekendIdentifier || teamRoster.length === 0 || isUpdating}
