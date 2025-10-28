@@ -1380,7 +1380,7 @@ body.light-theme .toggle .opt.active {
 }
 
 #team-viewer-app .dropdown-btn::after {
-    content: 'â–¼';
+    content: '▼';
     font-size: 10px;
     margin-left: 8px;
 }

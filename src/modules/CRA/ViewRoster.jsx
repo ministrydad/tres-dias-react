@@ -8,6 +8,8 @@ export default function ViewRoster({ onNavigate }) {
   const [applications, setApplications] = useState([]);
   const [currentFilter, setCurrentFilter] = useState('men');
   const [loading, setLoading] = useState(true);
+  const [sortColumn, setSortColumn] = useState('status'); // Default sort by status
+  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
 
   useEffect(() => {
     if (orgId) {
@@ -43,6 +45,17 @@ export default function ViewRoster({ onNavigate }) {
 
   const handleFilterChange = (filter) => {
     setCurrentFilter(filter);
+  };
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      // Toggle direction if clicking same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to ascending
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
   };
 
   const handleEdit = (id) => {
@@ -134,6 +147,79 @@ export default function ViewRoster({ onNavigate }) {
     return false;
   });
 
+  // Calculate active candidates (excluding withdrawn)
+  const activeCandidateCount = filteredApps.filter(app => {
+    const status = getCalculatedStatus(app);
+    return status !== 'Withdrawn';
+  }).length;
+
+  // Sort applications by status priority
+  const statusPriority = {
+    'Withdrawn': 1,
+    'Confirmed': 2,
+    'Letters Sent': 3,
+    'Pending Follow-up': 4
+  };
+
+  const sortedApps = [...filteredApps].sort((a, b) => {
+    let compareA, compareB;
+
+    switch (sortColumn) {
+      case 'name':
+        // Sort by candidate name
+        const nameA = currentFilter === 'men' 
+          ? `${a.m_first} ${a.c_lastname}`.toLowerCase()
+          : `${a.f_first} ${a.c_lastname}`.toLowerCase();
+        const nameB = currentFilter === 'men'
+          ? `${b.m_first} ${b.c_lastname}`.toLowerCase()
+          : `${b.f_first} ${b.c_lastname}`.toLowerCase();
+        compareA = nameA;
+        compareB = nameB;
+        break;
+
+      case 'church':
+        compareA = (a.c_church || '').toLowerCase();
+        compareB = (b.c_church || '').toLowerCase();
+        break;
+
+      case 'city':
+        const cityA = [a.c_city, a.c_state].filter(Boolean).join(', ').toLowerCase();
+        const cityB = [b.c_city, b.c_state].filter(Boolean).join(', ').toLowerCase();
+        compareA = cityA;
+        compareB = cityB;
+        break;
+
+      case 'sponsor':
+        compareA = (a.s_sponsor || '').toLowerCase();
+        compareB = (b.s_sponsor || '').toLowerCase();
+        break;
+
+      case 'status':
+        // Use status priority for sorting
+        const statusA = getCalculatedStatus(a);
+        const statusB = getCalculatedStatus(b);
+        compareA = statusPriority[statusA] || 99;
+        compareB = statusPriority[statusB] || 99;
+        break;
+
+      default:
+        return 0;
+    }
+
+    // Apply sort direction
+    if (sortColumn === 'status') {
+      // For status, lower priority number = higher priority
+      return sortDirection === 'asc' 
+        ? compareA - compareB 
+        : compareB - compareA;
+    } else {
+      // For text fields, standard alphabetical sort
+      if (compareA < compareB) return sortDirection === 'asc' ? -1 : 1;
+      if (compareA > compareB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    }
+  });
+
   return (
     <div id="cra-apps" className="cra-view">
       <div className="card pad" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
@@ -155,22 +241,55 @@ export default function ViewRoster({ onNavigate }) {
           </div>
         </div>
         <div id="craCandidateCountCard" className="team-total-card">
-          <div className="team-total-title">Total Candidates</div>
-          <div className="team-total-count">{filteredApps.length}</div>
+          <div className="team-total-title">Active Candidates</div>
+          <div className="team-total-count">{activeCandidateCount}</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
+            ({filteredApps.length} total)
+          </div>
         </div>
       </div>
 
       <div className="card pad">
+        <style>{`
+          #cra-apps th[style*="cursor: pointer"]:hover {
+            background-color: var(--panel-header);
+          }
+        `}</style>
         <table className="table">
           <thead>
             <tr>
-              <th>Candidate(s)</th>
-              <th>Church</th>
-              <th>City/State</th>
-              <th>Sponsor</th>
+              <th 
+                onClick={() => handleSort('name')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Candidate(s) {sortColumn === 'name' && (sortDirection === 'asc' ? '▲' : '▼')}
+              </th>
+              <th 
+                onClick={() => handleSort('church')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Church {sortColumn === 'church' && (sortDirection === 'asc' ? '▲' : '▼')}
+              </th>
+              <th 
+                onClick={() => handleSort('city')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                City/State {sortColumn === 'city' && (sortDirection === 'asc' ? '▲' : '▼')}
+              </th>
+              <th 
+                onClick={() => handleSort('sponsor')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Sponsor {sortColumn === 'sponsor' && (sortDirection === 'asc' ? '▲' : '▼')}
+              </th>
               <th>Weekend Fee</th>
               <th>Sponsor Fee</th>
-              <th>Status</th>
+              <th 
+                onClick={() => handleSort('status')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Status {sortColumn === 'status' && (sortDirection === 'asc' ? '▲' : '▼')}
+              </th>
               <th style={{ width: '150px' }}>Actions</th>
             </tr>
           </thead>
@@ -181,14 +300,14 @@ export default function ViewRoster({ onNavigate }) {
                   Loading applications...
                 </td>
               </tr>
-            ) : filteredApps.length === 0 ? (
+            ) : sortedApps.length === 0 ? (
               <tr>
                 <td colSpan="8" style={{ textAlign: 'center', padding: '20px', color: 'var(--muted)' }}>
                   No {currentFilter} applications found.
                 </td>
               </tr>
             ) : (
-              filteredApps.map(app => {
+              sortedApps.map(app => {
                 // Build candidate name based on filter
                 let candName = '';
                 if (currentFilter === 'men') {
