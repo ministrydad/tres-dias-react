@@ -1531,7 +1531,7 @@ export default function TeamList() {
               </div>
 
               {/* Body */}
-              <div style={{ padding: '24px' }}>
+              <div style={{ padding: '24px', maxHeight: '60vh', overflowY: 'auto' }}>
                 <div style={{ marginBottom: '20px' }}>
                   <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '4px' }}>Member:</div>
                   <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)' }}>{changingMember.name}</div>
@@ -1543,94 +1543,344 @@ export default function TeamList() {
                 </div>
 
                 <div>
-                  <label className="label" style={{ display: 'block', marginBottom: '8px' }}>New Role:</label>
-                  <select 
-                    className="input"
-                    value={newRole}
-                    onChange={(e) => setNewRole(e.target.value)}
-                    style={{ width: '100%', padding: '10px', fontSize: '1rem' }}
-                  >
-                    <option value="">-- Select New Role --</option>
-                    
-                    <optgroup label="Leadership">
-                      <option value="Rector">Rector</option>
-                      <option value="BUR">BUR</option>
-                      <option value="Rover">Rover</option>
-                      <option value="Head">Head</option>
-                      <option value="Asst Head">Asst Head</option>
-                      <option value="Head Spiritual Director">Head Spiritual Director</option>
-                      <option value="Spiritual Director">Spiritual Director</option>
-                    </optgroup>
-                    
-                    <optgroup label="Kitchen Team">
-                      <option value="Head Kitchen">Head Kitchen</option>
-                      <option value="Asst Head Kitchen">Asst Head Kitchen</option>
-                      <option value="Kitchen">Kitchen</option>
-                    </optgroup>
-                    
-                    <optgroup label="Prayer Team">
-                      <option value="Head Prayer">Head Prayer</option>
-                      <option value="Prayer">Prayer</option>
-                    </optgroup>
-                    
-                    <optgroup label="Table Team">
-                      <option value="Head Table">Head Table</option>
-                      <option value="Table">Table</option>
-                    </optgroup>
-                    
-                    <optgroup label="Chapel Team">
-                      <option value="Head Chapel">Head Chapel</option>
-                      <option value="Chapel">Chapel</option>
-                    </optgroup>
-                    
-                    <optgroup label="Dorm Team">
-                      <option value="Head Dorm">Head Dorm</option>
-                      <option value="Dorm">Dorm</option>
-                    </optgroup>
-                    
-                    <optgroup label="Palanca Team">
-                      <option value="Head Palanca">Head Palanca</option>
-                      <option value="Palanca">Palanca</option>
-                    </optgroup>
-                    
-                    <optgroup label="Gopher Team">
-                      <option value="Head Gopher">Head Gopher</option>
-                      <option value="Gopher">Gopher</option>
-                    </optgroup>
-                    
-                    <optgroup label="Storeroom Team">
-                      <option value="Head Storeroom">Head Storeroom</option>
-                      <option value="Storeroom">Storeroom</option>
-                    </optgroup>
-                    
-                    <optgroup label="Floater Supply Team">
-                      <option value="Head Floater Supply">Head Floater Supply</option>
-                      <option value="Floater Supply">Floater Supply</option>
-                    </optgroup>
-                    
-                    <optgroup label="Worship Team">
-                      <option value="Head Worship">Head Worship</option>
-                      <option value="Worship">Worship</option>
-                    </optgroup>
-                    
-                    <optgroup label="Media Team">
-                      <option value="Head Media">Head Media</option>
-                      <option value="Media">Media</option>
-                    </optgroup>
-                    
-                    <optgroup label="Professor Team">
-                      <option value="Prof_Silent">Silent</option>
-                      <option value="Prof_Ideals">Ideals</option>
-                      <option value="Prof_Church">Church</option>
-                      <option value="Prof_Piety">Piety</option>
-                      <option value="Prof_Study">Study</option>
-                      <option value="Prof_Action">Action</option>
-                      <option value="Prof_Leaders">Leaders</option>
-                      <option value="Prof_Environments">Environments</option>
-                      <option value="Prof_CCIA">CCIA</option>
-                      <option value="Prof_Reunion">Reunion</option>
-                    </optgroup>
-                  </select>
+                  <label className="label" style={{ display: 'block', marginBottom: '12px' }}>Select New Role:</label>
+                  
+                  {/* Leadership Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      LEADERSHIP
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Rector', 'BUR', 'Rover', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Professor Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      PROFESSOR TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {[
+                        { value: 'Prof_Silent', label: 'Silent' },
+                        { value: 'Prof_Ideals', label: 'Ideals' },
+                        { value: 'Prof_Church', label: 'Church' },
+                        { value: 'Prof_Piety', label: 'Piety' },
+                        { value: 'Prof_Study', label: 'Study' },
+                        { value: 'Prof_Action', label: 'Action' },
+                        { value: 'Prof_Leaders', label: 'Leaders' },
+                        { value: 'Prof_Environments', label: 'Environments' },
+                        { value: 'Prof_CCIA', label: 'CCIA' },
+                        { value: 'Prof_Reunion', label: 'Reunion' }
+                      ].map(role => (
+                        <button
+                          key={role.value}
+                          onClick={() => setNewRole(role.value)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role.value ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role.value ? 'white' : 'var(--ink)',
+                            border: newRole === role.value ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Kitchen Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      KITCHEN TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Head Kitchen', 'Asst Head Kitchen', 'Kitchen'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Prayer Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      PRAYER TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Head Prayer', 'Prayer'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Table Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      TABLE TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Head Table', 'Table'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Chapel Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      CHAPEL TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Head Chapel', 'Chapel'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Dorm Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      DORM TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Head Dorm', 'Dorm'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Palanca Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      PALANCA TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Head Palanca', 'Palanca'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Gopher Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      GOPHER TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Head Gopher', 'Gopher'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Storeroom Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      STOREROOM TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Head Storeroom', 'Storeroom'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Floater Supply Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      FLOATER SUPPLY TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Head Floater Supply', 'Floater Supply'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Worship Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      WORSHIP TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Head Worship', 'Worship'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Media Team Section */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
+                      MEDIA TEAM
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {['Head Media', 'Media'].map(role => (
+                        <button
+                          key={role}
+                          onClick={() => setNewRole(role)}
+                          className="btn btn-small"
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '0.8rem',
+                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                            color: newRole === role ? 'white' : 'var(--ink)',
+                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
