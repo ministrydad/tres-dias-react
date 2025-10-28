@@ -401,74 +401,74 @@ export default function ViewRoster({ onNavigate }) {
                           }}>
                             {/* Sponsor Info */}
                             <div>
-                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 SPONSOR
                               </div>
-                              <div>{sponsorName}</div>
-                              <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>{app.s_phone || 'No phone'}</div>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{sponsorName}</div>
+                              <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{app.s_phone || 'No phone'}</div>
                             </div>
 
                             {/* Candidate Contact */}
                             <div>
-                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 CANDIDATE CONTACT
                               </div>
-                              <div>{candPhone}</div>
-                              <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>{candEmail}</div>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{candPhone}</div>
+                              <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{candEmail}</div>
                             </div>
 
                             {/* Church */}
                             <div>
-                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 CHURCH
                               </div>
-                              <div>{app.c_church || 'N/A'}</div>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{app.c_church || 'N/A'}</div>
                             </div>
 
                             {/* Weekend Payment Details */}
                             <div>
-                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 WEEKEND FEE
                               </div>
                               {app.payment_wk_scholarship ? (
-                                <div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
                                   {app.payment_wk_scholarshiptype === 'full' 
                                     ? 'Full Scholarship' 
                                     : `Partial ($${app.payment_wk_partialamount})`}
                                 </div>
                               ) : (
                                 <>
-                                  {app.payment_wk_cash && <div>Cash</div>}
-                                  {app.payment_wk_check && <div>Check</div>}
-                                  {!app.payment_wk_cash && !app.payment_wk_check && <div style={{ color: 'var(--muted)' }}>Not Paid</div>}
+                                  {app.payment_wk_cash && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Cash</div>}
+                                  {app.payment_wk_check && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Check</div>}
+                                  {!app.payment_wk_cash && !app.payment_wk_check && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Not Paid</div>}
                                 </>
                               )}
                             </div>
 
                             {/* Sponsor Payment Details */}
                             <div>
-                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 SPONSOR FEE
                               </div>
-                              {app.payment_sp_cash && <div>Cash</div>}
-                              {app.payment_sp_check && <div>Check</div>}
-                              {!app.payment_sp_cash && !app.payment_sp_check && <div style={{ color: 'var(--muted)' }}>Not Paid</div>}
+                              {app.payment_sp_cash && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Cash</div>}
+                              {app.payment_sp_check && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Check</div>}
+                              {!app.payment_sp_cash && !app.payment_sp_check && <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Not Paid</div>}
                             </div>
 
                             {/* Diet */}
                             <div>
-                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 DIET
                               </div>
-                              <div>{candDiet}</div>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{candDiet}</div>
                             </div>
 
                             {/* Smoking */}
                             <div>
-                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 SMOKING
                               </div>
-                              <div>{candSmoking}</div>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{candSmoking}</div>
                             </div>
                           </div>
                         </td>
