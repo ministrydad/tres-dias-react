@@ -10,6 +10,7 @@ export default function ViewRoster({ onNavigate }) {
   const [loading, setLoading] = useState(true);
   const [sortColumn, setSortColumn] = useState('status'); // Default sort by status
   const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
+  const [expandedRows, setExpandedRows] = useState(new Set());
 
   useEffect(() => {
     if (orgId) {
@@ -56,6 +57,16 @@ export default function ViewRoster({ onNavigate }) {
       setSortColumn(column);
       setSortDirection('asc');
     }
+  };
+
+  const toggleRowExpansion = (appId) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(appId)) {
+      newExpanded.delete(appId);
+    } else {
+      newExpanded.add(appId);
+    }
+    setExpandedRows(newExpanded);
   };
 
   const handleEdit = (id) => {
@@ -254,6 +265,21 @@ export default function ViewRoster({ onNavigate }) {
           #cra-apps th[style*="cursor: pointer"]:hover {
             background-color: var(--panel-header);
           }
+          
+          #cra-apps tr.expanded-row {
+            animation: expandRow 0.2s ease-out;
+          }
+          
+          @keyframes expandRow {
+            from {
+              opacity: 0;
+              transform: translateY(-10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
         `}</style>
         <table className="table">
           <thead>
@@ -265,44 +291,32 @@ export default function ViewRoster({ onNavigate }) {
                 Candidate(s) {sortColumn === 'name' && (sortDirection === 'asc' ? '▲' : '▼')}
               </th>
               <th 
-                onClick={() => handleSort('church')}
-                style={{ cursor: 'pointer', userSelect: 'none' }}
-              >
-                Church {sortColumn === 'church' && (sortDirection === 'asc' ? '▲' : '▼')}
-              </th>
-              <th 
-                onClick={() => handleSort('city')}
-                style={{ cursor: 'pointer', userSelect: 'none' }}
-              >
-                City/State {sortColumn === 'city' && (sortDirection === 'asc' ? '▲' : '▼')}
-              </th>
-              <th 
                 onClick={() => handleSort('sponsor')}
                 style={{ cursor: 'pointer', userSelect: 'none' }}
               >
                 Sponsor {sortColumn === 'sponsor' && (sortDirection === 'asc' ? '▲' : '▼')}
               </th>
-              <th>Weekend Fee</th>
-              <th>Sponsor Fee</th>
               <th 
                 onClick={() => handleSort('status')}
                 style={{ cursor: 'pointer', userSelect: 'none' }}
               >
                 Status {sortColumn === 'status' && (sortDirection === 'asc' ? '▲' : '▼')}
               </th>
+              <th>Weekend Fee</th>
+              <th>Sponsor Fee</th>
               <th style={{ width: '150px' }}>Actions</th>
             </tr>
           </thead>
           <tbody id="apps_tbody">
             {loading ? (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>
+                <td colSpan="6" style={{ textAlign: 'center', padding: '40px' }}>
                   Loading applications...
                 </td>
               </tr>
             ) : sortedApps.length === 0 ? (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center', padding: '20px', color: 'var(--muted)' }}>
+                <td colSpan="6" style={{ textAlign: 'center', padding: '20px', color: 'var(--muted)' }}>
                   No {currentFilter} applications found.
                 </td>
               </tr>
@@ -316,47 +330,146 @@ export default function ViewRoster({ onNavigate }) {
                   candName = `${app.f_first} ${app.f_pref ? `(${app.f_pref}) ` : ''}${app.c_lastname}`;
                 }
 
-                const cityState = [app.c_city, app.c_state].filter(Boolean).join(', ') || 'N/A';
                 const sponsor = app.s_sponsor || 'N/A';
                 const weekendFee = getPaymentStatusString(app, 'wk');
                 const sponsorFee = getPaymentStatusString(app, 'sp');
                 const status = getCalculatedStatus(app);
+                const isExpanded = expandedRows.has(app.id);
 
                 // Highlight withdrawn applications with red background
                 const rowStyle = status === 'Withdrawn' 
                   ? { backgroundColor: 'rgba(220, 53, 69, 0.08)' }
                   : {};
 
+                // Get gender-specific fields
+                const candPhone = currentFilter === 'men' ? (app.m_phone || 'N/A') : (app.f_phone || 'N/A');
+                const candEmail = currentFilter === 'men' ? (app.m_email || 'N/A') : (app.f_email || 'N/A');
+                const candDiet = currentFilter === 'men' ? (app.m_diet || 'N/A') : (app.f_diet || 'N/A');
+                const candSmoking = currentFilter === 'men' ? (app.m_smoking || 'N/A') : (app.f_smoking || 'N/A');
+
                 return (
-                  <tr key={app.id} style={rowStyle}>
-                    <td>{candName}</td>
-                    <td>{app.c_church || 'N/A'}</td>
-                    <td>{cityState}</td>
-                    <td>{sponsor}</td>
-                    <td>{weekendFee}</td>
-                    <td>{sponsorFee}</td>
-                    <td>
-                      <span className={`badge ${getStatusBadgeClass(status)}`}>
-                        {status}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button 
-                          className="btn btn-small"
-                          onClick={() => handleEdit(app.id)}
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          className="btn btn-small btn-danger"
-                          onClick={() => handleDelete(app.id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  <>
+                    {/* Main Row */}
+                    <tr key={app.id} style={rowStyle}>
+                      <td 
+                        onClick={() => toggleRowExpansion(app.id)}
+                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                      >
+                        <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                        {candName}
+                      </td>
+                      <td>{sponsor}</td>
+                      <td>
+                        <span className={`badge ${getStatusBadgeClass(status)}`}>
+                          {status}
+                        </span>
+                      </td>
+                      <td>{weekendFee}</td>
+                      <td>{sponsorFee}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button 
+                            className="btn btn-small"
+                            onClick={() => handleEdit(app.id)}
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            className="btn btn-small btn-danger"
+                            onClick={() => handleDelete(app.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* Expanded Detail Row */}
+                    {isExpanded && (
+                      <tr className="expanded-row" style={{ ...rowStyle, borderTop: '1px solid var(--border)' }}>
+                        <td colSpan="6" style={{ padding: '16px 24px', backgroundColor: 'var(--panel-header)' }}>
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                            gap: '16px',
+                            fontSize: '0.9rem'
+                          }}>
+                            {/* Sponsor Info */}
+                            <div>
+                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                                SPONSOR
+                              </div>
+                              <div>{app.s_sponsor || 'N/A'}</div>
+                              <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>{app.s_phone || 'No phone'}</div>
+                            </div>
+
+                            {/* Candidate Contact */}
+                            <div>
+                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                                CANDIDATE CONTACT
+                              </div>
+                              <div>{candPhone}</div>
+                              <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>{candEmail}</div>
+                            </div>
+
+                            {/* Church */}
+                            <div>
+                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                                CHURCH
+                              </div>
+                              <div>{app.c_church || 'N/A'}</div>
+                            </div>
+
+                            {/* Weekend Payment Details */}
+                            <div>
+                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                                WEEKEND FEE
+                              </div>
+                              {app.payment_wk_scholarship ? (
+                                <div>
+                                  {app.payment_wk_scholarshiptype === 'full' 
+                                    ? 'Full Scholarship' 
+                                    : `Partial ($${app.payment_wk_partialamount})`}
+                                </div>
+                              ) : (
+                                <>
+                                  {app.payment_wk_cash && <div>Cash</div>}
+                                  {app.payment_wk_check && <div>Check</div>}
+                                  {!app.payment_wk_cash && !app.payment_wk_check && <div style={{ color: 'var(--muted)' }}>Not Paid</div>}
+                                </>
+                              )}
+                            </div>
+
+                            {/* Sponsor Payment Details */}
+                            <div>
+                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                                SPONSOR FEE
+                              </div>
+                              {app.payment_sp_cash && <div>Cash</div>}
+                              {app.payment_sp_check && <div>Check</div>}
+                              {!app.payment_sp_cash && !app.payment_sp_check && <div style={{ color: 'var(--muted)' }}>Not Paid</div>}
+                            </div>
+
+                            {/* Diet */}
+                            <div>
+                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                                DIET
+                              </div>
+                              <div>{candDiet}</div>
+                            </div>
+
+                            {/* Smoking */}
+                            <div>
+                              <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                                SMOKING
+                              </div>
+                              <div>{candSmoking}</div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 );
               })
             )}
