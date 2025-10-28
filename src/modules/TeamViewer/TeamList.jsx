@@ -946,7 +946,7 @@ export default function TeamList() {
         <div className="small-card-header">
           Leadership Team {totalCount > 0 && <span style={{ marginLeft: '8px' }}>({totalCount})</span>}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
           <table className="table">
             <thead>
               <tr>
@@ -1080,7 +1080,7 @@ export default function TeamList() {
         <div className="small-card-header">
           Professor Team {totalCount > 0 && <span style={{ marginLeft: '8px' }}>({totalCount})</span>}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
           <table className="table">
             <thead>
               <tr>
@@ -1211,7 +1211,7 @@ export default function TeamList() {
           {group.title} {totalCount > 0 && <span style={{ marginLeft: '8px' }}>({totalCount})</span>}
         </div>
         {allMembers.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
             <table className="table">
               <thead>
                 <tr>
@@ -1774,6 +1774,7 @@ export default function TeamList() {
         /* Two-column table layout */
         #team-list-app .table {
           margin-bottom: 0;
+          vertical-align: top;
         }
         
         #team-list-app .table td,
@@ -1781,6 +1782,7 @@ export default function TeamList() {
           height: 44px;
           min-height: 44px;
           max-height: 44px;
+          vertical-align: middle;
         }
         
         #team-list-app .table tbody tr {
