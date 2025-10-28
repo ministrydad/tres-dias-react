@@ -1531,15 +1531,25 @@ export default function TeamList() {
               </div>
 
               {/* Body */}
-              <div style={{ padding: '24px', maxHeight: '60vh', overflowY: 'auto' }}>
+              <div style={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
                 <div style={{ marginBottom: '20px' }}>
                   <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '4px' }}>Member:</div>
                   <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)' }}>{changingMember.name}</div>
                 </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '4px' }}>Current Role:</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--accentB)' }}>{changingMember.currentRole}</div>
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '6px' }}>Current Role:</div>
+                  <div style={{ 
+                    fontSize: '1.1rem', 
+                    fontWeight: 700, 
+                    color: 'var(--accentB)',
+                    padding: '8px 12px',
+                    backgroundColor: 'var(--panel-header)',
+                    borderRadius: '6px',
+                    border: '2px solid var(--accentB)'
+                  }}>
+                    {changingMember.currentRole}
+                  </div>
                 </div>
 
                 <div>
@@ -1554,7 +1564,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
@@ -1586,7 +1596,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role.value)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role.value ? 'var(--accentB)' : 'transparent',
                           color: newRole === role.value ? 'white' : 'var(--ink)',
@@ -1607,7 +1617,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
@@ -1628,7 +1638,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
@@ -1649,7 +1659,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
@@ -1670,7 +1680,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
@@ -1691,7 +1701,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
@@ -1712,7 +1722,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
@@ -1733,7 +1743,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
@@ -1754,7 +1764,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
@@ -1775,7 +1785,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
@@ -1796,7 +1806,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
@@ -1817,7 +1827,7 @@ export default function TeamList() {
                         onClick={() => setNewRole(role)}
                         className="btn btn-small"
                         style={{
-                          padding: '10px 12px',
+                          padding: '10px 13px',
                           fontSize: '0.8rem',
                           backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                           color: newRole === role ? 'white' : 'var(--ink)',
