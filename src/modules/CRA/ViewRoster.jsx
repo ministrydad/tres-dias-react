@@ -341,11 +341,14 @@ export default function ViewRoster({ onNavigate }) {
                   ? { backgroundColor: 'rgba(220, 53, 69, 0.08)' }
                   : {};
 
+                // Construct sponsor name from s_first and s_last
+                const sponsorName = [app.s_first, app.s_last].filter(Boolean).join(' ') || 'N/A';
+
                 // Get gender-specific fields
-                const candPhone = currentFilter === 'men' ? (app.m_phone || 'N/A') : (app.f_phone || 'N/A');
+                const candPhone = currentFilter === 'men' ? (app.m_cell || 'N/A') : (app.f_cell || 'N/A');
                 const candEmail = currentFilter === 'men' ? (app.m_email || 'N/A') : (app.f_email || 'N/A');
-                const candDiet = currentFilter === 'men' ? (app.m_diet || 'N/A') : (app.f_diet || 'N/A');
-                const candSmoking = currentFilter === 'men' ? (app.m_smoking || 'N/A') : (app.f_smoking || 'N/A');
+                const candDiet = currentFilter === 'men' ? (app.m_diettext || 'None') : (app.f_diettext || 'None');
+                const candSmoking = currentFilter === 'men' ? (app.m_smoke ? 'Yes' : 'No') : (app.f_smoke ? 'Yes' : 'No');
 
                 return (
                   <>
@@ -360,7 +363,7 @@ export default function ViewRoster({ onNavigate }) {
                           {candName}
                         </span>
                       </td>
-                      <td>{sponsor}</td>
+                      <td>{sponsorName}</td>
                       <td>
                         <span className={`badge ${getStatusBadgeClass(status)}`}>
                           {status}
@@ -401,7 +404,7 @@ export default function ViewRoster({ onNavigate }) {
                               <div style={{ fontWeight: 600, color: 'var(--muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
                                 SPONSOR
                               </div>
-                              <div>{app.s_sponsor || 'N/A'}</div>
+                              <div>{sponsorName}</div>
                               <div style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>{app.s_phone || 'No phone'}</div>
                             </div>
 
