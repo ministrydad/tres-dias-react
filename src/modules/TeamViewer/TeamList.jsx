@@ -1545,381 +1545,292 @@ export default function TeamList() {
                 <div>
                   <label className="label" style={{ display: 'block', marginBottom: '12px' }}>Select New Role:</label>
                   
-                  {/* Leadership Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      LEADERSHIP
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Rector', 'BUR', 'Rover', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
+                  {/* All roles in one unified grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+                    {/* Leadership */}
+                    {['Rector', 'BUR', 'Rover', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                    
+                    {/* Professor Team */}
+                    {[
+                      { value: 'Prof_Silent', label: 'Silent' },
+                      { value: 'Prof_Ideals', label: 'Ideals' },
+                      { value: 'Prof_Church', label: 'Church' },
+                      { value: 'Prof_Piety', label: 'Piety' },
+                      { value: 'Prof_Study', label: 'Study' },
+                      { value: 'Prof_Action', label: 'Action' },
+                      { value: 'Prof_Leaders', label: 'Leaders' },
+                      { value: 'Prof_Environments', label: 'Environments' },
+                      { value: 'Prof_CCIA', label: 'CCIA' },
+                      { value: 'Prof_Reunion', label: 'Reunion' }
+                    ].map(role => (
+                      <button
+                        key={role.value}
+                        onClick={() => setNewRole(role.value)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role.value ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role.value ? 'white' : 'var(--ink)',
+                          border: newRole === role.value ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role.label}
+                      </button>
+                    ))}
+                    
+                    {/* Kitchen Team */}
+                    {['Head Kitchen', 'Asst Head Kitchen', 'Kitchen'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                    
+                    {/* Prayer Team */}
+                    {['Head Prayer', 'Prayer'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                    
+                    {/* Table Team */}
+                    {['Head Table', 'Table'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                    
+                    {/* Chapel Team */}
+                    {['Head Chapel', 'Chapel'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                    
+                    {/* Dorm Team */}
+                    {['Head Dorm', 'Dorm'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                    
+                    {/* Palanca Team */}
+                    {['Head Palanca', 'Palanca'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                    
+                    {/* Gopher Team */}
+                    {['Head Gopher', 'Gopher'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                    
+                    {/* Storeroom Team */}
+                    {['Head Storeroom', 'Storeroom'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                    
+                    {/* Floater Supply Team */}
+                    {['Head Floater Supply', 'Floater Supply'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                    
+                    {/* Worship Team */}
+                    {['Head Worship', 'Worship'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
+                    
+                    {/* Media Team */}
+                    {['Head Media', 'Media'].map(role => (
+                      <button
+                        key={role}
+                        onClick={() => setNewRole(role)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px 12px',
+                          fontSize: '0.8rem',
+                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                          color: newRole === role ? 'white' : 'var(--ink)',
+                          border: newRole === role ? 'none' : '1px solid var(--border)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {role}
+                      </button>
+                    ))}
                   </div>
-
-                  {/* Professor Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      PROFESSOR TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
-                      {[
-                        { value: 'Prof_Silent', label: 'Silent' },
-                        { value: 'Prof_Ideals', label: 'Ideals' },
-                        { value: 'Prof_Church', label: 'Church' },
-                        { value: 'Prof_Piety', label: 'Piety' },
-                        { value: 'Prof_Study', label: 'Study' },
-                        { value: 'Prof_Action', label: 'Action' },
-                        { value: 'Prof_Leaders', label: 'Leaders' },
-                        { value: 'Prof_Environments', label: 'Environments' },
-                        { value: 'Prof_CCIA', label: 'CCIA' },
-                        { value: 'Prof_Reunion', label: 'Reunion' }
-                      ].map(role => (
-                        <button
-                          key={role.value}
-                          onClick={() => setNewRole(role.value)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role.value ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role.value ? 'white' : 'var(--ink)',
-                            border: newRole === role.value ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Kitchen Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      KITCHEN TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Head Kitchen', 'Asst Head Kitchen', 'Kitchen'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Prayer Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      PRAYER TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Head Prayer', 'Prayer'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Table Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      TABLE TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Head Table', 'Table'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Chapel Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      CHAPEL TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Head Chapel', 'Chapel'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Dorm Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      DORM TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Head Dorm', 'Dorm'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Palanca Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      PALANCA TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Head Palanca', 'Palanca'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Gopher Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      GOPHER TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Head Gopher', 'Gopher'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Storeroom Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      STOREROOM TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Head Storeroom', 'Storeroom'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Floater Supply Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      FLOATER SUPPLY TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Head Floater Supply', 'Floater Supply'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Worship Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      WORSHIP TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Head Worship', 'Worship'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Media Team Section */}
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
-                      MEDIA TEAM
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                      {['Head Media', 'Media'].map(role => (
-                        <button
-                          key={role}
-                          onClick={() => setNewRole(role)}
-                          className="btn btn-small"
-                          style={{
-                            padding: '10px 12px',
-                            fontSize: '0.8rem',
-                            backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                            color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {role}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                 </div>
               </div>
 
