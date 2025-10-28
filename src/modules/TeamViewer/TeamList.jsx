@@ -25,27 +25,27 @@ export default function TeamList() {
 
   const tourSteps = [
     {
-      target: 'weekend-selector',
-      title: 'Select Weekend',
-      content: 'Choose which weekend to view. The most recent weekend loads automatically.',
-      position: 'bottom'
-    },
-    {
       target: 'gender-toggle',
-      title: 'Switch Gender',
-      content: 'Toggle between Men\'s and Women\'s team rosters.',
+      title: 'Toggle Gender',
+      content: 'Switch between Men\'s and Women\'s team rosters to view different teams.',
       position: 'bottom'
     },
     {
-      target: 'team-total-card',
-      title: 'Team Count',
-      content: 'See the total number of team members at a glance.',
+      target: 'tour-team-section',
+      title: 'Team Sections',
+      content: 'Each section shows the team head and members. You can see role assignments and manage team members here.',
+      position: 'right'
+    },
+    {
+      target: 'tour-action-buttons',
+      title: 'Change or Remove',
+      content: 'Click "Change" to reassign someone to a different role, or "Remove" to take them off the team.',
       position: 'left'
     },
     {
       target: 'export-badge-btn',
-      title: 'Export Badges',
-      content: 'Generate a CSV file for printing name badges.',
+      title: 'Export Options',
+      content: 'Use these buttons to export your team list for printing badges or creating team books.',
       position: 'bottom'
     }
   ];
@@ -943,7 +943,7 @@ export default function TeamList() {
                     }}>HEAD</span>
                   )}
                 </span>
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div id="tour-action-buttons" style={{ display: 'flex', gap: '6px' }}>
                   <button 
                     className="btn btn-small"
                     onClick={() => handleChangeRoleClick(person.id, person.name, person.role)}
@@ -998,7 +998,7 @@ export default function TeamList() {
     };
 
     return (
-      <div className="card pad" style={{ marginBottom: '20px' }}>
+      <div className="card pad" id="tour-team-section" style={{ marginBottom: '20px' }}>
         <div className="small-card-header">
           Leadership Team {totalCount > 0 && <span style={{ marginLeft: '8px' }}>({totalCount})</span>}
         </div>
@@ -2139,7 +2139,7 @@ export default function TeamList() {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.7);
+          background: rgba(0, 0, 0, 0.4);
           z-index: 9998;
         }
 
@@ -2147,7 +2147,7 @@ export default function TeamList() {
           position: fixed;
           border: 3px solid var(--accentB);
           border-radius: 8px;
-          box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+          box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
           z-index: 9999;
           pointer-events: none;
           transition: all 0.3s ease;
