@@ -1515,7 +1515,7 @@ export default function TeamList() {
               borderRadius: '16px',
               border: '1px solid var(--border)',
               width: '90%',
-              maxWidth: '500px',
+              maxWidth: '800px',
               boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
               overflow: 'hidden'
             }}>
@@ -1550,18 +1550,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       LEADERSHIP
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Rector', 'BUR', 'Rover', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
@@ -1575,7 +1578,7 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       PROFESSOR TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
                       {[
                         { value: 'Prof_Silent', label: 'Silent' },
                         { value: 'Prof_Ideals', label: 'Ideals' },
@@ -1593,11 +1596,14 @@ export default function TeamList() {
                           onClick={() => setNewRole(role.value)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role.value ? 'var(--accentB)' : 'transparent',
                             color: newRole === role.value ? 'white' : 'var(--ink)',
-                            border: newRole === role.value ? 'none' : '1px solid var(--border)'
+                            border: newRole === role.value ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role.label}
@@ -1611,18 +1617,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       KITCHEN TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Head Kitchen', 'Asst Head Kitchen', 'Kitchen'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
@@ -1636,18 +1645,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       PRAYER TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Head Prayer', 'Prayer'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
@@ -1661,18 +1673,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       TABLE TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Head Table', 'Table'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
@@ -1686,18 +1701,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       CHAPEL TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Head Chapel', 'Chapel'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
@@ -1711,18 +1729,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       DORM TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Head Dorm', 'Dorm'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
@@ -1736,18 +1757,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       PALANCA TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Head Palanca', 'Palanca'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
@@ -1761,18 +1785,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       GOPHER TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Head Gopher', 'Gopher'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
@@ -1786,18 +1813,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       STOREROOM TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Head Storeroom', 'Storeroom'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
@@ -1811,18 +1841,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       FLOATER SUPPLY TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Head Floater Supply', 'Floater Supply'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
@@ -1836,18 +1869,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       WORSHIP TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Head Worship', 'Worship'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
@@ -1861,18 +1897,21 @@ export default function TeamList() {
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>
                       MEDIA TEAM
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                       {['Head Media', 'Media'].map(role => (
                         <button
                           key={role}
                           onClick={() => setNewRole(role)}
                           className="btn btn-small"
                           style={{
-                            padding: '8px 12px',
+                            padding: '10px 12px',
                             fontSize: '0.8rem',
                             backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
                             color: newRole === role ? 'white' : 'var(--ink)',
-                            border: newRole === role ? 'none' : '1px solid var(--border)'
+                            border: newRole === role ? 'none' : '1px solid var(--border)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           {role}
