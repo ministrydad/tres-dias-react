@@ -16,10 +16,10 @@ export default function ViewRoster({ onNavigate }) {
   const [showFollowupForm, setShowFollowupForm] = useState(false);
   const [currentApp, setCurrentApp] = useState(null);
   const [followupData, setFollowupData] = useState({
-    attendance: null,
-    smoker: false,
-    wheelchair: false,
-    diet: false,
+    attendance: null,        // null | 'no' | 'yes'
+    smoker: null,           // null | 'no' | 'yes'
+    wheelchair: null,       // null | 'no' | 'yes'
+    diet: null,             // null | 'no' | 'yes'
     diet_details: '',
     letter_sent_sponsor: false,
     letter_sent_candidate: false
@@ -92,11 +92,18 @@ export default function ViewRoster({ onNavigate }) {
     const dietCol = `${prefix}diet`;
     const dietTextCol = `${prefix}diettext`;
     
+    // Map database booleans to null/'no'/'yes' strings
+    const mapBoolToState = (value) => {
+      if (value === true) return 'yes';
+      if (value === false) return 'no';
+      return null; // undefined or null = N/A
+    };
+    
     setFollowupData({
       attendance: app.attendance || null,
-      smoker: app[smokeCol] || false,
-      wheelchair: app[wheelchairCol] || false,
-      diet: app[dietCol] || false,
+      smoker: mapBoolToState(app[smokeCol]),
+      wheelchair: mapBoolToState(app[wheelchairCol]),
+      diet: mapBoolToState(app[dietCol]),
       diet_details: app[dietTextCol] || '',
       letter_sent_sponsor: app.letter_sent_sponsor || false,
       letter_sent_candidate: app.letter_sent_candidate || false
@@ -116,6 +123,13 @@ export default function ViewRoster({ onNavigate }) {
     }));
   };
 
+  const handle3StateToggle = (field, value) => {
+    setFollowupData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleAttendanceChange = (value) => {
     setFollowupData(prev => ({
       ...prev,
@@ -128,11 +142,19 @@ export default function ViewRoster({ onNavigate }) {
 
     try {
       const prefix = currentFilter === 'men' ? 'm_' : 'f_';
+      
+      // Map null/'no'/'yes' strings back to booleans for database
+      const mapStateToBool = (value) => {
+        if (value === 'yes') return true;
+        if (value === 'no') return false;
+        return null; // N/A = null in database
+      };
+      
       const payload = {
         attendance: followupData.attendance,
-        [`${prefix}smoke`]: followupData.smoker,
-        [`${prefix}wheelchair`]: followupData.wheelchair,
-        [`${prefix}diet`]: followupData.diet,
+        [`${prefix}smoke`]: mapStateToBool(followupData.smoker),
+        [`${prefix}wheelchair`]: mapStateToBool(followupData.wheelchair),
+        [`${prefix}diet`]: mapStateToBool(followupData.diet),
         [`${prefix}diettext`]: followupData.diet_details,
         letter_sent_sponsor: followupData.letter_sent_sponsor,
         letter_sent_candidate: followupData.letter_sent_candidate
@@ -362,7 +384,7 @@ export default function ViewRoster({ onNavigate }) {
         <div 
           className="card pad"
           style={{
-            width: showFollowupForm ? '45%' : '100%',
+            width: showFollowupForm ? '60%' : '100%',
             transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             minWidth: 0
           }}
@@ -614,7 +636,7 @@ export default function ViewRoster({ onNavigate }) {
           <div 
             className="card pad"
             style={{
-              width: '53%',
+              width: '38%',
               animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
               maxHeight: 'calc(100vh - 200px)',
               overflowY: 'auto'
@@ -695,16 +717,22 @@ export default function ViewRoster({ onNavigate }) {
             <div className="grid grid-3">
               <div className="field" style={{ marginBottom: 0 }}>
                 <label className="label">Smoker?</label>
-                <div className="toggle">
+                <div className="toggle toggle-compact">
                   <div 
-                    className={`opt ${!followupData.smoker ? 'active' : ''}`}
-                    onClick={() => handleToggle('smoker')}
+                    className={`opt ${followupData.smoker === null ? 'active' : ''}`}
+                    onClick={() => handle3StateToggle('smoker', null)}
+                  >
+                    N/A
+                  </div>
+                  <div 
+                    className={`opt ${followupData.smoker === 'no' ? 'active' : ''}`}
+                    onClick={() => handle3StateToggle('smoker', 'no')}
                   >
                     No
                   </div>
                   <div 
-                    className={`opt ${followupData.smoker ? 'active' : ''}`}
-                    onClick={() => handleToggle('smoker')}
+                    className={`opt ${followupData.smoker === 'yes' ? 'active' : ''}`}
+                    onClick={() => handle3StateToggle('smoker', 'yes')}
                   >
                     Yes
                   </div>
@@ -713,16 +741,22 @@ export default function ViewRoster({ onNavigate }) {
 
               <div className="field" style={{ marginBottom: 0 }}>
                 <label className="label">Wheelchair?</label>
-                <div className="toggle">
+                <div className="toggle toggle-compact">
                   <div 
-                    className={`opt ${!followupData.wheelchair ? 'active' : ''}`}
-                    onClick={() => handleToggle('wheelchair')}
+                    className={`opt ${followupData.wheelchair === null ? 'active' : ''}`}
+                    onClick={() => handle3StateToggle('wheelchair', null)}
+                  >
+                    N/A
+                  </div>
+                  <div 
+                    className={`opt ${followupData.wheelchair === 'no' ? 'active' : ''}`}
+                    onClick={() => handle3StateToggle('wheelchair', 'no')}
                   >
                     No
                   </div>
                   <div 
-                    className={`opt ${followupData.wheelchair ? 'active' : ''}`}
-                    onClick={() => handleToggle('wheelchair')}
+                    className={`opt ${followupData.wheelchair === 'yes' ? 'active' : ''}`}
+                    onClick={() => handle3StateToggle('wheelchair', 'yes')}
                   >
                     Yes
                   </div>
@@ -731,16 +765,22 @@ export default function ViewRoster({ onNavigate }) {
 
               <div className="field" style={{ marginBottom: 0 }}>
                 <label className="label">Special Diet?</label>
-                <div className="toggle">
+                <div className="toggle toggle-compact">
                   <div 
-                    className={`opt ${!followupData.diet ? 'active' : ''}`}
-                    onClick={() => handleToggle('diet')}
+                    className={`opt ${followupData.diet === null ? 'active' : ''}`}
+                    onClick={() => handle3StateToggle('diet', null)}
+                  >
+                    N/A
+                  </div>
+                  <div 
+                    className={`opt ${followupData.diet === 'no' ? 'active' : ''}`}
+                    onClick={() => handle3StateToggle('diet', 'no')}
                   >
                     No
                   </div>
                   <div 
-                    className={`opt ${followupData.diet ? 'active' : ''}`}
-                    onClick={() => handleToggle('diet')}
+                    className={`opt ${followupData.diet === 'yes' ? 'active' : ''}`}
+                    onClick={() => handle3StateToggle('diet', 'yes')}
                   >
                     Yes
                   </div>
@@ -748,7 +788,7 @@ export default function ViewRoster({ onNavigate }) {
               </div>
             </div>
 
-            {followupData.diet && (
+            {followupData.diet === 'yes' && (
               <div className="field" style={{ marginTop: '16px' }}>
                 <label className="label">Dietary Details</label>
                 <textarea 
