@@ -353,10 +353,12 @@ export default function ViewRoster({ onNavigate }) {
                     <tr key={app.id} style={rowStyle}>
                       <td 
                         onClick={() => toggleRowExpansion(app.id)}
-                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                        style={{ cursor: 'pointer' }}
                       >
-                        <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
-                        {candName}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                          {candName}
+                        </span>
                       </td>
                       <td>{sponsor}</td>
                       <td>
