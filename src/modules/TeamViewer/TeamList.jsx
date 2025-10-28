@@ -180,7 +180,7 @@ export default function TeamList() {
               name: `${profile.Preferred || profile.First || ''} ${profile.Last || ''}`.trim(),
               role: entry.role,
               email: profile.Email || '',
-              phone: profile.Cell || profile.Home || ''
+              phone: profile.Phone1 || profile.Phone2 || ''
             });
           }
         });
