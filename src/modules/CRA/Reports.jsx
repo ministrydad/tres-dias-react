@@ -9,13 +9,12 @@ export default function Reports() {
   const [currentFilter, setCurrentFilter] = useState('men');
   const [currentTab, setCurrentTab] = useState('attendees');
   const [loading, setLoading] = useState(true);
-
-  // Fee constants (should match your config)
-  const WEEKEND_FEE = 150;
-  const SPONSOR_FEE = 50;
+  const [weekendFee, setWeekendFee] = useState(150); // Default fallback
+  const [sponsorFee, setSponsorFee] = useState(50);   // Default fallback
 
   useEffect(() => {
     if (orgId) {
+      loadAppSettings();
       loadApplications();
     }
   }, [orgId]);
@@ -28,6 +27,28 @@ export default function Reports() {
       document.querySelector('.app-container')?.classList.remove('print-mode');
     };
   }, []);
+
+  const loadAppSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('weekend_fee, team_fee')
+        .eq('org_id', orgId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setWeekendFee(parseFloat(data.weekend_fee) || 150);
+        setSponsorFee(parseFloat(data.team_fee) || 50);
+      }
+    } catch (error) {
+      console.error('Error loading app settings:', error);
+      // Use defaults if settings not found
+      setWeekendFee(150);
+      setSponsorFee(50);
+    }
+  };
 
   const loadApplications = async () => {
     setLoading(true);
@@ -77,36 +98,41 @@ export default function Reports() {
     filteredApps.forEach(app => {
       const isScholarship = app.payment_wk_scholarship;
       const isFullScholarship = isScholarship && app.payment_wk_scholarshiptype === 'full';
+      const isPartialScholarship = isScholarship && app.payment_wk_scholarshiptype === 'partial';
       
-      // Expected
-      if (!isFullScholarship) {
-        totals.weekendExpected += WEEKEND_FEE;
-      }
-      totals.sponsorExpected += SPONSOR_FEE;
+      // EXPECTED CALCULATIONS
+      // Weekend Expected: All candidates pay the weekend fee (scholarships are not subtracted from expected)
+      totals.weekendExpected += weekendFee;
+      
+      // Sponsor Expected: All candidates are expected to pay sponsor fee
+      totals.sponsorExpected += sponsorFee;
 
-      // Collected
+      // COLLECTED CALCULATIONS
+      // Weekend Fee Collected: Only count actual money received
       let weekendCollected = 0;
-      if (isFullScholarship) {
-        weekendCollected = WEEKEND_FEE;
-      } else if (isScholarship && app.payment_wk_scholarshiptype === 'partial') {
-        weekendCollected = app.payment_wk_partialamount || 0;
+      if (isPartialScholarship) {
+        // Partial scholarship: they paid the partial amount
+        weekendCollected = parseFloat(app.payment_wk_partialamount) || 0;
       } else if (app.payment_wk_cash || app.payment_wk_check) {
-        weekendCollected = WEEKEND_FEE;
+        // Full payment received (either cash or check)
+        weekendCollected = weekendFee;
       }
+      // Note: Full scholarships contribute $0 to collected (no actual money received)
       
-      const sponsorCollected = (app.payment_sp_cash || app.payment_sp_check) ? SPONSOR_FEE : 0;
+      // Sponsor Fee Collected: Only if cash or check was received
+      const sponsorCollected = (app.payment_sp_cash || app.payment_sp_check) ? sponsorFee : 0;
       
       totals.weekendCollected += weekendCollected;
       totals.sponsorCollected += sponsorCollected;
       
-      // Payment methods
-      if (app.payment_wk_cash) totals.cashCollected += WEEKEND_FEE;
-      if (app.payment_wk_check) totals.checkCollected += WEEKEND_FEE;
-      if (app.payment_sp_cash) totals.cashCollected += SPONSOR_FEE;
-      if (app.payment_sp_check) totals.checkCollected += SPONSOR_FEE;
+      // Payment methods breakdown (cash vs check)
+      if (app.payment_wk_cash) totals.cashCollected += weekendFee;
+      if (app.payment_wk_check) totals.checkCollected += weekendFee;
+      if (app.payment_sp_cash) totals.cashCollected += sponsorFee;
+      if (app.payment_sp_check) totals.checkCollected += sponsorFee;
 
-      // Overdue
-      const totalExpected = (isFullScholarship ? 0 : WEEKEND_FEE) + SPONSOR_FEE;
+      // Overdue calculation
+      const totalExpected = weekendFee + sponsorFee;
       const totalCollected = weekendCollected + sponsorCollected;
       if ((totalExpected - totalCollected) > 0.01) {
         totals.overdueItems++;
@@ -201,7 +227,7 @@ export default function Reports() {
           <div className="section-title">Financial Breakdown</div>
           <div className="grid grid-3">
             <div className="card pad">
-              <div className="label">Weekend Fees</div>
+              <div className="small-card-header">Weekend Fees</div>
               <div className="financial-line">
                 <span>Expected:</span>
                 <span id="cra_weekendExpected">{formatCurrency(totals.weekendExpected)}</span>
@@ -226,7 +252,7 @@ export default function Reports() {
             </div>
 
             <div className="card pad">
-              <div className="label">Sponsor Fees</div>
+              <div className="small-card-header">Sponsor Fees</div>
               <div className="financial-line">
                 <span>Expected:</span>
                 <span id="cra_sponsorExpected">{formatCurrency(totals.sponsorExpected)}</span>
@@ -251,7 +277,7 @@ export default function Reports() {
             </div>
 
             <div className="card pad">
-              <div className="label">Payment Methods</div>
+              <div className="small-card-header">Payment Methods</div>
               <div className="financial-line">
                 <span>Cash:</span>
                 <span id="cra_cashCollected" style={{ color: 'var(--accentA)' }}>
