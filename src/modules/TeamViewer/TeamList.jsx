@@ -865,7 +865,7 @@ export default function TeamList() {
           <table className="table">
             <thead>
               <tr>
-                <th style={{ width: '40%' }}>Role</th>
+                <th style={{ width: '30%' }}>Role</th>
                 <th>Name</th>
               </tr>
             </thead>
