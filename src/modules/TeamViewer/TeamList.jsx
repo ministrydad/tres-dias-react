@@ -1779,18 +1779,26 @@ export default function TeamList() {
         #team-list-app .table td,
         #team-list-app .table th {
           height: 44px;
+          min-height: 44px;
+          max-height: 44px;
         }
         
         #team-list-app .table tbody tr {
           height: 44px;
+          min-height: 44px;
+          max-height: 44px;
         }
         
         #team-list-app .table tbody tr.expanded-row {
           height: auto;
+          min-height: auto;
+          max-height: none;
         }
         
         #team-list-app .table tbody tr.expanded-row td {
           height: auto;
+          min-height: auto;
+          max-height: none;
           padding-top: 0;
           padding-bottom: 12px;
         }
