@@ -19,6 +19,7 @@ export default function TeamList() {
   const [testMode, setTestMode] = useState(true); // Start in test mode by default
   const [showChangeRoleModal, setShowChangeRoleModal] = useState(false);
   const [changingMember, setChangingMember] = useState(null); // { id, name, currentRole }
+  const [expandedRows, setExpandedRows] = useState(new Set()); // Track expanded rows by ID
   const [newRole, setNewRole] = useState('');
   const [showBadgePanel, setShowBadgePanel] = useState(false);
   const [badgeExportType, setBadgeExportType] = useState('team');
@@ -177,7 +178,9 @@ export default function TeamList() {
             newRoster.push({
               id: profile.PescadoreKey,
               name: `${profile.Preferred || profile.First || ''} ${profile.Last || ''}`.trim(),
-              role: entry.role
+              role: entry.role,
+              email: profile.Email || '',
+              phone: profile.Cell || profile.Home || ''
             });
           }
         });
@@ -190,6 +193,18 @@ export default function TeamList() {
     } finally {
       setLoadingTeam(false);
     }
+  };
+
+  const toggleRowExpansion = (personId) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(personId)) {
+        newSet.delete(personId);
+      } else {
+        newSet.add(personId);
+      }
+      return newSet;
+    });
   };
 
   const handleGenderToggle = (gender) => {
@@ -748,6 +763,7 @@ export default function TeamList() {
   };
   const renderRectorSection = () => {
     const rector = teamRoster.find(m => m.role === 'Rector');
+    const isExpanded = rector && expandedRows.has(rector.id);
     
     return (
       <div className="card pad" style={{ marginBottom: '20px' }}>
@@ -768,7 +784,13 @@ export default function TeamList() {
               <td style={{ fontWeight: 600 }}>
                 {rector ? (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{rector.name}</span>
+                    <span 
+                      onClick={() => toggleRowExpansion(rector.id)}
+                      style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                      {rector.name}
+                    </span>
                     <button 
                       className="btn btn-small btn-danger"
                       onClick={() => handleRemoveTeammate(rector.id, 'Rector')}
@@ -783,6 +805,35 @@ export default function TeamList() {
                 )}
               </td>
             </tr>
+            {isExpanded && rector && (
+              <tr className="expanded-row">
+                <td>
+                  <div style={{ 
+                    padding: '8px 12px', 
+                    backgroundColor: 'var(--panel-header)', 
+                    borderRadius: '4px',
+                    fontSize: '0.85rem',
+                    lineHeight: '1.6'
+                  }}>
+                    {rector.email && (
+                      <div style={{ marginBottom: '4px' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--muted)' }}>Email:</span>{' '}
+                        <a href={`mailto:${rector.email}`} style={{ color: 'var(--accentB)' }}>{rector.email}</a>
+                      </div>
+                    )}
+                    {rector.phone && (
+                      <div>
+                        <span style={{ fontWeight: 600, color: 'var(--muted)' }}>Phone:</span>{' '}
+                        <a href={`tel:${rector.phone}`} style={{ color: 'var(--accentB)' }}>{rector.phone}</a>
+                      </div>
+                    )}
+                    {!rector.email && !rector.phone && (
+                      <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>No contact information available</span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -798,50 +849,97 @@ export default function TeamList() {
 
     const totalCount = headSpirDirector.length + spirDirectors.length + heads.length + asstHeads.length + burs.length;
 
-    const renderRow = (role, person, showLabel = true) => (
-      <tr key={person ? person.id : `empty-${role}`} className={removingId === person?.id ? 'removing' : ''}>
-        {showLabel && <td style={{ fontWeight: 500, width: '30%' }}>{role}</td>}
-        <td style={{ fontWeight: 600 }}>
-          {person ? (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>
-                {person.name}
-                {role === 'Head Spiritual Director' && (
-                  <span style={{ 
-                    marginLeft: '8px', 
-                    padding: '2px 8px', 
-                    borderRadius: '12px', 
-                    fontSize: '11px', 
-                    fontWeight: 'bold',
-                    backgroundColor: '#28a745',
-                    color: 'white'
-                  }}>HEAD</span>
-                )}
-              </span>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button 
-                  className="btn btn-small"
-                  onClick={() => handleChangeRoleClick(person.id, person.name, person.role)}
-                  style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+    const renderRow = (role, person, showLabel = true) => {
+      if (!person) {
+        return (
+          <tr key={`empty-${role}`}>
+            {showLabel && <td style={{ fontWeight: 500, width: '30%' }}>{role}</td>}
+            <td style={{ fontWeight: 600 }}>
+              <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>Not Assigned</span>
+            </td>
+          </tr>
+        );
+      }
+
+      const isExpanded = expandedRows.has(person.id);
+      
+      return (
+        <>
+          <tr key={person.id} className={removingId === person.id ? 'removing' : ''}>
+            {showLabel && <td style={{ fontWeight: 500, width: '30%' }}>{role}</td>}
+            <td style={{ fontWeight: 600 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span 
+                  onClick={() => toggleRowExpansion(person.id)}
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
-                  Change
-                </button>
-                <button 
-                  className="btn btn-small btn-danger"
-                  onClick={() => handleRemoveTeammate(person.id, person.role)}
-                  disabled={removingId === person.id}
-                  style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                >
-                  Remove
-                </button>
+                  <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                  {person.name}
+                  {role === 'Head Spiritual Director' && (
+                    <span style={{ 
+                      marginLeft: '8px', 
+                      padding: '2px 8px', 
+                      borderRadius: '12px', 
+                      fontSize: '11px', 
+                      fontWeight: 'bold',
+                      backgroundColor: '#28a745',
+                      color: 'white'
+                    }}>HEAD</span>
+                  )}
+                </span>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button 
+                    className="btn btn-small"
+                    onClick={() => handleChangeRoleClick(person.id, person.name, person.role)}
+                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                  >
+                    Change
+                  </button>
+                  <button 
+                    className="btn btn-small btn-danger"
+                    onClick={() => handleRemoveTeammate(person.id, person.role)}
+                    disabled={removingId === person.id}
+                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>Not Assigned</span>
+            </td>
+          </tr>
+          {isExpanded && (
+            <tr key={`${person.id}-details`} className="expanded-row">
+              {showLabel && <td></td>}
+              <td colSpan={showLabel ? 1 : 2}>
+                <div style={{ 
+                  padding: '8px 12px', 
+                  backgroundColor: 'var(--panel-header)', 
+                  borderRadius: '4px',
+                  fontSize: '0.85rem',
+                  lineHeight: '1.6'
+                }}>
+                  {person.email && (
+                    <div style={{ marginBottom: '4px' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--muted)' }}>Email:</span>{' '}
+                      <a href={`mailto:${person.email}`} style={{ color: 'var(--accentB)' }}>{person.email}</a>
+                    </div>
+                  )}
+                  {person.phone && (
+                    <div>
+                      <span style={{ fontWeight: 600, color: 'var(--muted)' }}>Phone:</span>{' '}
+                      <a href={`tel:${person.phone}`} style={{ color: 'var(--accentB)' }}>{person.phone}</a>
+                    </div>
+                  )}
+                  {!person.email && !person.phone && (
+                    <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>No contact information available</span>
+                  )}
+                </div>
+              </td>
+            </tr>
           )}
-        </td>
-      </tr>
-    );
+        </>
+      );
+    };
 
     return (
       <div className="card pad" style={{ marginBottom: '20px' }}>
@@ -891,13 +989,33 @@ export default function TeamList() {
 
     const renderRow = (prof) => {
       const person = prof.members[0];
+      
+      if (!person) {
+        return (
+          <tr key={prof.role}>
+            <td style={{ fontWeight: 500, width: '30%' }}>{prof.displayName}</td>
+            <td style={{ fontWeight: 600 }}>
+              <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>Not Assigned</span>
+            </td>
+          </tr>
+        );
+      }
+
+      const isExpanded = expandedRows.has(person.id);
+
       return (
-        <tr key={prof.role} className={removingId === person?.id ? 'removing' : ''}>
-          <td style={{ fontWeight: 500, width: '30%' }}>{prof.displayName}</td>
-          <td style={{ fontWeight: 600 }}>
-            {person ? (
+        <>
+          <tr key={prof.role} className={removingId === person.id ? 'removing' : ''}>
+            <td style={{ fontWeight: 500, width: '30%' }}>{prof.displayName}</td>
+            <td style={{ fontWeight: 600 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>{person.name}</span>
+                <span 
+                  onClick={() => toggleRowExpansion(person.id)}
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                  {person.name}
+                </span>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button 
                     className="btn btn-small"
@@ -916,11 +1034,39 @@ export default function TeamList() {
                   </button>
                 </div>
               </div>
-            ) : (
-              <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>Not Assigned</span>
-            )}
-          </td>
-        </tr>
+            </td>
+          </tr>
+          {isExpanded && (
+            <tr key={`${person.id}-details`} className="expanded-row">
+              <td></td>
+              <td>
+                <div style={{ 
+                  padding: '8px 12px', 
+                  backgroundColor: 'var(--panel-header)', 
+                  borderRadius: '4px',
+                  fontSize: '0.85rem',
+                  lineHeight: '1.6'
+                }}>
+                  {person.email && (
+                    <div style={{ marginBottom: '4px' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--muted)' }}>Email:</span>{' '}
+                      <a href={`mailto:${person.email}`} style={{ color: 'var(--accentB)' }}>{person.email}</a>
+                    </div>
+                  )}
+                  {person.phone && (
+                    <div>
+                      <span style={{ fontWeight: 600, color: 'var(--muted)' }}>Phone:</span>{' '}
+                      <a href={`tel:${person.phone}`} style={{ color: 'var(--accentB)' }}>{person.phone}</a>
+                    </div>
+                  )}
+                  {!person.email && !person.phone && (
+                    <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>No contact information available</span>
+                  )}
+                </div>
+              </td>
+            </tr>
+          )}
+        </>
       );
     };
 
@@ -969,45 +1115,84 @@ export default function TeamList() {
 
     const totalCount = headMembers.length + assistantHeadMembers.length + teamMembers.length;
 
-    const renderRow = (person, roleLabel) => (
-      <tr key={person.id} className={removingId === person.id ? 'removing' : ''}>
-        <td style={{ fontWeight: 600 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>
-              {person.name}
-              {roleLabel && (
-                <span style={{ 
-                  marginLeft: '8px', 
-                  padding: '2px 8px', 
-                  borderRadius: '12px', 
-                  fontSize: '11px', 
-                  fontWeight: 'bold',
-                  backgroundColor: roleLabel === 'HEAD' ? '#28a745' : '#ffc107',
-                  color: roleLabel === 'HEAD' ? 'white' : '#333'
-                }}>{roleLabel}</span>
-              )}
-            </span>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button 
-                className="btn btn-small"
-                onClick={() => handleChangeRoleClick(person.id, person.name, person.role)}
-                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-              >
-                Change
-              </button>
-              <button 
-                className="btn btn-small btn-danger"
-                onClick={() => handleRemoveTeammate(person.id, person.role)}
-                disabled={removingId === person.id}
-                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        </td>
-      </tr>
-    );
+    const renderRow = (person, roleLabel) => {
+      const isExpanded = expandedRows.has(person.id);
+
+      return (
+        <>
+          <tr key={person.id} className={removingId === person.id ? 'removing' : ''}>
+            <td style={{ fontWeight: 600 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span 
+                  onClick={() => toggleRowExpansion(person.id)}
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                  {person.name}
+                  {roleLabel && (
+                    <span style={{ 
+                      marginLeft: '8px', 
+                      padding: '2px 8px', 
+                      borderRadius: '12px', 
+                      fontSize: '11px', 
+                      fontWeight: 'bold',
+                      backgroundColor: roleLabel === 'HEAD' ? '#28a745' : '#ffc107',
+                      color: roleLabel === 'HEAD' ? 'white' : '#333'
+                    }}>{roleLabel}</span>
+                  )}
+                </span>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button 
+                    className="btn btn-small"
+                    onClick={() => handleChangeRoleClick(person.id, person.name, person.role)}
+                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                  >
+                    Change
+                  </button>
+                  <button 
+                    className="btn btn-small btn-danger"
+                    onClick={() => handleRemoveTeammate(person.id, person.role)}
+                    disabled={removingId === person.id}
+                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {isExpanded && (
+            <tr key={`${person.id}-details`} className="expanded-row">
+              <td>
+                <div style={{ 
+                  padding: '8px 12px', 
+                  backgroundColor: 'var(--panel-header)', 
+                  borderRadius: '4px',
+                  fontSize: '0.85rem',
+                  lineHeight: '1.6'
+                }}>
+                  {person.email && (
+                    <div style={{ marginBottom: '4px' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--muted)' }}>Email:</span>{' '}
+                      <a href={`mailto:${person.email}`} style={{ color: 'var(--accentB)' }}>{person.email}</a>
+                    </div>
+                  )}
+                  {person.phone && (
+                    <div>
+                      <span style={{ fontWeight: 600, color: 'var(--muted)' }}>Phone:</span>{' '}
+                      <a href={`tel:${person.phone}`} style={{ color: 'var(--accentB)' }}>{person.phone}</a>
+                    </div>
+                  )}
+                  {!person.email && !person.phone && (
+                    <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>No contact information available</span>
+                  )}
+                </div>
+              </td>
+            </tr>
+          )}
+        </>
+      );
+    };
 
     // Combine all members for two-column layout
     const allMembers = [
@@ -1600,8 +1785,34 @@ export default function TeamList() {
           height: 44px;
         }
         
+        #team-list-app .table tbody tr.expanded-row {
+          height: auto;
+        }
+        
+        #team-list-app .table tbody tr.expanded-row td {
+          height: auto;
+          padding-top: 0;
+          padding-bottom: 12px;
+        }
+        
         #team-list-app .table td {
           font-size: 0.85rem;
+        }
+        
+        /* Expandable row animations */
+        #team-list-app tr.expanded-row {
+          animation: expandRow 0.2s ease-out;
+        }
+        
+        @keyframes expandRow {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         
         /* Remove animation for table rows */
