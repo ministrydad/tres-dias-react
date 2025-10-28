@@ -90,8 +90,10 @@ export default function Reports() {
       sponsorExpected: 0,
       weekendCollected: 0,
       sponsorCollected: 0,
-      cashCollected: 0,
-      checkCollected: 0,
+      weekendCashCollected: 0,
+      weekendCheckCollected: 0,
+      sponsorCashCollected: 0,
+      sponsorCheckCollected: 0,
       overdueItems: 0
     };
 
@@ -125,11 +127,11 @@ export default function Reports() {
       totals.weekendCollected += weekendCollected;
       totals.sponsorCollected += sponsorCollected;
       
-      // Payment methods breakdown (cash vs check)
-      if (app.payment_wk_cash) totals.cashCollected += weekendFee;
-      if (app.payment_wk_check) totals.checkCollected += weekendFee;
-      if (app.payment_sp_cash) totals.cashCollected += sponsorFee;
-      if (app.payment_sp_check) totals.checkCollected += sponsorFee;
+      // Payment methods breakdown - GRANULAR (weekend vs sponsor, cash vs check)
+      if (app.payment_wk_cash) totals.weekendCashCollected += weekendFee;
+      if (app.payment_wk_check) totals.weekendCheckCollected += weekendFee;
+      if (app.payment_sp_cash) totals.sponsorCashCollected += sponsorFee;
+      if (app.payment_sp_check) totals.sponsorCheckCollected += sponsorFee;
 
       // Overdue calculation
       const totalExpected = weekendFee + sponsorFee;
@@ -278,17 +280,39 @@ export default function Reports() {
 
             <div className="card pad">
               <div className="small-card-header">Payment Methods</div>
-              <div className="financial-line">
-                <span>Cash:</span>
-                <span id="cra_cashCollected" style={{ color: 'var(--accentA)' }}>
-                  {formatCurrency(totals.cashCollected)}
-                </span>
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '6px' }}>
+                  Weekend Fee
+                </div>
+                <div className="financial-line">
+                  <span>Cash:</span>
+                  <span id="cra_weekendCashCollected" style={{ color: 'var(--accentA)' }}>
+                    {formatCurrency(totals.weekendCashCollected)}
+                  </span>
+                </div>
+                <div className="financial-line">
+                  <span>Check:</span>
+                  <span id="cra_weekendCheckCollected" style={{ color: 'var(--accentB)' }}>
+                    {formatCurrency(totals.weekendCheckCollected)}
+                  </span>
+                </div>
               </div>
-              <div className="financial-line">
-                <span>Check:</span>
-                <span id="cra_checkCollected" style={{ color: 'var(--accentB)' }}>
-                  {formatCurrency(totals.checkCollected)}
-                </span>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '6px' }}>
+                  Sponsor Fee
+                </div>
+                <div className="financial-line">
+                  <span>Cash:</span>
+                  <span id="cra_sponsorCashCollected" style={{ color: 'var(--accentA)' }}>
+                    {formatCurrency(totals.sponsorCashCollected)}
+                  </span>
+                </div>
+                <div className="financial-line">
+                  <span>Check:</span>
+                  <span id="cra_sponsorCheckCollected" style={{ color: 'var(--accentB)' }}>
+                    {formatCurrency(totals.sponsorCheckCollected)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
