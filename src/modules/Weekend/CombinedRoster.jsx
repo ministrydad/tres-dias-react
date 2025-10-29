@@ -118,6 +118,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingLeft: 6,  // Increased indent adjustment for better alignment
   },
+  columnNoIndent: {
+    flex: 1,
+    paddingLeft: 0,  // No indent for middle/right columns in 3-column layout
+  },
   centerColumn: {
     flex: 1,
     alignItems: 'center',
@@ -272,12 +276,12 @@ const RosterPDFDocument = ({
       
       {/* Row 2: BUR, Head, Asst Head */}
       <View style={styles.threeColumnContainer} wrap={false}>
-        {['BUR', 'Head', 'Asst Head'].map(role => {
+        {['BUR', 'Head', 'Asst Head'].map((role, colIdx) => {
           const members = teamMembers.filter(m => m.role === role);
-          if (members.length === 0) return <View key={role} style={styles.column} />;
+          if (members.length === 0) return <View key={role} style={colIdx === 0 ? styles.column : styles.columnNoIndent} />;
           
           return (
-            <View key={role} style={styles.column}>
+            <View key={role} style={colIdx === 0 ? styles.column : styles.columnNoIndent}>
               <Text style={styles.roleHeader}>{role}</Text>
               {members.map((member, idx) => (
                 <View key={idx} style={styles.memberRow}>
@@ -297,12 +301,12 @@ const RosterPDFDocument = ({
       
       {/* Row 3: Head Spiritual Director, Spiritual Director(s), Rover */}
       <View style={styles.threeColumnContainer} wrap={false}>
-        {['Head Spiritual Director', 'Spiritual Director', 'Rover'].map(role => {
+        {['Head Spiritual Director', 'Spiritual Director', 'Rover'].map((role, colIdx) => {
           const members = teamMembers.filter(m => m.role === role);
-          if (members.length === 0) return <View key={role} style={styles.column} />;
+          if (members.length === 0) return <View key={role} style={colIdx === 0 ? styles.column : styles.columnNoIndent} />;
           
           return (
-            <View key={role} style={styles.column}>
+            <View key={role} style={colIdx === 0 ? styles.column : styles.columnNoIndent}>
               <Text style={styles.roleHeader}>{role}</Text>
               {members.map((member, idx) => (
                 <View key={idx} style={styles.memberRow}>
@@ -464,7 +468,7 @@ export default function CombinedRoster() {
   // Cover page inputs
   const [coverImage, setCoverImage] = useState(null);
   const [coverImagePreview, setCoverImagePreview] = useState(null);
-  const [title, setTitle] = useState('A New Creation');
+  const [title, setTitle] = useState('');
   const [verse, setVerse] = useState('');
   const [communityName, setCommunityName] = useState('');
   const [weekendStartDate, setWeekendStartDate] = useState('');
@@ -947,17 +951,14 @@ export default function CombinedRoster() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <label 
                   htmlFor="coverImageUpload" 
-                  className="btn"
+                  className={coverImagePreview ? "btn" : "btn"}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '8px',
                     cursor: 'pointer',
-                    padding: '8px 16px',
-                    backgroundColor: coverImagePreview ? 'var(--accentB)' : 'var(--panel)',
-                    color: coverImagePreview ? 'white' : 'var(--ink)',
-                    border: coverImagePreview ? 'none' : '1px solid var(--border)',
-                    transition: 'all 0.2s'
+                    backgroundColor: coverImagePreview ? 'var(--accentB)' : undefined,
+                    color: coverImagePreview ? 'white' : undefined,
+                    border: coverImagePreview ? 'none' : undefined
                   }}
                 >
                   {coverImagePreview ? 'Image Selected' : 'Choose Image'}
