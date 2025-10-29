@@ -3,14 +3,33 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
-import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Image } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Image, Font } from '@react-pdf/renderer';
 
-// PDF Styles - Professional, compact design
+// Register Source Sans Pro font
+Font.register({
+  family: 'Source Sans Pro',
+  fonts: [
+    {
+      src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xK3dSBYKcSV-LCoeQqfX1RYOo3qOK7lujVj9w.woff2',
+      fontWeight: 400,
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwlxdu3cOWxw.woff2',
+      fontWeight: 600,
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwmRdu3cOWxw.woff2',
+      fontWeight: 700,
+    },
+  ],
+});
+
+// PDF Styles - Professional, compact design with Source Sans Pro
 const styles = StyleSheet.create({
   page: {
     padding: 30,
     fontSize: 9,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Source Sans Pro',
   },
   coverPage: {
     display: 'flex',
@@ -20,14 +39,14 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   coverImage: {
-    maxWidth: '70%',
-    maxHeight: 400,
+    maxWidth: '85%',
+    maxHeight: 480,
     marginBottom: 30,
     objectFit: 'contain',
   },
   coverTitle: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: 700,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -40,6 +59,7 @@ const styles = StyleSheet.create({
   },
   coverCommunity: {
     fontSize: 16,
+    fontWeight: 600,
     marginBottom: 8,
     textAlign: 'center',
   },
@@ -50,14 +70,14 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: 700,
     marginBottom: 10,
     paddingBottom: 5,
     borderBottom: '2 solid #333',
   },
   roleHeader: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: 700,
     marginTop: 8,
     marginBottom: 4,
     color: '#2c5aa0',
@@ -79,7 +99,7 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 9,
-    fontWeight: 'bold',
+    fontWeight: 700,
     marginBottom: 2,
   },
   memberDetails: {
@@ -89,7 +109,7 @@ const styles = StyleSheet.create({
   },
   tableGroupHeader: {
     fontSize: 11,
-    fontWeight: 'bold',
+    fontWeight: 700,
     marginTop: 10,
     marginBottom: 6,
     backgroundColor: '#e8e8e8',
