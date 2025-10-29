@@ -396,8 +396,51 @@ export default function CombinedRoster() {
           dataUrlLength: result.length,
           startsWithDataUrl: result.startsWith('data:')
         });
-        setCoverImage(result);
-        setCoverImagePreview(result);
+        
+        // Compress image for PDF (large images cause rendering issues)
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Max dimensions for PDF (keeps reasonable file size)
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculate new dimensions while maintaining aspect ratio
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = (height * MAX_WIDTH) / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = (width * MAX_HEIGHT) / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to JPEG with good quality (reduces file size significantly)
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          
+          console.log('✅ Image compressed:', {
+            originalSize: result.length,
+            compressedSize: compressedDataUrl.length,
+            reduction: `${Math.round((1 - compressedDataUrl.length / result.length) * 100)}%`,
+            dimensions: `${width}x${height}`
+          });
+          
+          setCoverImage(compressedDataUrl);
+          setCoverImagePreview(compressedDataUrl);
+        };
+        img.src = result;
       };
       reader.readAsDataURL(file);
     }
@@ -653,12 +696,35 @@ export default function CombinedRoster() {
 
             <div className="field" style={{ marginBottom: 0 }}>
               <label className="label">Cover Image (optional)</label>
-              <input 
-                type="file" 
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="input"
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <label 
+                  htmlFor="coverImageUpload" 
+                  className="btn"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    padding: '8px 16px',
+                    backgroundColor: coverImagePreview ? 'var(--accentB)' : 'var(--panel)',
+                    color: coverImagePreview ? 'white' : 'var(--ink)',
+                    border: coverImagePreview ? 'none' : '1px solid var(--border)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {coverImagePreview ? 'Image Selected' : 'Choose Image'}
+                </label>
+                <input 
+                  id="coverImageUpload"
+                  type="file" 
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                  Any size accepted (auto-optimized for PDF)
+                </span>
+              </div>
             </div>
           </div>
 
