@@ -400,7 +400,7 @@ export default function CombinedRoster() {
         });
         
         // Compress image for PDF (large images cause rendering issues)
-        const img = new Image();
+        const img = new window.Image();
         img.onload = () => {
           console.log('🖼️ Image loaded for compression, dimensions:', img.width, 'x', img.height);
           const canvas = document.createElement('canvas');
