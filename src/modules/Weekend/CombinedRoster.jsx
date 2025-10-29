@@ -452,6 +452,8 @@ export default function CombinedRoster() {
       return;
     }
 
+    console.log('🔄 Loading roster... Current coverImage length:', coverImage ? coverImage.length : 0);
+
     setLoading(true);
     setPdfReady(false);
 
@@ -463,6 +465,7 @@ export default function CombinedRoster() {
       await loadCandidates();
       
       setPdfReady(true);
+      console.log('✅ Roster loaded. CoverImage still exists:', !!coverImage);
       window.showMainStatus?.('Roster data loaded successfully', false);
     } catch (error) {
       console.error('Error loading roster:', error);
