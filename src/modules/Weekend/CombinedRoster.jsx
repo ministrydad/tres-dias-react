@@ -33,7 +33,7 @@ Font.register({
 const styles = StyleSheet.create({
   page: {
     padding: 30,
-    fontSize: 9,
+    fontSize: 10,  // Increased from 9 to 10
     fontFamily: 'Source Sans 3',
   },
   coverPage: {
@@ -76,14 +76,14 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   sectionHeader: {
-    fontSize: 16,
+    fontSize: 17,  // Increased from 16
     fontWeight: 700,
     marginBottom: 10,
     paddingBottom: 5,
     borderBottom: '2 solid #333',
   },
   roleHeader: {
-    fontSize: 10,
+    fontSize: 11,  // Increased from 10
     fontWeight: 700,
     marginTop: 8,
     marginBottom: 4,
@@ -91,13 +91,33 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     padding: '3 5',
   },
+  roleHeaderCentered: {
+    fontSize: 11,
+    fontWeight: 700,
+    marginTop: 8,
+    marginBottom: 4,
+    color: '#2c5aa0',
+    backgroundColor: '#f5f5f5',
+    padding: '3 5',
+    textAlign: 'center',
+  },
   twoColumnContainer: {
     display: 'flex',
     flexDirection: 'row',
     gap: 12,
   },
+  threeColumnContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
   column: {
     flex: 1,
+  },
+  centerColumn: {
+    flex: 1,
+    alignItems: 'center',
   },
   memberRow: {
     marginBottom: 6,
@@ -105,17 +125,17 @@ const styles = StyleSheet.create({
     borderBottom: '0.5 solid #ddd',
   },
   memberName: {
-    fontSize: 9,
+    fontSize: 10,  // Increased from 9
     fontWeight: 700,
     marginBottom: 2,
   },
   memberDetails: {
-    fontSize: 7.5,
+    fontSize: 8.5,  // Increased from 7.5
     color: '#444',
     lineHeight: 1.3,
   },
   tableGroupHeader: {
-    fontSize: 11,
+    fontSize: 12,  // Increased from 11
     fontWeight: 700,
     marginTop: 10,
     marginBottom: 6,
@@ -203,17 +223,95 @@ const RosterPDFDocument = ({
       </View>
     </Page>
 
-    {/* Team Members Pages - Row by Row Layout */}
+    {/* Team Members Page 1 - Leadership Structure */}
     <Page size="LETTER" style={styles.page}>
-      <Text style={styles.sectionHeader}>Team Members</Text>
+      <Text style={styles.sectionHeader}>Team Members - Leadership</Text>
       
-      {roleOrder.map(role => {
+      {/* Rector - Centered */}
+      {(() => {
+        const rectorMembers = teamMembers.filter(m => m.role === 'Rector');
+        if (rectorMembers.length === 0) return null;
+        
+        return (
+          <View wrap={false} style={{ marginBottom: 16, alignItems: 'center' }}>
+            <Text style={styles.roleHeaderCentered}>Rector</Text>
+            {rectorMembers.map((member, idx) => (
+              <View key={idx} style={{ ...styles.memberRow, maxWidth: '60%', width: '100%' }}>
+                <Text style={styles.memberName}>{member.name}</Text>
+                <Text style={styles.memberDetails}>
+                  {member.address && `${member.address}\n`}
+                  {member.email && `${member.email}\n`}
+                  {member.phone && `${member.phone}\n`}
+                  {member.church && `${member.church}`}
+                </Text>
+              </View>
+            ))}
+          </View>
+        );
+      })()}
+      
+      {/* Row 2: BUR, Head, Asst Head */}
+      <View style={styles.threeColumnContainer} wrap={false}>
+        {['BUR', 'Head', 'Asst Head'].map(role => {
+          const members = teamMembers.filter(m => m.role === role);
+          if (members.length === 0) return <View key={role} style={styles.column} />;
+          
+          return (
+            <View key={role} style={styles.column}>
+              <Text style={styles.roleHeaderCentered}>{role}</Text>
+              {members.map((member, idx) => (
+                <View key={idx} style={styles.memberRow}>
+                  <Text style={styles.memberName}>{member.name}</Text>
+                  <Text style={styles.memberDetails}>
+                    {member.address && `${member.address}\n`}
+                    {member.email && `${member.email}\n`}
+                    {member.phone && `${member.phone}\n`}
+                    {member.church && `${member.church}`}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          );
+        })}
+      </View>
+      
+      {/* Row 3: Head Spiritual Director, Spiritual Director(s) */}
+      <View style={styles.threeColumnContainer} wrap={false}>
+        {['Head Spiritual Director', 'Spiritual Director', 'Rover'].map(role => {
+          const members = teamMembers.filter(m => m.role === role);
+          if (members.length === 0) return <View key={role} style={styles.column} />;
+          
+          return (
+            <View key={role} style={styles.column}>
+              <Text style={role.startsWith('Head') ? styles.roleHeaderCentered : styles.roleHeader}>{role}</Text>
+              {members.map((member, idx) => (
+                <View key={idx} style={styles.memberRow}>
+                  <Text style={styles.memberName}>{member.name}</Text>
+                  <Text style={styles.memberDetails}>
+                    {member.address && `${member.address}\n`}
+                    {member.email && `${member.email}\n`}
+                    {member.phone && `${member.phone}\n`}
+                    {member.church && `${member.church}`}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          );
+        })}
+      </View>
+    </Page>
+
+    {/* Team Members Page 2+ - All Other Roles (Row by Row Layout) */}
+    <Page size="LETTER" style={styles.page}>
+      <Text style={styles.sectionHeader}>Team Members - Service Teams</Text>
+      
+      {roleOrder.filter(role => !['Rector', 'BUR', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director', 'Rover'].includes(role)).map(role => {
         const members = teamMembers.filter(m => m.role === role);
         if (members.length === 0) return null;
         
         return (
           <View key={role} wrap={false} style={{ marginBottom: 8 }}>
-            <Text style={styles.roleHeader}>{role}</Text>
+            <Text style={role.startsWith('Head') ? styles.roleHeaderCentered : styles.roleHeader}>{role}</Text>
             <View style={styles.twoColumnContainer}>
               <View style={styles.column}>
                 {members.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
