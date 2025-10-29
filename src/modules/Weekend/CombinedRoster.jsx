@@ -278,10 +278,10 @@ const RosterPDFDocument = ({
       <View style={styles.threeColumnContainer} wrap={false}>
         {['BUR', 'Head', 'Asst Head'].map((role, colIdx) => {
           const members = teamMembers.filter(m => m.role === role);
-          if (members.length === 0) return <View key={role} style={colIdx === 0 ? styles.column : styles.columnNoIndent} />;
+          if (members.length === 0) return <View key={role} style={styles.columnNoIndent} />;
           
           return (
-            <View key={role} style={colIdx === 0 ? styles.column : styles.columnNoIndent}>
+            <View key={role} style={styles.columnNoIndent}>
               <Text style={styles.roleHeader}>{role}</Text>
               {members.map((member, idx) => (
                 <View key={idx} style={styles.memberRow}>
@@ -303,10 +303,10 @@ const RosterPDFDocument = ({
       <View style={styles.threeColumnContainer} wrap={false}>
         {['Head Spiritual Director', 'Spiritual Director', 'Rover'].map((role, colIdx) => {
           const members = teamMembers.filter(m => m.role === role);
-          if (members.length === 0) return <View key={role} style={colIdx === 0 ? styles.column : styles.columnNoIndent} />;
+          if (members.length === 0) return <View key={role} style={styles.columnNoIndent} />;
           
           return (
-            <View key={role} style={colIdx === 0 ? styles.column : styles.columnNoIndent}>
+            <View key={role} style={styles.columnNoIndent}>
               <Text style={styles.roleHeader}>{role}</Text>
               {members.map((member, idx) => (
                 <View key={idx} style={styles.memberRow}>
@@ -393,7 +393,7 @@ const RosterPDFDocument = ({
               <View style={styles.column}>
                 {allProfessors.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
                   <View key={idx} style={styles.memberRow}>
-                    <Text style={styles.memberName}>{member.name} ({member.displayRole})</Text>
+                    <Text style={styles.memberName}>{member.name} - {member.displayRole}</Text>
                     <Text style={styles.memberDetails}>
                       {member.address && `${member.address}\n`}
                       {member.email && `${member.email}\n`}
@@ -407,7 +407,7 @@ const RosterPDFDocument = ({
               <View style={styles.column}>
                 {allProfessors.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
                   <View key={idx} style={styles.memberRow}>
-                    <Text style={styles.memberName}>{member.name} ({member.displayRole})</Text>
+                    <Text style={styles.memberName}>{member.name} - {member.displayRole}</Text>
                     <Text style={styles.memberDetails}>
                       {member.address && `${member.address}\n`}
                       {member.email && `${member.email}\n`}
