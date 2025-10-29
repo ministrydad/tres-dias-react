@@ -5,24 +5,28 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Image, Font } from '@react-pdf/renderer';
 
-// Register Source Sans Pro font
-Font.register({
-  family: 'Source Sans Pro',
-  fonts: [
-    {
-      src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xK3dSBYKcSV-LCoeQqfX1RYOo3qOK7lujVj9w.woff2',
-      fontWeight: 400,
-    },
-    {
-      src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwlxdu3cOWxw.woff2',
-      fontWeight: 600,
-    },
-    {
-      src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwmRdu3cOWxw.woff2',
-      fontWeight: 700,
-    },
-  ],
-});
+// Register Source Sans Pro font with fallback
+try {
+  Font.register({
+    family: 'Source Sans Pro',
+    fonts: [
+      {
+        src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xK3dSBYKcSV-LCoeQqfX1RYOo3qOK7lujVj9w.woff2',
+        fontWeight: 400,
+      },
+      {
+        src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwlxdu3cOWxw.woff2',
+        fontWeight: 600,
+      },
+      {
+        src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwmRdu3cOWxw.woff2',
+        fontWeight: 700,
+      },
+    ],
+  });
+} catch (error) {
+  console.warn('Failed to load Source Sans Pro, falling back to Helvetica:', error);
+}
 
 // PDF Styles - Professional, compact design with Source Sans Pro
 const styles = StyleSheet.create({
@@ -663,7 +667,7 @@ export default function CombinedRoster() {
         </div>
       </div>
 
-      {/* Candidate Table Assignment Section - More Compact */}
+      {/* Candidate Table Assignment Section - Button Grid Interface */}
       {pdfReady && candidates.length > 0 && (
         <div className="card pad" style={{ marginBottom: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -673,34 +677,56 @@ export default function CombinedRoster() {
             </div>
           </div>
           
-          <table className="table">
-            <thead>
-              <tr>
-                <th style={{ width: '60%' }}>Candidate Name</th>
-                <th style={{ width: '40%' }}>Table Assignment</th>
-              </tr>
-            </thead>
-            <tbody>
-              {candidates.map(candidate => (
-                <tr key={candidate.id}>
-                  <td style={{ fontWeight: 600, fontSize: '0.9rem' }}>{candidate.name}</td>
-                  <td>
-                    <select
-                      className="input"
-                      value={tableAssignments[candidate.id] || ''}
-                      onChange={(e) => handleTableAssignment(candidate.id, e.target.value)}
-                      style={{ fontSize: '0.85rem', padding: '6px 8px' }}
+          <div style={{ display: 'grid', gap: '12px' }}>
+            {candidates.map(candidate => (
+              <div key={candidate.id} style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px',
+                padding: '8px',
+                backgroundColor: tableAssignments[candidate.id] ? 'var(--panel-header)' : 'transparent',
+                borderRadius: '4px',
+                border: tableAssignments[candidate.id] ? '1px solid var(--border)' : 'none'
+              }}>
+                <div style={{ flex: '0 0 200px', fontWeight: 600, fontSize: '0.9rem' }}>
+                  {candidate.name}
+                </div>
+                <div style={{ flex: 1, display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {tableNames.map(table => (
+                    <button
+                      key={table}
+                      className={`btn btn-small ${tableAssignments[candidate.id] === table ? 'btn-primary' : ''}`}
+                      onClick={() => handleTableAssignment(candidate.id, table)}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '0.8rem',
+                        minWidth: '80px',
+                        backgroundColor: tableAssignments[candidate.id] === table ? 'var(--accentB)' : 'transparent',
+                        color: tableAssignments[candidate.id] === table ? 'white' : 'var(--ink)',
+                        border: tableAssignments[candidate.id] === table ? 'none' : '1px solid var(--border)'
+                      }}
                     >
-                      <option value="">-- Select Table --</option>
-                      {tableNames.map(table => (
-                        <option key={table} value={table}>{table}</option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      {table}
+                    </button>
+                  ))}
+                  {tableAssignments[candidate.id] && (
+                    <button
+                      className="btn btn-small"
+                      onClick={() => handleTableAssignment(candidate.id, '')}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '0.8rem',
+                        color: 'var(--accentD)',
+                        border: '1px solid var(--accentD)'
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
