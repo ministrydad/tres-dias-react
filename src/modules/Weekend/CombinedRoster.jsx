@@ -68,6 +68,12 @@ const styles = StyleSheet.create({
     fontWeight: 600,
     textAlign: 'center',
     color: '#333',
+    marginBottom: 8,
+  },
+  coverDates: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: '#666',
   },
   sectionHeader: {
     fontSize: 16,
@@ -140,6 +146,8 @@ const RosterPDFDocument = ({
   verse, 
   communityName, 
   weekendIdentifier,
+  weekendStartDate,
+  weekendEndDate,
   teamMembers,
   candidates,
   roleOrder 
@@ -151,8 +159,24 @@ const RosterPDFDocument = ({
     coverImageLength: coverImage ? coverImage.length : 0,
     title,
     communityName,
-    weekendIdentifier
+    weekendIdentifier,
+    weekendStartDate,
+    weekendEndDate
   });
+  
+  // Format date range for PDF
+  const formatDateRange = () => {
+    if (!weekendStartDate || !weekendEndDate) return '';
+    
+    const start = new Date(weekendStartDate + 'T00:00:00');
+    const end = new Date(weekendEndDate + 'T00:00:00');
+    
+    const options = { month: 'long', day: 'numeric', year: 'numeric' };
+    const startFormatted = start.toLocaleDateString('en-US', options);
+    const endFormatted = end.toLocaleDateString('en-US', options);
+    
+    return `${startFormatted} - ${endFormatted}`;
+  };
   
   return (
   <Document>
@@ -169,8 +193,13 @@ const RosterPDFDocument = ({
         )}
         {verse && <Text style={styles.coverVerse}>{verse}</Text>}
         <Text style={styles.coverCommunityWeekend}>
-          {communityName} - {weekendIdentifier}
+          {communityName} - {weekendIdentifier.replace(/^(Men's|Women's)\s*(\d+)$/i, "$1 Weekend #$2")}
         </Text>
+        {weekendStartDate && weekendEndDate && (
+          <Text style={styles.coverDates}>
+            {formatDateRange()}
+          </Text>
+        )}
       </View>
     </Page>
 
@@ -276,6 +305,8 @@ export default function CombinedRoster() {
   const [title, setTitle] = useState('A New Creation');
   const [verse, setVerse] = useState('');
   const [communityName, setCommunityName] = useState('');
+  const [weekendStartDate, setWeekendStartDate] = useState('');
+  const [weekendEndDate, setWeekendEndDate] = useState('');
   
   // Roster data
   const [teamMembers, setTeamMembers] = useState([]);
@@ -382,6 +413,37 @@ export default function CombinedRoster() {
       console.error('Error loading weekends:', error);
       window.showMainStatus?.('Failed to load weekends', true);
     }
+  };
+
+  const handleStartDateChange = (e) => {
+    const startDate = e.target.value;
+    setWeekendStartDate(startDate);
+    
+    if (startDate) {
+      // Add 3 days to get the end date (Thursday to Sunday)
+      const start = new Date(startDate + 'T00:00:00');
+      const end = new Date(start);
+      end.setDate(start.getDate() + 3);
+      
+      // Format as YYYY-MM-DD for the input
+      const endDateStr = end.toISOString().split('T')[0];
+      setWeekendEndDate(endDateStr);
+    } else {
+      setWeekendEndDate('');
+    }
+  };
+
+  const formatDateRange = () => {
+    if (!weekendStartDate || !weekendEndDate) return '';
+    
+    const start = new Date(weekendStartDate + 'T00:00:00');
+    const end = new Date(weekendEndDate + 'T00:00:00');
+    
+    const options = { month: 'long', day: 'numeric', year: 'numeric' };
+    const startFormatted = start.toLocaleDateString('en-US', options);
+    const endFormatted = end.toLocaleDateString('en-US', options);
+    
+    return `${startFormatted} - ${endFormatted}`;
   };
 
   const handleImageUpload = (e) => {
@@ -683,6 +745,21 @@ export default function CombinedRoster() {
             </div>
 
             <div className="field" style={{ marginBottom: 0 }}>
+              <label className="label">Weekend Start Date</label>
+              <input 
+                type="date"
+                className="input"
+                value={weekendStartDate}
+                onChange={handleStartDateChange}
+              />
+              {weekendEndDate && (
+                <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
+                  Dates: {formatDateRange()}
+                </div>
+              )}
+            </div>
+
+            <div className="field" style={{ marginBottom: 0 }}>
               <label className="label">Scripture Verse (optional)</label>
               <input 
                 type="text"
@@ -861,6 +938,8 @@ export default function CombinedRoster() {
                     verse={verse}
                     communityName={communityName}
                     weekendIdentifier={weekendIdentifier}
+                    weekendStartDate={weekendStartDate}
+                    weekendEndDate={weekendEndDate}
                     teamMembers={teamMembers}
                     candidates={getCandidatesGroupedByTable()}
                     roleOrder={ROLE_ORDER}
@@ -893,6 +972,8 @@ export default function CombinedRoster() {
                   verse={verse}
                   communityName={communityName}
                   weekendIdentifier={weekendIdentifier}
+                  weekendStartDate={weekendStartDate}
+                  weekendEndDate={weekendEndDate}
                   teamMembers={teamMembers}
                   candidates={getCandidatesGroupedByTable()}
                   roleOrder={ROLE_ORDER}
