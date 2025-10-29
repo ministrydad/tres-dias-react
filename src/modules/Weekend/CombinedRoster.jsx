@@ -64,14 +64,14 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   coverCommunityWeekend: {
-    fontSize: 16,
-    fontWeight: 600,
+    fontSize: 18,
+    fontWeight: 700,
     textAlign: 'center',
     color: '#333',
     marginBottom: 8,
   },
   coverDates: {
-    fontSize: 14,
+    fontSize: 11,
     textAlign: 'center',
     color: '#666',
   },
@@ -203,44 +203,20 @@ const RosterPDFDocument = ({
       </View>
     </Page>
 
-    {/* Team Members Pages - 2 Column Layout */}
+    {/* Team Members Pages - Row by Row Layout */}
     <Page size="LETTER" style={styles.page}>
       <Text style={styles.sectionHeader}>Team Members</Text>
       
-      <View style={styles.twoColumnContainer}>
-        <View style={styles.column}>
-          {roleOrder.slice(0, Math.ceil(roleOrder.length / 2)).map(role => {
-            const members = teamMembers.filter(m => m.role === role);
-            if (members.length === 0) return null;
-            
-            return (
-              <View key={role} wrap={false}>
-                <Text style={styles.roleHeader}>{role}</Text>
-                {members.map((member, idx) => (
-                  <View key={idx} style={styles.memberRow}>
-                    <Text style={styles.memberName}>{member.name}</Text>
-                    <Text style={styles.memberDetails}>
-                      {member.address && `${member.address}\n`}
-                      {member.email && `${member.email}\n`}
-                      {member.phone && `${member.phone}\n`}
-                      {member.church && `${member.church}`}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            );
-          })}
-        </View>
+      {roleOrder.map(role => {
+        const members = teamMembers.filter(m => m.role === role);
+        if (members.length === 0) return null;
         
-        <View style={styles.column}>
-          {roleOrder.slice(Math.ceil(roleOrder.length / 2)).map(role => {
-            const members = teamMembers.filter(m => m.role === role);
-            if (members.length === 0) return null;
-            
-            return (
-              <View key={role} wrap={false}>
-                <Text style={styles.roleHeader}>{role}</Text>
-                {members.map((member, idx) => (
+        return (
+          <View key={role} wrap={false} style={{ marginBottom: 8 }}>
+            <Text style={styles.roleHeader}>{role}</Text>
+            <View style={styles.twoColumnContainer}>
+              <View style={styles.column}>
+                {members.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
                   <View key={idx} style={styles.memberRow}>
                     <Text style={styles.memberName}>{member.name}</Text>
                     <Text style={styles.memberDetails}>
@@ -252,10 +228,24 @@ const RosterPDFDocument = ({
                   </View>
                 ))}
               </View>
-            );
-          })}
-        </View>
-      </View>
+              
+              <View style={styles.column}>
+                {members.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
+                  <View key={idx} style={styles.memberRow}>
+                    <Text style={styles.memberName}>{member.name}</Text>
+                    <Text style={styles.memberDetails}>
+                      {member.address && `${member.address}\n`}
+                      {member.email && `${member.email}\n`}
+                      {member.phone && `${member.phone}\n`}
+                      {member.church && `${member.church}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        );
+      })}
     </Page>
 
     {/* Candidates Pages - All tables together, 2 candidates per row */}
