@@ -698,11 +698,13 @@ export default function TeamList() {
       if (orgError) throw orgError;
       setBadgeCommunity(orgData.name || '');
 
-      // Load candidates
+      // Load candidates (exclude withdrawn and declined)
       const { data: candidatesData, error: candidatesError} = await supabase
         .from('cra_applications')
-        .select('m_first, m_pref, f_first, f_pref, c_lastname')
-        .eq('org_id', orgId);
+        .select('m_first, m_pref, f_first, f_pref, c_lastname, attendance')
+        .eq('org_id', orgId)
+        .not('attendance', 'eq', 'no')  // Exclude "No" responses
+        .not('attendance', 'eq', 'withdrawn');  // Exclude withdrawn
 
       if (candidatesError) throw candidatesError;
 
