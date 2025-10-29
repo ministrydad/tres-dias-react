@@ -39,39 +39,35 @@ const styles = StyleSheet.create({
   coverPage: {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     height: '100%',
+    paddingTop: 80,
+  },
+  coverTitle: {
+    fontSize: 40,
+    fontWeight: 700,
+    marginBottom: 40,
+    textAlign: 'center',
   },
   coverImage: {
     maxWidth: '85%',
-    maxHeight: 480,
-    marginBottom: 30,
+    maxHeight: 380,
+    marginBottom: 40,
     objectFit: 'contain',
   },
-  coverTitle: {
-    fontSize: 32,
-    fontWeight: 700,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
   coverVerse: {
-    fontSize: 14,
+    fontSize: 12,
     fontStyle: 'italic',
-    marginBottom: 15,
+    marginBottom: 30,
     textAlign: 'center',
     color: '#555',
   },
-  coverCommunity: {
+  coverCommunityWeekend: {
     fontSize: 16,
     fontWeight: 600,
-    marginBottom: 8,
     textAlign: 'center',
-  },
-  coverWeekend: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
+    color: '#333',
   },
   sectionHeader: {
     fontSize: 16,
@@ -152,16 +148,18 @@ const RosterPDFDocument = ({
     {/* Cover Page */}
     <Page size="LETTER" style={styles.page}>
       <View style={styles.coverPage}>
+        <Text style={styles.coverTitle}>{title}</Text>
         {coverImage && (
           <Image
             style={styles.coverImage}
             src={coverImage}
+            cache={false}
           />
         )}
-        <Text style={styles.coverTitle}>{title}</Text>
         {verse && <Text style={styles.coverVerse}>{verse}</Text>}
-        <Text style={styles.coverCommunity}>{communityName}</Text>
-        <Text style={styles.coverWeekend}>{weekendIdentifier}</Text>
+        <Text style={styles.coverCommunityWeekend}>
+          {communityName} - {weekendIdentifier}
+        </Text>
       </View>
     </Page>
 
