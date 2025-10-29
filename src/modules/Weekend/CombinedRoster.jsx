@@ -5,11 +5,11 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Image } from '@react-pdf/renderer';
 
-// PDF Styles
+// PDF Styles - Optimized 2-column layout
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
-    fontSize: 10,
+    padding: 30,
+    fontSize: 9,
     fontFamily: 'Helvetica',
   },
   coverPage: {
@@ -48,42 +48,52 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sectionHeader: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 20,
-    marginTop: 10,
-    paddingBottom: 8,
+    marginBottom: 12,
+    marginTop: 8,
+    paddingBottom: 6,
     borderBottom: '2 solid #333',
   },
   roleHeader: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 10,
+    marginBottom: 6,
     color: '#2c5aa0',
+    backgroundColor: '#f0f0f0',
+    padding: 4,
+  },
+  twoColumnContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 15,
+  },
+  column: {
+    flex: 1,
   },
   memberRow: {
-    marginBottom: 12,
-    paddingBottom: 8,
-    borderBottom: '1 solid #ddd',
+    marginBottom: 8,
+    paddingBottom: 6,
+    borderBottom: '1 solid #e0e0e0',
   },
   memberName: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   memberDetails: {
-    fontSize: 9,
+    fontSize: 8,
     color: '#555',
-    marginLeft: 10,
+    lineHeight: 1.4,
   },
   tableGroupHeader: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
-    backgroundColor: '#f0f0f0',
-    padding: 8,
+    marginTop: 12,
+    marginBottom: 8,
+    backgroundColor: '#e8e8e8',
+    padding: 6,
   },
 });
 
@@ -115,47 +125,100 @@ const RosterPDFDocument = ({
       </View>
     </Page>
 
-    {/* Team Members Pages */}
+    {/* Team Members Pages - 2 Column Layout */}
     <Page size="LETTER" style={styles.page}>
       <Text style={styles.sectionHeader}>Team Members</Text>
       
-      {roleOrder.map(role => {
-        const members = teamMembers.filter(m => m.role === role);
-        if (members.length === 0) return null;
-        
-        return (
-          <View key={role}>
-            <Text style={styles.roleHeader}>{role}</Text>
-            {members.map((member, idx) => (
-              <View key={idx} style={styles.memberRow}>
-                <Text style={styles.memberName}>{member.name}</Text>
-                <Text style={styles.memberDetails}>Address: {member.address || 'N/A'}</Text>
-                <Text style={styles.memberDetails}>Email: {member.email || 'N/A'}</Text>
-                <Text style={styles.memberDetails}>Phone: {member.phone || 'N/A'}</Text>
-                <Text style={styles.memberDetails}>Church: {member.church || 'N/A'}</Text>
+      <View style={styles.twoColumnContainer}>
+        <View style={styles.column}>
+          {roleOrder.slice(0, Math.ceil(roleOrder.length / 2)).map(role => {
+            const members = teamMembers.filter(m => m.role === role);
+            if (members.length === 0) return null;
+            
+            return (
+              <View key={role} wrap={false}>
+                <Text style={styles.roleHeader}>{role}</Text>
+                {members.map((member, idx) => (
+                  <View key={idx} style={styles.memberRow}>
+                    <Text style={styles.memberName}>{member.name}</Text>
+                    <Text style={styles.memberDetails}>
+                      {member.address && `${member.address}\n`}
+                      {member.email && `${member.email}\n`}
+                      {member.phone && `${member.phone}\n`}
+                      {member.church && `${member.church}`}
+                    </Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
-        );
-      })}
+            );
+          })}
+        </View>
+        
+        <View style={styles.column}>
+          {roleOrder.slice(Math.ceil(roleOrder.length / 2)).map(role => {
+            const members = teamMembers.filter(m => m.role === role);
+            if (members.length === 0) return null;
+            
+            return (
+              <View key={role} wrap={false}>
+                <Text style={styles.roleHeader}>{role}</Text>
+                {members.map((member, idx) => (
+                  <View key={idx} style={styles.memberRow}>
+                    <Text style={styles.memberName}>{member.name}</Text>
+                    <Text style={styles.memberDetails}>
+                      {member.address && `${member.address}\n`}
+                      {member.email && `${member.email}\n`}
+                      {member.phone && `${member.phone}\n`}
+                      {member.church && `${member.church}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+        </View>
+      </View>
     </Page>
 
-    {/* Candidates Pages - Grouped by Table */}
+    {/* Candidates Pages - Grouped by Table with 2-column layout */}
     {Object.entries(candidates).map(([tableName, tableMembers]) => {
       if (tableMembers.length === 0) return null;
+      
+      const midpoint = Math.ceil(tableMembers.length / 2);
+      const leftColumn = tableMembers.slice(0, midpoint);
+      const rightColumn = tableMembers.slice(midpoint);
       
       return (
         <Page key={tableName} size="LETTER" style={styles.page}>
           <Text style={styles.tableGroupHeader}>Table: {tableName}</Text>
-          {tableMembers.map((candidate, idx) => (
-            <View key={idx} style={styles.memberRow}>
-              <Text style={styles.memberName}>{candidate.name}</Text>
-              <Text style={styles.memberDetails}>Address: {candidate.address || 'N/A'}</Text>
-              <Text style={styles.memberDetails}>Email: {candidate.email || 'N/A'}</Text>
-              <Text style={styles.memberDetails}>Phone: {candidate.phone || 'N/A'}</Text>
-              <Text style={styles.memberDetails}>Church: {candidate.church || 'N/A'}</Text>
+          <View style={styles.twoColumnContainer}>
+            <View style={styles.column}>
+              {leftColumn.map((candidate, idx) => (
+                <View key={idx} style={styles.memberRow} wrap={false}>
+                  <Text style={styles.memberName}>{candidate.name}</Text>
+                  <Text style={styles.memberDetails}>
+                    {candidate.address && `${candidate.address}\n`}
+                    {candidate.email && `${candidate.email}\n`}
+                    {candidate.phone && `${candidate.phone}\n`}
+                    {candidate.church && `${candidate.church}`}
+                  </Text>
+                </View>
+              ))}
             </View>
-          ))}
+            <View style={styles.column}>
+              {rightColumn.map((candidate, idx) => (
+                <View key={idx} style={styles.memberRow} wrap={false}>
+                  <Text style={styles.memberName}>{candidate.name}</Text>
+                  <Text style={styles.memberDetails}>
+                    {candidate.address && `${candidate.address}\n`}
+                    {candidate.email && `${candidate.email}\n`}
+                    {candidate.phone && `${candidate.phone}\n`}
+                    {candidate.church && `${candidate.church}`}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
         </Page>
       );
     })}
@@ -365,23 +428,36 @@ export default function CombinedRoster() {
 
       const candidatesList = (data || [])
         .map(c => {
-          let name, email, phone;
+          let firstName, preferredName, lastName, email, phone;
           
           if (currentGender === 'men') {
-            name = `${c.m_pref || c.m_first || ''} ${c.c_lastname || ''}`.trim();
+            // Check if this application has a male candidate
+            if (!c.m_first && !c.m_pref) return null;
+            
+            firstName = c.m_first || '';
+            preferredName = c.m_pref || '';
+            lastName = c.c_lastname || '';
             email = c.m_email || '';
             phone = c.m_cell || '';
           } else {
-            name = `${c.f_pref || c.f_first || ''} ${c.c_lastname || ''}`.trim();
+            // Check if this application has a female candidate
+            if (!c.f_first && !c.f_pref) return null;
+            
+            firstName = c.f_first || '';
+            preferredName = c.f_pref || '';
+            lastName = c.c_lastname || '';
             email = c.f_email || '';
             phone = c.f_cell || '';
           }
 
-          if (!name) return null;
+          // Use preferred name if available, otherwise first name
+          const displayName = `${preferredName || firstName} ${lastName}`.trim();
+          
+          if (!displayName) return null;
 
           return {
             id: c.id,
-            name,
+            name: displayName,
             email,
             phone,
             address: `${c.c_address || ''}, ${c.c_city || ''}, ${c.c_state || ''} ${c.c_zip || ''}`.trim(),
@@ -440,105 +516,108 @@ export default function CombinedRoster() {
   return (
     <section id="combined-roster-app" className="app-panel" style={{ display: 'block', padding: 0 }}>
       <div className="card pad" style={{ marginBottom: '12px' }}>
-        <div className="section-title">Combined Weekend Roster</div>
+        <div className="section-title" style={{ marginBottom: '16px' }}>Combined Weekend Roster</div>
         
-        {/* Gender Toggle */}
-        <div className="field">
-          <label className="label">Select Gender</label>
-          <div className="toggle" style={{ maxWidth: '250px' }}>
-            <div 
-              className={`opt ${currentGender === 'men' ? 'active' : ''}`}
-              onClick={() => setCurrentGender('men')}
-            >
-              Men
-            </div>
-            <div 
-              className={`opt ${currentGender === 'women' ? 'active' : ''}`}
-              onClick={() => setCurrentGender('women')}
-            >
-              Women
-            </div>
-          </div>
-        </div>
-
-        {/* Weekend Selection */}
-        <div className="field">
-          <label className="label">Weekend</label>
-          <select 
-            className="input" 
-            value={weekendIdentifier}
-            onChange={(e) => setWeekendIdentifier(e.target.value)}
-            style={{ maxWidth: '400px' }}
-          >
-            <option value="">-- Select Weekend --</option>
-            {availableWeekends.map(weekend => (
-              <option key={weekend} value={weekend}>{weekend}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Cover Page Settings */}
-        <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '16px' }}>Cover Page Settings</h3>
-          
-          <div className="field">
-            <label className="label">Cover Image (optional)</label>
-            <input 
-              type="file" 
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="input"
-              style={{ maxWidth: '400px' }}
-            />
-            {coverImagePreview && (
-              <div style={{ marginTop: '12px' }}>
-                <img 
-                  src={coverImagePreview} 
-                  alt="Cover preview" 
-                  style={{ maxWidth: '200px', maxHeight: '200px', border: '1px solid var(--border)', borderRadius: '4px' }}
-                />
+        {/* Compact form layout - 2 columns */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+          {/* Gender Toggle */}
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label className="label">Gender</label>
+            <div className="toggle" style={{ maxWidth: '250px' }}>
+              <div 
+                className={`opt ${currentGender === 'men' ? 'active' : ''}`}
+                onClick={() => setCurrentGender('men')}
+              >
+                Men
               </div>
-            )}
+              <div 
+                className={`opt ${currentGender === 'women' ? 'active' : ''}`}
+                onClick={() => setCurrentGender('women')}
+              >
+                Women
+              </div>
+            </div>
           </div>
 
-          <div className="field">
-            <label className="label">Title</label>
-            <input 
-              type="text"
-              className="input"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., A New Creation"
-              style={{ maxWidth: '400px' }}
-            />
-          </div>
-
-          <div className="field">
-            <label className="label">Scripture Verse (optional)</label>
-            <input 
-              type="text"
-              className="input"
-              value={verse}
-              onChange={(e) => setVerse(e.target.value)}
-              placeholder="e.g., 2 Corinthians 5:17"
-              style={{ maxWidth: '400px' }}
-            />
-          </div>
-
-          <div className="field">
-            <label className="label">Community Name</label>
-            <input 
-              type="text"
-              className="input"
-              value={communityName}
-              onChange={(e) => setCommunityName(e.target.value)}
-              style={{ maxWidth: '400px' }}
-            />
+          {/* Weekend Selection */}
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label className="label">Weekend</label>
+            <select 
+              className="input" 
+              value={weekendIdentifier}
+              onChange={(e) => setWeekendIdentifier(e.target.value)}
+            >
+              <option value="">-- Select Weekend --</option>
+              {availableWeekends.map(weekend => (
+                <option key={weekend} value={weekend}>{weekend}</option>
+              ))}
+            </select>
           </div>
         </div>
+
+        {/* Cover Page Settings - Collapsible */}
+        <details open style={{ marginBottom: '16px', border: '1px solid var(--border)', borderRadius: '4px', padding: '12px' }}>
+          <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: '12px', fontSize: '0.95rem' }}>
+            Cover Page Settings
+          </summary>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label className="label">Title</label>
+              <input 
+                type="text"
+                className="input"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g., A New Creation"
+              />
+            </div>
+
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label className="label">Scripture Verse (optional)</label>
+              <input 
+                type="text"
+                className="input"
+                value={verse}
+                onChange={(e) => setVerse(e.target.value)}
+                placeholder="e.g., 2 Corinthians 5:17"
+              />
+            </div>
+
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label className="label">Community Name</label>
+              <input 
+                type="text"
+                className="input"
+                value={communityName}
+                onChange={(e) => setCommunityName(e.target.value)}
+              />
+            </div>
+
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label className="label">Cover Image (optional)</label>
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="input"
+              />
+            </div>
+          </div>
+
+          {coverImagePreview && (
+            <div style={{ marginTop: '12px', textAlign: 'center' }}>
+              <img 
+                src={coverImagePreview} 
+                alt="Cover preview" 
+                style={{ maxWidth: '150px', maxHeight: '150px', border: '1px solid var(--border)', borderRadius: '4px' }}
+              />
+            </div>
+          )}
+        </details>
 
         {/* Load Roster Button */}
-        <div style={{ marginTop: '24px' }}>
+        <div>
           <button 
             className="btn btn-primary"
             onClick={handleLoadRoster}
@@ -549,31 +628,33 @@ export default function CombinedRoster() {
         </div>
       </div>
 
-      {/* Candidate Table Assignment Section */}
+      {/* Candidate Table Assignment Section - More Compact */}
       {pdfReady && candidates.length > 0 && (
         <div className="card pad" style={{ marginBottom: '12px' }}>
-          <div className="section-title">Assign Candidates to Tables</div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '16px' }}>
-            Assign each candidate to a table. All candidates must be assigned before generating the PDF.
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div className="section-title" style={{ margin: 0 }}>Assign Candidates to Tables</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+              {candidates.filter(c => tableAssignments[c.id]).length} / {candidates.length} assigned
+            </div>
+          </div>
           
           <table className="table">
             <thead>
               <tr>
-                <th>Candidate Name</th>
-                <th>Table Assignment</th>
+                <th style={{ width: '60%' }}>Candidate Name</th>
+                <th style={{ width: '40%' }}>Table Assignment</th>
               </tr>
             </thead>
             <tbody>
               {candidates.map(candidate => (
                 <tr key={candidate.id}>
-                  <td style={{ fontWeight: 600 }}>{candidate.name}</td>
+                  <td style={{ fontWeight: 600, fontSize: '0.9rem' }}>{candidate.name}</td>
                   <td>
                     <select
                       className="input"
                       value={tableAssignments[candidate.id] || ''}
                       onChange={(e) => handleTableAssignment(candidate.id, e.target.value)}
-                      style={{ maxWidth: '200px' }}
+                      style={{ fontSize: '0.85rem', padding: '6px 8px' }}
                     >
                       <option value="">-- Select Table --</option>
                       {tableNames.map(table => (
