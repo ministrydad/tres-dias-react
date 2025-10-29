@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   },
   columnNoIndent: {
     flex: 1,
-    paddingLeft: 0,  // No indent for middle/right columns in 3-column layout
+    paddingLeft: 5,  // Match roleHeader left padding (from padding: '3 5')
   },
   centerColumn: {
     flex: 1,
