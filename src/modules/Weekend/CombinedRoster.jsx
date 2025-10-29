@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Image } from '@react-pdf/renderer';
 
-// PDF Styles - Optimized 2-column layout
+// PDF Styles - Professional, compact design
 const styles = StyleSheet.create({
   page: {
     padding: 30,
@@ -50,50 +50,64 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 12,
-    marginTop: 8,
-    paddingBottom: 6,
+    marginBottom: 10,
+    paddingBottom: 5,
     borderBottom: '2 solid #333',
   },
   roleHeader: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 6,
+    marginTop: 8,
+    marginBottom: 4,
     color: '#2c5aa0',
-    backgroundColor: '#f0f0f0',
-    padding: 4,
+    backgroundColor: '#f5f5f5',
+    padding: '3 5',
   },
   twoColumnContainer: {
     display: 'flex',
     flexDirection: 'row',
-    gap: 15,
+    gap: 12,
   },
   column: {
     flex: 1,
   },
   memberRow: {
-    marginBottom: 8,
-    paddingBottom: 6,
-    borderBottom: '1 solid #e0e0e0',
+    marginBottom: 6,
+    paddingBottom: 4,
+    borderBottom: '0.5 solid #ddd',
   },
   memberName: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 'bold',
     marginBottom: 2,
   },
   memberDetails: {
-    fontSize: 8,
-    color: '#555',
-    lineHeight: 1.4,
+    fontSize: 7.5,
+    color: '#444',
+    lineHeight: 1.3,
   },
   tableGroupHeader: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: 10,
+    marginBottom: 6,
     backgroundColor: '#e8e8e8',
+    padding: '4 8',
+    textAlign: 'center',
+  },
+  candidatesGrid: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  candidateCard: {
+    width: '48%',
+    marginBottom: 6,
     padding: 6,
+    backgroundColor: '#fafafa',
+    borderRadius: 3,
+    border: '0.5 solid #ddd',
   },
 });
 
@@ -180,48 +194,34 @@ const RosterPDFDocument = ({
       </View>
     </Page>
 
-    {/* Candidates Pages - Grouped by Table with 2-column layout */}
-    {Object.entries(candidates).map(([tableName, tableMembers]) => {
-      if (tableMembers.length === 0) return null;
-      
-      const midpoint = Math.ceil(tableMembers.length / 2);
-      const leftColumn = tableMembers.slice(0, midpoint);
-      const rightColumn = tableMembers.slice(midpoint);
-      
-      return (
-        <Page key={tableName} size="LETTER" style={styles.page}>
-          <Text style={styles.tableGroupHeader}>Table: {tableName}</Text>
-          <View style={styles.twoColumnContainer}>
-            <View style={styles.column}>
-              {leftColumn.map((candidate, idx) => (
-                <View key={idx} style={styles.memberRow} wrap={false}>
-                  <Text style={styles.memberName}>{candidate.name}</Text>
-                  <Text style={styles.memberDetails}>
-                    {candidate.address && `${candidate.address}\n`}
-                    {candidate.email && `${candidate.email}\n`}
-                    {candidate.phone && `${candidate.phone}\n`}
-                    {candidate.church && `${candidate.church}`}
-                  </Text>
-                </View>
-              ))}
+    {/* Candidates Pages - All tables together, 2 candidates per row */}
+    {Object.keys(candidates).length > 0 && (
+      <Page size="LETTER" style={styles.page}>
+        <Text style={styles.sectionHeader}>Candidates by Table</Text>
+        
+        {Object.entries(candidates).map(([tableName, tableMembers]) => {
+          if (tableMembers.length === 0) return null;
+          
+          return (
+            <View key={tableName} wrap={false} style={{ marginBottom: 12 }}>
+              <Text style={styles.tableGroupHeader}>Table: {tableName}</Text>
+              <View style={styles.candidatesGrid}>
+                {tableMembers.map((candidate, idx) => (
+                  <View key={idx} style={styles.candidateCard}>
+                    <Text style={styles.memberName}>{candidate.name}</Text>
+                    <Text style={styles.memberDetails}>
+                      {candidate.phone && `${candidate.phone}\n`}
+                      {candidate.email && `${candidate.email}\n`}
+                      {candidate.church && `${candidate.church}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </View>
-            <View style={styles.column}>
-              {rightColumn.map((candidate, idx) => (
-                <View key={idx} style={styles.memberRow} wrap={false}>
-                  <Text style={styles.memberName}>{candidate.name}</Text>
-                  <Text style={styles.memberDetails}>
-                    {candidate.address && `${candidate.address}\n`}
-                    {candidate.email && `${candidate.email}\n`}
-                    {candidate.phone && `${candidate.phone}\n`}
-                    {candidate.church && `${candidate.church}`}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        </Page>
-      );
-    })}
+          );
+        })}
+      </Page>
+    )}
   </Document>
 );
 
@@ -285,6 +285,10 @@ export default function CombinedRoster() {
   useEffect(() => {
     if (orgId) {
       loadAvailableWeekends();
+      // Reset candidates and PDF when gender changes
+      setCandidates([]);
+      setTableAssignments({});
+      setPdfReady(false);
     }
   }, [currentGender, orgId]);
 
@@ -418,36 +422,43 @@ export default function CombinedRoster() {
 
   const loadCandidates = async () => {
     try {
+      console.log('🔍 Loading candidates for gender:', currentGender);
+      
       const { data, error } = await supabase
         .from('cra_applications')
         .select('*')
-        .eq('org_id', orgId)
-        .neq('attendance', 'no');
+        .eq('org_id', orgId);
 
       if (error) throw error;
+
+      console.log('📊 Total applications from database:', data?.length || 0);
 
       const candidatesList = (data || [])
         .map(c => {
           let firstName, preferredName, lastName, email, phone;
           
           if (currentGender === 'men') {
-            // Check if this application has a male candidate
-            if (!c.m_first && !c.m_pref) return null;
-            
             firstName = c.m_first || '';
             preferredName = c.m_pref || '';
             lastName = c.c_lastname || '';
             email = c.m_email || '';
             phone = c.m_cell || '';
-          } else {
-            // Check if this application has a female candidate
-            if (!c.f_first && !c.f_pref) return null;
             
+            // Skip if no male candidate exists OR if attendance is 'no'
+            if ((!firstName && !preferredName) || c.attendance === 'no') {
+              return null;
+            }
+          } else {
             firstName = c.f_first || '';
             preferredName = c.f_pref || '';
             lastName = c.c_lastname || '';
             email = c.f_email || '';
             phone = c.f_cell || '';
+            
+            // Skip if no female candidate exists OR if attendance is 'no'
+            if ((!firstName && !preferredName) || c.attendance === 'no') {
+              return null;
+            }
           }
 
           // Use preferred name if available, otherwise first name
@@ -466,6 +477,9 @@ export default function CombinedRoster() {
         })
         .filter(c => c !== null);
 
+      console.log('✅ Filtered candidates for', currentGender, ':', candidatesList.length);
+      console.log('Candidate names:', candidatesList.map(c => c.name));
+
       setCandidates(candidatesList);
       
       // Initialize table assignments
@@ -475,7 +489,7 @@ export default function CombinedRoster() {
       });
       setTableAssignments(initialAssignments);
     } catch (error) {
-      console.error('Error loading candidates:', error);
+      console.error('❌ Error loading candidates:', error);
       throw error;
     }
   };
@@ -555,11 +569,11 @@ export default function CombinedRoster() {
           </div>
         </div>
 
-        {/* Cover Page Settings - Collapsible */}
-        <details open style={{ marginBottom: '16px', border: '1px solid var(--border)', borderRadius: '4px', padding: '12px' }}>
-          <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: '12px', fontSize: '0.95rem' }}>
+        {/* Cover Page Settings */}
+        <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
+          <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '12px', color: 'var(--ink)' }}>
             Cover Page Settings
-          </summary>
+          </h3>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div className="field" style={{ marginBottom: 0 }}>
@@ -614,7 +628,7 @@ export default function CombinedRoster() {
               />
             </div>
           )}
-        </details>
+        </div>
 
         {/* Load Roster Button */}
         <div>
