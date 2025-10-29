@@ -75,13 +75,8 @@ export default function TeamList() {
     localStorage.setItem('teamListTourCompleted', 'true');
   };
 
-  useEffect(() => {
-    const tourCompleted = localStorage.getItem('teamListTourCompleted');
-    if (!tourCompleted && teamRoster.length > 0) {
-      // Auto-start tour after data loads (only first time)
-      setTimeout(() => setShowTour(true), 1000);
-    }
-  }, [teamRoster]);
+  // Tour removed from auto-start - only launches via floating icon click
+  
   const [newRole, setNewRole] = useState('');
   const [showBadgePanel, setShowBadgePanel] = useState(false);
   const [badgeExportType, setBadgeExportType] = useState('team');
@@ -698,18 +693,18 @@ export default function TeamList() {
       if (orgError) throw orgError;
       setBadgeCommunity(orgData.name || '');
 
-      // Load candidates (exclude withdrawn and declined)
+      // Load candidates (exclude those who declined attendance)
       const { data: candidatesData, error: candidatesError} = await supabase
         .from('cra_applications')
         .select('m_first, m_pref, f_first, f_pref, c_lastname, attendance')
-        .eq('org_id', orgId)
-        .not('attendance', 'eq', 'no')  // Exclude "No" responses
-        .not('attendance', 'eq', 'withdrawn');  // Exclude withdrawn
+        .eq('org_id', orgId);
 
       if (candidatesError) throw candidatesError;
 
-      // Filter by gender and format
-      const formattedCandidates = (candidatesData || []).map(c => {
+      // Filter by gender, exclude those with attendance='no', and format
+      const formattedCandidates = (candidatesData || [])
+        .filter(c => c.attendance !== 'no')  // Exclude declined/withdrawn
+        .map(c => {
         if (currentGender === 'men') {
           return {
             firstName: c.m_pref || c.m_first || '',
