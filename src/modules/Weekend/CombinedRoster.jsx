@@ -20,9 +20,10 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   coverImage: {
-    width: 200,
-    height: 200,
+    maxWidth: '70%',
+    maxHeight: 400,
     marginBottom: 30,
+    objectFit: 'contain',
   },
   coverTitle: {
     fontSize: 32,
