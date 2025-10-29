@@ -5,40 +5,36 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Image, Font } from '@react-pdf/renderer';
 
-// Register Source Sans Pro font with italic variants
-try {
-  Font.register({
-    family: 'Source Sans Pro',
-    fonts: [
-      {
-        src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xK3dSBYKcSV-LCoeQqfX1RYOo3qOK7lujVj9w.woff2',
-        fontWeight: 400,
-      },
-      {
-        src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xK1dSBYKcSV-LCoeQqfX1RYOo3qPK7lqDY.woff2',
-        fontWeight: 400,
-        fontStyle: 'italic',
-      },
-      {
-        src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwlxdu3cOWxw.woff2',
-        fontWeight: 600,
-      },
-      {
-        src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwmRdu3cOWxw.woff2',
-        fontWeight: 700,
-      },
-    ],
-  });
-} catch (error) {
-  console.warn('Failed to load Source Sans Pro, falling back to Helvetica:', error);
-}
+// Register Source Sans 3 font from local TTF files
+Font.register({
+  family: 'Source Sans 3',
+  fonts: [
+    {
+      src: '/fonts/SourceSans3-Regular.ttf',
+      fontWeight: 400,
+    },
+    {
+      src: '/fonts/SourceSans3-Italic.ttf',
+      fontWeight: 400,
+      fontStyle: 'italic',
+    },
+    {
+      src: '/fonts/SourceSans3-SemiBold.ttf',
+      fontWeight: 600,
+    },
+    {
+      src: '/fonts/SourceSans3-Bold.ttf',
+      fontWeight: 700,
+    },
+  ],
+});
 
-// PDF Styles - Professional, compact design with Source Sans Pro
+// PDF Styles - Professional, compact design with Source Sans 3
 const styles = StyleSheet.create({
   page: {
     padding: 30,
     fontSize: 9,
-    fontFamily: 'Source Sans Pro',
+    fontFamily: 'Source Sans 3',
   },
   coverPage: {
     display: 'flex',
