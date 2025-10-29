@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   },
   column: {
     flex: 1,
-    paddingLeft: 3,  // Subtle indent adjustment for alignment
+    paddingLeft: 6,  // Increased indent adjustment for better alignment
   },
   centerColumn: {
     flex: 1,
@@ -228,7 +228,7 @@ const RosterPDFDocument = ({
 
     {/* Team Members Page 1 - Leadership Structure */}
     <Page size="LETTER" style={styles.page}>
-      <Text style={styles.sectionHeader}>Team Members - Leadership</Text>
+      <Text style={styles.sectionHeader}>Team Members</Text>
       
       {/* Rector - Full Width Header, Left-Aligned Info */}
       {(() => {
@@ -321,20 +321,20 @@ const RosterPDFDocument = ({
       </View>
     </Page>
 
-    {/* Team Members Page 2+ - All Other Roles (Row by Row Layout) */}
+    {/* Team Members Page 2+ - Service Teams and Professors */}
     <Page size="LETTER" style={styles.page}>
-      <Text style={styles.sectionHeader}>Team Members - Service Teams</Text>
       
-      {roleOrder.filter(role => !['Rector', 'BUR', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director', 'Rover'].includes(role)).map(role => {
+      {/* All non-professor, non-leadership roles */}
+      {roleOrder.filter(role => 
+        !['Rector', 'BUR', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director', 'Rover'].includes(role) &&
+        !role.startsWith('Prof_')
+      ).map(role => {
         const members = teamMembers.filter(m => m.role === role);
         if (members.length === 0) return null;
         
-        // Remove "Prof_" prefix for display
-        const displayRole = role.replace(/^Prof_/, '');
-        
         return (
           <View key={role} wrap={false} style={{ marginBottom: 8 }}>
-            <Text style={styles.roleHeader}>{displayRole}</Text>
+            <Text style={styles.roleHeader}>{role}</Text>
             <View style={styles.twoColumnContainer}>
               <View style={styles.column}>
                 {members.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
@@ -367,6 +367,56 @@ const RosterPDFDocument = ({
           </View>
         );
       })}
+      
+      {/* All Professors grouped together in 2 columns */}
+      {(() => {
+        const allProfessors = roleOrder
+          .filter(role => role.startsWith('Prof_'))
+          .flatMap(role => {
+            const members = teamMembers.filter(m => m.role === role);
+            return members.map(member => ({
+              ...member,
+              displayRole: role.replace(/^Prof_/, '')
+            }));
+          });
+        
+        if (allProfessors.length === 0) return null;
+        
+        return (
+          <View wrap={false} style={{ marginBottom: 8 }}>
+            <Text style={styles.roleHeader}>Professors</Text>
+            <View style={styles.twoColumnContainer}>
+              <View style={styles.column}>
+                {allProfessors.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
+                  <View key={idx} style={styles.memberRow}>
+                    <Text style={styles.memberName}>{member.name} ({member.displayRole})</Text>
+                    <Text style={styles.memberDetails}>
+                      {member.address && `${member.address}\n`}
+                      {member.email && `${member.email}\n`}
+                      {member.phone && `${member.phone}\n`}
+                      {member.church && `${member.church}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              
+              <View style={styles.column}>
+                {allProfessors.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
+                  <View key={idx} style={styles.memberRow}>
+                    <Text style={styles.memberName}>{member.name} ({member.displayRole})</Text>
+                    <Text style={styles.memberDetails}>
+                      {member.address && `${member.address}\n`}
+                      {member.email && `${member.email}\n`}
+                      {member.phone && `${member.phone}\n`}
+                      {member.church && `${member.church}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        );
+      })()}
     </Page>
 
     {/* Candidates Pages - All tables together, 2 candidates per row */}
