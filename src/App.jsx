@@ -1,5 +1,6 @@
 // src/App.jsx
 // FIXED: Moved PescadoresProvider to top level to prevent loading issues
+// UPDATED: Added CombinedRoster component for Weekend module
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PescadoresProvider } from './context/PescadoresContext';
@@ -20,6 +21,7 @@ import EmailReports from './modules/CRA/EmailReports';
 import CheckIn from './modules/TeamMeetings/CheckIn';
 import MCIReports from './modules/TeamMeetings/Reports';
 import Budget from './modules/TeamMeetings/Budget';
+import CombinedRoster from './modules/Weekend/CombinedRoster';
 import ConfirmModal from './components/common/ConfirmModal';
 import ChangelogModal from './components/common/ChangelogModal';
 import { MainStatusBar } from './components/common/StatusBar';
@@ -76,6 +78,7 @@ function Dashboard() {
     switch(currentView) {
       case 'directory': return 'Directory';
       case 'team-list': return 'Team List';
+      case 'combined-roster': return 'Combined Weekend Roster';
       case 'mci-checkin': return 'Team Meetings - Check-In';
       case 'mci-reports': return 'Team Meetings - Reports';
       case 'mci-budget': return 'Team Meetings - Budget';
@@ -100,6 +103,8 @@ function Dashboard() {
         return <Directory />;
       case 'team-list':
         return <TeamList />;
+      case 'combined-roster':
+        return <CombinedRoster />;
       case 'cra-view-roster':
         return <ViewRoster onNavigate={handleNavigate} />;
       case 'cra-followup':

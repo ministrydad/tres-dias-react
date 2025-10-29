@@ -82,7 +82,7 @@ const Sidebar = memo(function Sidebar({ currentView, onNavigate, permissions, on
             <li className={`nav-item has-submenu ${openSubmenu === 'directory' ? 'open' : ''}`}>
               <a 
                 href="#" 
-                className={currentView === 'directory' || currentView === 'team-list' ? 'active' : ''}
+                className={currentView === 'directory' || currentView === 'team-list' || currentView === 'combined-roster' ? 'active' : ''}
                 onClick={(e) => { 
                   e.preventDefault(); 
                   toggleSubmenu('directory');
@@ -102,6 +102,18 @@ const Sidebar = memo(function Sidebar({ currentView, onNavigate, permissions, on
                     }}
                   >
                     Team List
+                  </a>
+                </li>
+                <li className="submenu-item">
+                  <a 
+                    href="#" 
+                    className={currentView === 'combined-roster' ? 'active' : ''}
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      onNavigate('combined-roster'); 
+                    }}
+                  >
+                    Combined Roster
                   </a>
                 </li>
               </ul>
