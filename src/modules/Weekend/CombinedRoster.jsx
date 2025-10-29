@@ -143,7 +143,18 @@ const RosterPDFDocument = ({
   teamMembers,
   candidates,
   roleOrder 
-}) => (
+}) => {
+  // Debug logging
+  console.log('🎨 PDF Document rendering with:', {
+    hasCoverImage: !!coverImage,
+    coverImageType: coverImage ? typeof coverImage : 'none',
+    coverImageLength: coverImage ? coverImage.length : 0,
+    title,
+    communityName,
+    weekendIdentifier
+  });
+  
+  return (
   <Document>
     {/* Cover Page */}
     <Page size="LETTER" style={styles.page}>
@@ -247,7 +258,8 @@ const RosterPDFDocument = ({
       </Page>
     )}
   </Document>
-);
+  );
+};
 
 export default function CombinedRoster() {
   const { orgId } = useAuth();
@@ -377,8 +389,15 @@ export default function CombinedRoster() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setCoverImage(reader.result);
-        setCoverImagePreview(reader.result);
+        const result = reader.result;
+        console.log('📸 Image uploaded:', {
+          type: file.type,
+          size: file.size,
+          dataUrlLength: result.length,
+          startsWithDataUrl: result.startsWith('data:')
+        });
+        setCoverImage(result);
+        setCoverImagePreview(result);
       };
       reader.readAsDataURL(file);
     }
