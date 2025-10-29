@@ -55,7 +55,8 @@ const styles = StyleSheet.create({
     maxHeight: 380,
     marginBottom: 40,
     objectFit: 'contain',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    border: '1 solid #ddd',
+    borderRadius: 4,
   },
   coverVerse: {
     fontSize: 12,
