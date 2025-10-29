@@ -55,6 +55,7 @@ const styles = StyleSheet.create({
     maxHeight: 380,
     marginBottom: 40,
     objectFit: 'contain',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
   },
   coverVerse: {
     fontSize: 12,
@@ -114,6 +115,7 @@ const styles = StyleSheet.create({
   },
   column: {
     flex: 1,
+    paddingLeft: 3,  // Subtle indent adjustment for alignment
   },
   centerColumn: {
     flex: 1,
@@ -326,9 +328,12 @@ const RosterPDFDocument = ({
         const members = teamMembers.filter(m => m.role === role);
         if (members.length === 0) return null;
         
+        // Remove "Prof_" prefix for display
+        const displayRole = role.replace(/^Prof_/, '');
+        
         return (
           <View key={role} wrap={false} style={{ marginBottom: 8 }}>
-            <Text style={styles.roleHeader}>{role}</Text>
+            <Text style={styles.roleHeader}>{displayRole}</Text>
             <View style={styles.twoColumnContainer}>
               <View style={styles.column}>
                 {members.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
@@ -366,19 +371,20 @@ const RosterPDFDocument = ({
     {/* Candidates Pages - All tables together, 2 candidates per row */}
     {Object.keys(candidates).length > 0 && (
       <Page size="LETTER" style={styles.page}>
-        <Text style={styles.sectionHeader}>Candidates by Table</Text>
+        <Text style={styles.sectionHeader}>Pescadores</Text>
         
         {Object.entries(candidates).map(([tableName, tableMembers]) => {
           if (tableMembers.length === 0) return null;
           
           return (
             <View key={tableName} wrap={false} style={{ marginBottom: 12 }}>
-              <Text style={styles.tableGroupHeader}>Table: {tableName}</Text>
+              <Text style={styles.tableGroupHeader}>Table of {tableName}</Text>
               <View style={styles.candidatesGrid}>
                 {tableMembers.map((candidate, idx) => (
                   <View key={idx} style={styles.candidateCard}>
                     <Text style={styles.memberName}>{candidate.name}</Text>
                     <Text style={styles.memberDetails}>
+                      {candidate.address && `${candidate.address}\n`}
                       {candidate.phone && `${candidate.phone}\n`}
                       {candidate.email && `${candidate.email}\n`}
                       {candidate.church && `${candidate.church}`}
