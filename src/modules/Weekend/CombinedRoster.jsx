@@ -385,8 +385,10 @@ export default function CombinedRoster() {
   };
 
   const handleImageUpload = (e) => {
+    console.log('🎬 handleImageUpload called, event:', e.target.files);
     const file = e.target.files[0];
     if (file) {
+      console.log('📁 File selected:', file.name, file.size, file.type);
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result;
@@ -400,6 +402,7 @@ export default function CombinedRoster() {
         // Compress image for PDF (large images cause rendering issues)
         const img = new Image();
         img.onload = () => {
+          console.log('🖼️ Image loaded for compression, dimensions:', img.width, 'x', img.height);
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           
@@ -439,10 +442,13 @@ export default function CombinedRoster() {
           
           setCoverImage(compressedDataUrl);
           setCoverImagePreview(compressedDataUrl);
+          console.log('💾 State updated with compressed image');
         };
         img.src = result;
       };
       reader.readAsDataURL(file);
+    } else {
+      console.log('❌ No file selected');
     }
   };
 
