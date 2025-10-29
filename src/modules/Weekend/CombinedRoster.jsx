@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Image, Font } from '@react-pdf/renderer';
 
-// Register Source Sans Pro font with fallback
+// Register Source Sans Pro font with italic variants
 try {
   Font.register({
     family: 'Source Sans Pro',
@@ -13,6 +13,11 @@ try {
       {
         src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xK3dSBYKcSV-LCoeQqfX1RYOo3qOK7lujVj9w.woff2',
         fontWeight: 400,
+      },
+      {
+        src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xK1dSBYKcSV-LCoeQqfX1RYOo3qPK7lqDY.woff2',
+        fontWeight: 400,
+        fontStyle: 'italic',
       },
       {
         src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwlxdu3cOWxw.woff2',
