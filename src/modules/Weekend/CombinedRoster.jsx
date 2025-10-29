@@ -227,25 +227,42 @@ const RosterPDFDocument = ({
     <Page size="LETTER" style={styles.page}>
       <Text style={styles.sectionHeader}>Team Members - Leadership</Text>
       
-      {/* Rector - Centered */}
+      {/* Rector - Full Width Header, Left-Aligned Info */}
       {(() => {
         const rectorMembers = teamMembers.filter(m => m.role === 'Rector');
         if (rectorMembers.length === 0) return null;
         
         return (
-          <View wrap={false} style={{ marginBottom: 16, alignItems: 'center' }}>
-            <Text style={styles.roleHeaderCentered}>Rector</Text>
-            {rectorMembers.map((member, idx) => (
-              <View key={idx} style={{ ...styles.memberRow, maxWidth: '60%', width: '100%' }}>
-                <Text style={styles.memberName}>{member.name}</Text>
-                <Text style={styles.memberDetails}>
-                  {member.address && `${member.address}\n`}
-                  {member.email && `${member.email}\n`}
-                  {member.phone && `${member.phone}\n`}
-                  {member.church && `${member.church}`}
-                </Text>
+          <View wrap={false} style={{ marginBottom: 16 }}>
+            <Text style={styles.roleHeader}>Rector</Text>
+            <View style={styles.twoColumnContainer}>
+              <View style={styles.column}>
+                {rectorMembers.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
+                  <View key={idx} style={styles.memberRow}>
+                    <Text style={styles.memberName}>{member.name}</Text>
+                    <Text style={styles.memberDetails}>
+                      {member.address && `${member.address}\n`}
+                      {member.email && `${member.email}\n`}
+                      {member.phone && `${member.phone}\n`}
+                      {member.church && `${member.church}`}
+                    </Text>
+                  </View>
+                ))}
               </View>
-            ))}
+              <View style={styles.column}>
+                {rectorMembers.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
+                  <View key={idx} style={styles.memberRow}>
+                    <Text style={styles.memberName}>{member.name}</Text>
+                    <Text style={styles.memberDetails}>
+                      {member.address && `${member.address}\n`}
+                      {member.email && `${member.email}\n`}
+                      {member.phone && `${member.phone}\n`}
+                      {member.church && `${member.church}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
           </View>
         );
       })()}
@@ -258,7 +275,7 @@ const RosterPDFDocument = ({
           
           return (
             <View key={role} style={styles.column}>
-              <Text style={styles.roleHeaderCentered}>{role}</Text>
+              <Text style={styles.roleHeader}>{role}</Text>
               {members.map((member, idx) => (
                 <View key={idx} style={styles.memberRow}>
                   <Text style={styles.memberName}>{member.name}</Text>
@@ -275,7 +292,7 @@ const RosterPDFDocument = ({
         })}
       </View>
       
-      {/* Row 3: Head Spiritual Director, Spiritual Director(s) */}
+      {/* Row 3: Head Spiritual Director, Spiritual Director(s), Rover */}
       <View style={styles.threeColumnContainer} wrap={false}>
         {['Head Spiritual Director', 'Spiritual Director', 'Rover'].map(role => {
           const members = teamMembers.filter(m => m.role === role);
@@ -283,7 +300,7 @@ const RosterPDFDocument = ({
           
           return (
             <View key={role} style={styles.column}>
-              <Text style={role.startsWith('Head') ? styles.roleHeaderCentered : styles.roleHeader}>{role}</Text>
+              <Text style={styles.roleHeader}>{role}</Text>
               {members.map((member, idx) => (
                 <View key={idx} style={styles.memberRow}>
                   <Text style={styles.memberName}>{member.name}</Text>
@@ -311,7 +328,7 @@ const RosterPDFDocument = ({
         
         return (
           <View key={role} wrap={false} style={{ marginBottom: 8 }}>
-            <Text style={role.startsWith('Head') ? styles.roleHeaderCentered : styles.roleHeader}>{role}</Text>
+            <Text style={styles.roleHeader}>{role}</Text>
             <View style={styles.twoColumnContainer}>
               <View style={styles.column}>
                 {members.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
