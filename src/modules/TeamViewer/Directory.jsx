@@ -112,14 +112,20 @@ export default function Directory() {
   }, []);
 
   useEffect(() => {
-    if (orgId && activeTeamIdentifier) {
-      const genderFromIdentifier = activeTeamIdentifier.toLowerCase().includes('men') ? 'men' : 'women';
-      if (genderFromIdentifier !== currentGender) {
-        setActiveTeamIdentifier('');
-        setActiveTeamRoster([]);
-      }
+  if (orgId && activeTeamIdentifier) {
+    // Check for 'women' FIRST (before 'men') to avoid substring match
+    const genderFromIdentifier = activeTeamIdentifier.toLowerCase().includes('women') 
+      ? 'women' 
+      : activeTeamIdentifier.toLowerCase().includes('men')
+      ? 'men'
+      : null;
+    
+    if (genderFromIdentifier && genderFromIdentifier !== currentGender) {
+      setActiveTeamIdentifier('');
+      setActiveTeamRoster([]);
     }
-  }, [currentGender, activeTeamIdentifier, orgId]);
+  }
+}, [currentGender, activeTeamIdentifier, orgId]);
 
   function performSearch() {
     let data = [...allPescadores[currentGender]];
