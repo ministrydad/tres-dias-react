@@ -1764,11 +1764,16 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
 // PHASE 2D: Updated TeamRolesCard with edit mode support
 function TeamRolesCard({ profile, isEditMode, onFieldChange }) {
   const createRoleItem = (role) => {
-    const status = (profile[role.key] || 'N').toUpperCase();
-    const serviceField = `${role.key} Service`;
-    const quantityField = `${role.key.replace(/ /g, '_')}_Service_Qty`;
-    const serviceNumber = profile[serviceField] || '';
-    const quantityNumber = profile[quantityField] || '';
+  const status = (profile[role.key] || 'N').toUpperCase();
+  const serviceField = `${role.key} Service`;
+  
+  // Special handling for Spiritual Director abbreviation
+  const quantityField = role.key === 'Spiritual Director'
+    ? 'Spiritual_Dir_Service_Qty'  // ← Special case
+    : `${role.key.replace(/ /g, '_')}_Service_Qty`;  // ← All others
+    
+  const serviceNumber = profile[serviceField] || '';
+  const quantityNumber = profile[quantityField] || '';
 
     return (
       <div key={role.key} className="role-item">
