@@ -179,10 +179,11 @@ export default function LiveCheckIn() {
     document.querySelector('.app-container')?.classList.remove('presentation-mode');
   };
 
-  const awaitingCheckin = applications.filter(app => {
-    const hasPerson = (currentFilter === 'men' && app.m_first) || (currentFilter === 'women' && app.f_first);
-    return hasPerson && !app.is_checked_in;
-  });
+ const awaitingCheckin = applications.filter(app => {
+  const hasPerson = (currentFilter === 'men' && app.m_first) || (currentFilter === 'women' && app.f_first);
+  const isAttending = app.attendance === 'yes';  // ← Only include confirmed attendees
+  return hasPerson && !app.is_checked_in && isAttending;
+});
 
   const getCandidateName = (app) => {
     if (currentFilter === 'men') {
