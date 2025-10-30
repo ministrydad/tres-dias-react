@@ -980,11 +980,12 @@ function ProfileView({
     }
 
     // Collect changes from role service and quantity fields
-    const teamRoleFields = ROLE_CONFIG.team.map(r => ({
-      serviceField: `${r.key} Service`,
-      quantityField: `${r.key.replace(/ /g, '_')}_Service_Qty`
-    }));
-
+   const teamRoleFields = ROLE_CONFIG.team.map(r => ({
+  serviceField: `${r.key} Service`,
+  quantityField: r.key === 'Spiritual Director' 
+    ? 'Spiritual_Dir_Service_Qty'  // Special case: abbreviated in database
+    : `${r.key.replace(/ /g, '_')}_Service_Qty`  // All other team roles
+}));
     const profRoleFields = ROLE_CONFIG.professor.map(r => ({
       serviceField: `${r.key} Service`,
       quantityField: `${r.key}_Service_Qty`
