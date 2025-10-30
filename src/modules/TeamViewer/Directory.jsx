@@ -130,16 +130,32 @@ export default function Directory() {
  function performSearch() {
   let data = [...allPescadores[currentGender]];
   
-  // If viewing women, include men who are Spiritual Directors
+  // If viewing women, include men who are Spiritual Directors (Experienced only)
   if (currentGender === 'women') {
-    const menSpiritualDirectors = allPescadores['men'].filter(person => {
-      const sdStatus = (person['Spiritual Director'] || 'N').toUpperCase();
-      const hsdStatus = (person['Head Spiritual Director'] || 'N').toUpperCase();
-      return sdStatus === 'E' || sdStatus === 'I' || hsdStatus === 'E' || hsdStatus === 'I';
-    });
+    console.log('🔍 Checking for male Spiritual Directors...');
+    console.log('Total men in database:', allPescadores['men']?.length || 0);
     
-    // Add them to the data array
-    data = [...data, ...menSpiritualDirectors];
+    if (!allPescadores['men'] || allPescadores['men'].length === 0) {
+      console.warn('⚠️ Men data not loaded yet!');
+    } else {
+      const menSpiritualDirectors = allPescadores['men'].filter(person => {
+        const sdStatus = (person['Spiritual Director'] || 'N').toUpperCase();
+        const hsdStatus = (person['Head Spiritual Director'] || 'N').toUpperCase();
+        
+        const isQualified = sdStatus === 'E' || hsdStatus === 'E';
+        
+        if (isQualified) {
+          console.log(`✅ Found: ${person.First} ${person.Last} - SD: ${sdStatus}, HSD: ${hsdStatus}`);
+        }
+        
+        return isQualified;
+      });
+      
+      console.log(`📊 Found ${menSpiritualDirectors.length} qualified male Spiritual Directors`);
+      
+      // Add them to the data array
+      data = [...data, ...menSpiritualDirectors];
+    }
   }
   
   data.forEach(p => delete p.searchMatch);
