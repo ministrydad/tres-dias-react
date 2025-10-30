@@ -127,40 +127,53 @@ export default function Directory() {
   }
 }, [currentGender, activeTeamIdentifier, orgId]);
 
-  function performSearch() {
-    let data = [...allPescadores[currentGender]];
-    data.forEach(p => delete p.searchMatch);
+ function performSearch() {
+  let data = [...allPescadores[currentGender]];
+  
+  // If viewing women, include men who are Spiritual Directors
+  if (currentGender === 'women') {
+    const menSpiritualDirectors = allPescadores['men'].filter(person => {
+      const sdStatus = (person['Spiritual Director'] || 'N').toUpperCase();
+      const hsdStatus = (person['Head Spiritual Director'] || 'N').toUpperCase();
+      return sdStatus === 'E' || sdStatus === 'I' || hsdStatus === 'E' || hsdStatus === 'I';
+    });
+    
+    // Add them to the data array
+    data = [...data, ...menSpiritualDirectors];
+  }
+  
+  data.forEach(p => delete p.searchMatch);
 
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      const serviceKeys = [
-        ...ROLE_CONFIG.team.map(r => ({ dbKey: `${r.key} Service`, displayName: r.name })),
-        ...ROLE_CONFIG.professor.map(r => ({ dbKey: `${r.key} Service`, displayName: r.name }))
-      ];
+  if (searchTerm) {
+    const searchLower = searchTerm.toLowerCase();
+    const serviceKeys = [
+      ...ROLE_CONFIG.team.map(r => ({ dbKey: `${r.key} Service`, displayName: r.name })),
+      ...ROLE_CONFIG.professor.map(r => ({ dbKey: `${r.key} Service`, displayName: r.name }))
+    ];
 
-      data = data.filter(p => {
-        const searchableName = `${p.First || ''} ${p.Last || ''} ${p.Preferred || ''}`.toLowerCase();
-        if (searchableName.includes(searchLower)) {
+    data = data.filter(p => {
+      const searchableName = `${p.First || ''} ${p.Last || ''} ${p.Preferred || ''}`.toLowerCase();
+      if (searchableName.includes(searchLower)) {
+        return true;
+      }
+
+      const candidateWeekend = (p["Candidate Weekend"] || '').toString().toLowerCase();
+      if (candidateWeekend.includes(searchLower)) {
+        p.searchMatch = { type: 'candidate' };
+        return true;
+      }
+
+      for (const role of serviceKeys) {
+        const serviceValue = (p[role.dbKey] || '').toString().toLowerCase();
+        if (serviceValue.includes(searchLower)) {
+          p.searchMatch = { type: 'service', role: role.displayName };
           return true;
         }
+      }
 
-        const candidateWeekend = (p["Candidate Weekend"] || '').toString().toLowerCase();
-        if (candidateWeekend.includes(searchLower)) {
-          p.searchMatch = { type: 'candidate' };
-          return true;
-        }
-
-        for (const role of serviceKeys) {
-          const serviceValue = (p[role.dbKey] || '').toString().toLowerCase();
-          if (serviceValue.includes(searchLower)) {
-            p.searchMatch = { type: 'service', role: role.displayName };
-            return true;
-          }
-        }
-
-        return false;
-      });
-    }
+      return false;
+    });
+  }
 
     switch (primaryFilter) {
       case 'recent':
