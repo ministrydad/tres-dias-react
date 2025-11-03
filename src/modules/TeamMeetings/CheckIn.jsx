@@ -22,6 +22,8 @@ export default function CheckIn() {
   const [savedCheckinData, setSavedCheckinData] = useState({}); // Track saved state
   const [pendingMemberId, setPendingMemberId] = useState(null); // For modal
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [expandedPaymentType, setExpandedPaymentType] = useState(''); // 'cash', 'check', 'sponsorship', or ''
+  const [paymentAmount, setPaymentAmount] = useState('');
 
   // CONFIG constants
   const WEEKEND_FEE = 265;
@@ -336,6 +338,51 @@ export default function CheckIn() {
     setShowUnsavedModal(false);
   };
 
+  // ===== PAYMENT EXPANSION HANDLERS =====
+
+  const togglePaymentExpansion = (method) => {
+    if (expandedPaymentType === method) {
+      // Collapse if clicking same button
+      setExpandedPaymentType('');
+      setPaymentAmount('');
+    } else {
+      // Expand new payment type
+      setExpandedPaymentType(method);
+      setPaymentAmount('');
+    }
+  };
+
+  const addPayment = (amount) => {
+    if (!selectedMemberId || !expandedPaymentType) return;
+
+    if (!amount || amount <= 0) {
+      window.showMainStatus('Please enter a valid amount', true);
+      return;
+    }
+
+    setCheckinData(prev => {
+      const newData = { ...prev };
+      if (!newData[selectedMemberId]) {
+        newData[selectedMemberId] = { attendance: {}, weekendFee: [], teamFee: {}, palancaLetter: false };
+      }
+      if (!newData[selectedMemberId].weekendFee) {
+        newData[selectedMemberId].weekendFee = [];
+      }
+
+      // Add new payment
+      newData[selectedMemberId].weekendFee.push({
+        method: expandedPaymentType,
+        amount: amount
+      });
+
+      return newData;
+    });
+
+    // Collapse after adding
+    setExpandedPaymentType('');
+    setPaymentAmount('');
+  };
+
   // ===== RENDER HELPERS =====
 
   const getStatusForMember = (memberId) => {
@@ -499,9 +546,10 @@ export default function CheckIn() {
                       <div style={{ 
                         display: 'flex', 
                         justifyContent: 'space-between', 
-                        alignItems: 'center' 
+                        alignItems: 'center',
+                        gap: '12px'
                       }}>
-                        <div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: '600', marginBottom: '2px' }}>
                             {member.name}
                           </div>
@@ -515,11 +563,14 @@ export default function CheckIn() {
                         <div style={{ 
                           display: 'flex', 
                           alignItems: 'center', 
-                          gap: '12px' 
+                          gap: '12px',
+                          flexShrink: 0
                         }}>
                           <div style={{ 
                             fontSize: '12px', 
-                            color: isSelected ? 'rgba(255,255,255,0.8)' : 'var(--muted)' 
+                            color: isSelected ? 'rgba(255,255,255,0.8)' : 'var(--muted)',
+                            minWidth: '30px',
+                            textAlign: 'right'
                           }}>
                             {status.meetingCount}/6
                           </div>
@@ -606,6 +657,11 @@ export default function CheckIn() {
                 onTogglePalanca={togglePalanca}
                 onToggleOnlinePayment={toggleOnlinePayment}
                 onRemovePayment={removePayment}
+                onTogglePaymentExpansion={togglePaymentExpansion}
+                expandedPaymentType={expandedPaymentType}
+                paymentAmount={paymentAmount}
+                setPaymentAmount={setPaymentAmount}
+                onAddPayment={addPayment}
                 onSave={handleSaveMember}
                 hasUnsavedChanges={hasUnsavedChanges(selectedMemberId)}
                 saving={saving}
@@ -686,6 +742,11 @@ function DetailPanel({
   onTogglePalanca, 
   onToggleOnlinePayment,
   onRemovePayment,
+  onTogglePaymentExpansion,
+  expandedPaymentType,
+  paymentAmount,
+  setPaymentAmount,
+  onAddPayment,
   onSave,
   hasUnsavedChanges,
   saving,
@@ -756,10 +817,35 @@ function DetailPanel({
                   color: (val === true || val === 'zoom') ? 'white' : 'var(--ink)',
                   cursor: 'pointer',
                   fontWeight: '600',
-                  transition: 'all 0.2s ease'
+                  fontSize: val === 'zoom' ? '20px' : '14px',
+                  transition: 'all 0.2s ease',
+                  position: 'relative'
                 }}
               >
-                {num}
+                {val === 'zoom' ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%'
+                  }}>
+                    <div style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      background: 'white',
+                      color: 'var(--accentB)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '18px',
+                      fontWeight: '700'
+                    }}>
+                      Z
+                    </div>
+                  </div>
+                ) : num}
               </button>
             );
           })}
@@ -801,16 +887,16 @@ function DetailPanel({
               marginBottom: '8px'
             }}>
               <button 
-                className={`btn ${getBtnClass('cash')}`}
+                className={`btn ${getBtnClass('cash')} ${expandedPaymentType === 'cash' ? 'btn-primary' : ''}`}
                 disabled={isFeeWaived}
-                onClick={() => console.log('TODO: Open cash modal')}
+                onClick={() => onTogglePaymentExpansion('cash')}
               >
                 Cash
               </button>
               <button 
-                className={`btn ${getBtnClass('check')}`}
+                className={`btn ${getBtnClass('check')} ${expandedPaymentType === 'check' ? 'btn-primary' : ''}`}
                 disabled={isFeeWaived}
-                onClick={() => console.log('TODO: Open check modal')}
+                onClick={() => onTogglePaymentExpansion('check')}
               >
                 Check
               </button>
@@ -824,13 +910,80 @@ function DetailPanel({
             </div>
             
             <button 
-              className={`btn ${getBtnClass('sponsorship')}`}
+              className={`btn ${getBtnClass('sponsorship')} ${expandedPaymentType === 'sponsorship' ? 'btn-primary' : ''}`}
               disabled={isFeeWaived}
-              onClick={() => console.log('TODO: Open sponsorship modal')}
+              onClick={() => onTogglePaymentExpansion('sponsorship')}
               style={{ width: '100%', marginBottom: '12px' }}
             >
               Sponsorship
             </button>
+
+            {/* Expandable Payment Input */}
+            {expandedPaymentType && (
+              <div style={{
+                marginBottom: '12px',
+                padding: '12px',
+                background: 'var(--surface)',
+                borderRadius: '6px',
+                border: '1px solid var(--border)'
+              }}>
+                <div style={{ 
+                  fontSize: '13px', 
+                  fontWeight: '600', 
+                  marginBottom: '12px',
+                  textTransform: 'capitalize'
+                }}>
+                  {expandedPaymentType} Payment
+                </div>
+                
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => onAddPayment(WEEKEND_FEE)}
+                  style={{ width: '100%', marginBottom: '10px' }}
+                >
+                  Accept Full Amount ({fmt(WEEKEND_FEE)})
+                </button>
+
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    fontSize: '12px', 
+                    color: 'var(--muted)', 
+                    marginBottom: '6px' 
+                  }}>
+                    Or Enter Partial Amount:
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && paymentAmount && parseFloat(paymentAmount) > 0) {
+                        onAddPayment(parseFloat(paymentAmount));
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      border: '1px solid var(--border)',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                    autoFocus
+                  />
+                </div>
+
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => onAddPayment(parseFloat(paymentAmount))}
+                  disabled={!paymentAmount || parseFloat(paymentAmount) <= 0}
+                  style={{ width: '100%' }}
+                >
+                  Add Payment
+                </button>
+              </div>
+            )}
             
             {/* Payment Badges */}
             <div style={{ 
