@@ -8,19 +8,54 @@ export default function ViewRoster({ onNavigate }) {
   const [applications, setApplications] = useState([]);
   const [currentFilter, setCurrentFilter] = useState('men');
   const [loading, setLoading] = useState(true);
-  const [sortColumn, setSortColumn] = useState('status'); // Default sort by status
-  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
+  const [sortColumn, setSortColumn] = useState('status');
+  const [sortDirection, setSortDirection] = useState('asc');
   const [expandedRows, setExpandedRows] = useState(new Set());
   
   // Follow-up form state
   const [showFollowupForm, setShowFollowupForm] = useState(false);
   const [currentApp, setCurrentApp] = useState(null);
   const [followupData, setFollowupData] = useState({
-    attendance: null,        // null | 'no' | 'yes'
-    smoker: null,           // null | 'no' | 'yes'
-    wheelchair: null,       // null | 'no' | 'yes'
-    diet: null,             // null | 'no' | 'yes'
+    attendance: null,
+    smoker: null,
+    wheelchair: null,
+    diet: null,
     diet_details: '',
+    letter_sent_sponsor: false,
+    letter_sent_candidate: false
+  });
+
+  // Edit form state
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [currentEditApp, setCurrentEditApp] = useState(null);
+  const [editData, setEditData] = useState({
+    // Candidate info
+    m_first: '', m_pref: '', m_last: '',
+    f_first: '', f_pref: '', f_last: '',
+    m_cell: '', f_cell: '',
+    m_email: '', f_email: '',
+    c_address: '', c_city: '', c_state: '', c_zip: '',
+    c_church: '', c_lastname: '',
+    
+    // Sponsor info
+    s_first: '', s_last: '', s_phone: '',
+    
+    // Special needs
+    m_smoke: null, f_smoke: null,
+    m_wheelchair: null, f_wheelchair: null,
+    m_diet: null, f_diet: null,
+    m_diettext: '', f_diettext: '',
+    
+    // Payments
+    payment_wk_cash: false,
+    payment_wk_check: false,
+    payment_wk_scholarship: false,
+    payment_wk_scholarshiptype: '',
+    payment_wk_partialamount: '',
+    payment_sp_cash: false,
+    payment_sp_check: false,
+    
+    // Letters
     letter_sent_sponsor: false,
     letter_sent_candidate: false
   });
@@ -31,42 +66,43 @@ export default function ViewRoster({ onNavigate }) {
     }
   }, [orgId]);
 
- const loadApplications = async () => {
-  console.log('🔍 ViewRoster: loadApplications called');
-  console.log('📍 orgId:', orgId);
-  
-  setLoading(true);
-  try {
-    const { data, error } = await supabase
-      .from('cra_applications')
-      .select('*')
-      .eq('org_id', orgId)
-      .order('created_at', { ascending: false });
+  const loadApplications = async () => {
+    console.log('🔍 ViewRoster: loadApplications called');
+    console.log('📍 orgId:', orgId);
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('cra_applications')
+        .select('*')
+        .eq('org_id', orgId)
+        .order('created_at', { ascending: false });
 
-    console.log('📊 Query result - Data count:', data?.length, 'Error:', error);
+      console.log('📊 Query result - Data count:', data?.length, 'Error:', error);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    setApplications(data || []);
-  } catch (error) {
-    console.error('❌ Error loading CRA applications:', error);
-    console.error('❌ Error details:', error.message, error.code);
-    setApplications([]);
-  } finally {
-    setLoading(false);
-  }
-};
+      setApplications(data || []);
+    } catch (error) {
+      console.error('❌ Error loading CRA applications:', error);
+      console.error('❌ Error details:', error.message, error.code);
+      setApplications([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFilterChange = (filter) => {
     setCurrentFilter(filter);
+    // Close any open panels when switching gender
+    setShowFollowupForm(false);
+    setShowEditForm(false);
   };
 
   const handleSort = (column) => {
     if (sortColumn === column) {
-      // Toggle direction if clicking same column
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      // New column, default to ascending
       setSortColumn(column);
       setSortDirection('asc');
     }
@@ -82,9 +118,12 @@ export default function ViewRoster({ onNavigate }) {
     setExpandedRows(newExpanded);
   };
 
-  // Follow-up form handlers
+  // ============================================================
+  // FOLLOW-UP FORM HANDLERS (Existing)
+  // ============================================================
   const openFollowupForm = (app) => {
     setCurrentApp(app);
+    setShowEditForm(false); // Close edit form if open
     
     const prefix = currentFilter === 'men' ? 'm_' : 'f_';
     const smokeCol = `${prefix}smoke`;
@@ -92,11 +131,10 @@ export default function ViewRoster({ onNavigate }) {
     const dietCol = `${prefix}diet`;
     const dietTextCol = `${prefix}diettext`;
     
-    // Map database booleans to null/'no'/'yes' strings
     const mapBoolToState = (value) => {
       if (value === true) return 'yes';
       if (value === false) return 'no';
-      return null; // undefined or null = N/A
+      return null;
     };
     
     setFollowupData({
@@ -143,11 +181,10 @@ export default function ViewRoster({ onNavigate }) {
     try {
       const prefix = currentFilter === 'men' ? 'm_' : 'f_';
       
-      // Map null/'no'/'yes' strings back to booleans for database
       const mapStateToBool = (value) => {
         if (value === 'yes') return true;
         if (value === 'no') return false;
-        return null; // N/A = null in database
+        return null;
       };
       
       const payload = {
@@ -170,16 +207,224 @@ export default function ViewRoster({ onNavigate }) {
 
       window.showMainStatus('Follow-up saved successfully.', false);
       await loadApplications();
-      closeFollowupForm();
+      // Keep panel open as requested
     } catch (error) {
       console.error('Error saving follow-up:', error);
       window.showMainStatus(`Error saving follow-up: ${error.message}`, true);
     }
   };
 
-  const handleEdit = (id) => {
-    // Navigate to NewApplication view with editing ID
-    onNavigate('cra-new-application', { editingAppId: id });
+  // ============================================================
+  // EDIT FORM HANDLERS (New)
+  // ============================================================
+  const openEditForm = (app) => {
+    setCurrentEditApp(app);
+    setShowFollowupForm(false); // Close follow-up form if open
+    
+    // Map database booleans to null/'no'/'yes' strings for 3-state toggles
+    const mapBoolToState = (value) => {
+      if (value === true) return 'yes';
+      if (value === false) return 'no';
+      return null;
+    };
+    
+    // Pre-populate all fields
+    setEditData({
+      // Candidate info
+      m_first: app.m_first || '',
+      m_pref: app.m_pref || '',
+      m_last: app.m_last || '',
+      f_first: app.f_first || '',
+      f_pref: app.f_pref || '',
+      f_last: app.f_last || '',
+      m_cell: app.m_cell || '',
+      f_cell: app.f_cell || '',
+      m_email: app.m_email || '',
+      f_email: app.f_email || '',
+      c_address: app.c_address || '',
+      c_city: app.c_city || '',
+      c_state: app.c_state || '',
+      c_zip: app.c_zip || '',
+      c_church: app.c_church || '',
+      c_lastname: app.c_lastname || '',
+      
+      // Sponsor info
+      s_first: app.s_first || '',
+      s_last: app.s_last || '',
+      s_phone: app.s_phone || '',
+      
+      // Special needs
+      m_smoke: mapBoolToState(app.m_smoke),
+      f_smoke: mapBoolToState(app.f_smoke),
+      m_wheelchair: mapBoolToState(app.m_wheelchair),
+      f_wheelchair: mapBoolToState(app.f_wheelchair),
+      m_diet: mapBoolToState(app.m_diet),
+      f_diet: mapBoolToState(app.f_diet),
+      m_diettext: app.m_diettext || '',
+      f_diettext: app.f_diettext || '',
+      
+      // Payments
+      payment_wk_cash: app.payment_wk_cash || false,
+      payment_wk_check: app.payment_wk_check || false,
+      payment_wk_scholarship: app.payment_wk_scholarship || false,
+      payment_wk_scholarshiptype: app.payment_wk_scholarshiptype || '',
+      payment_wk_partialamount: app.payment_wk_partialamount || '',
+      payment_sp_cash: app.payment_sp_cash || false,
+      payment_sp_check: app.payment_sp_check || false,
+      
+      // Letters
+      letter_sent_sponsor: app.letter_sent_sponsor || false,
+      letter_sent_candidate: app.letter_sent_candidate || false
+    });
+    
+    setShowEditForm(true);
+  };
+
+  const closeEditForm = () => {
+    setShowEditForm(false);
+    setCurrentEditApp(null);
+  };
+
+  const handleEditFieldChange = (field, value) => {
+    setEditData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleEdit3StateToggle = (field, value) => {
+    setEditData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleEditToggle = (field) => {
+    setEditData(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  // Phone formatting function
+  const formatPhone = (phone) => {
+    if (!phone) return '';
+    
+    // Remove all non-digits
+    const cleaned = phone.replace(/\D/g, '');
+    
+    // Format as (xxx) xxx-xxxx
+    if (cleaned.length === 10) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    }
+    
+    // Return as-is if not 10 digits
+    return phone;
+  };
+
+  const handlePhoneBlur = (field) => {
+    const formatted = formatPhone(editData[field]);
+    handleEditFieldChange(field, formatted);
+  };
+
+  // Email validation function
+  const validateEmail = (email) => {
+    if (!email) return true; // Empty is OK (no required fields)
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleEmailBlur = (field) => {
+    const email = editData[field];
+    if (email && !validateEmail(email)) {
+      window.showMainStatus('Invalid email format', true);
+    }
+  };
+
+  const saveEdit = async () => {
+    if (!currentEditApp) return;
+
+    try {
+      // Validate emails before saving
+      const emailFields = ['m_email', 'f_email'];
+      for (const field of emailFields) {
+        if (editData[field] && !validateEmail(editData[field])) {
+          window.showMainStatus(`Invalid email format in ${field.includes('m_') ? 'Men' : 'Women'} email field`, true);
+          return;
+        }
+      }
+
+      // Map null/'no'/'yes' strings back to booleans for database
+      const mapStateToBool = (value) => {
+        if (value === 'yes') return true;
+        if (value === 'no') return false;
+        return null;
+      };
+      
+      const payload = {
+        // Candidate info
+        m_first: editData.m_first,
+        m_pref: editData.m_pref,
+        m_last: editData.m_last,
+        f_first: editData.f_first,
+        f_pref: editData.f_pref,
+        f_last: editData.f_last,
+        m_cell: editData.m_cell,
+        f_cell: editData.f_cell,
+        m_email: editData.m_email,
+        f_email: editData.f_email,
+        c_address: editData.c_address,
+        c_city: editData.c_city,
+        c_state: editData.c_state,
+        c_zip: editData.c_zip,
+        c_church: editData.c_church,
+        c_lastname: editData.c_lastname,
+        
+        // Sponsor info
+        s_first: editData.s_first,
+        s_last: editData.s_last,
+        s_phone: editData.s_phone,
+        
+        // Special needs
+        m_smoke: mapStateToBool(editData.m_smoke),
+        f_smoke: mapStateToBool(editData.f_smoke),
+        m_wheelchair: mapStateToBool(editData.m_wheelchair),
+        f_wheelchair: mapStateToBool(editData.f_wheelchair),
+        m_diet: mapStateToBool(editData.m_diet),
+        f_diet: mapStateToBool(editData.f_diet),
+        m_diettext: editData.m_diettext,
+        f_diettext: editData.f_diettext,
+        
+        // Payments
+        payment_wk_cash: editData.payment_wk_cash,
+        payment_wk_check: editData.payment_wk_check,
+        payment_wk_scholarship: editData.payment_wk_scholarship,
+        payment_wk_scholarshiptype: editData.payment_wk_scholarshiptype,
+        payment_wk_partialamount: editData.payment_wk_partialamount,
+        payment_sp_cash: editData.payment_sp_cash,
+        payment_sp_check: editData.payment_sp_check,
+        
+        // Letters
+        letter_sent_sponsor: editData.letter_sent_sponsor,
+        letter_sent_candidate: editData.letter_sent_candidate
+      };
+
+      const { error } = await supabase
+        .from('cra_applications')
+        .update(payload)
+        .eq('id', currentEditApp.id)
+        .eq('org_id', orgId);
+
+      if (error) throw error;
+
+      window.showMainStatus('Application updated successfully!', false);
+      await loadApplications();
+      // Keep panel open as requested
+    } catch (error) {
+      console.error('Error saving edit:', error);
+      window.showMainStatus(`Error saving changes: ${error.message}`, true);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -197,8 +442,6 @@ export default function ViewRoster({ onNavigate }) {
       if (error) throw error;
 
       window.showMainStatus('Application deleted successfully', false);
-      
-      // Reload applications
       await loadApplications();
     } catch (error) {
       console.error('Error deleting application:', error);
@@ -221,39 +464,31 @@ export default function ViewRoster({ onNavigate }) {
     return 'Due';
   };
 
-  // Calculate status based on data fields
   const getCalculatedStatus = (app) => {
-    // Check if candidate confirmed attendance
     if (app.attendance === 'yes') {
       return 'Confirmed';
     }
-    
-    // Check if candidate explicitly declined (withdrawn)
     if (app.attendance === 'no') {
       return 'Withdrawn';
     }
-    
-    // Check if both letters have been sent
     if (app.letter_sent_sponsor && app.letter_sent_candidate) {
       return 'Letters Sent';
     }
-    
-    // Default: pending follow-up (attendance not yet determined)
     return 'Pending Follow-up';
   };
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'Confirmed':
-        return 'badge-success';      // Green
+        return 'badge-success';
       case 'Letters Sent':
-        return 'badge-info';         // Blue
+        return 'badge-info';
       case 'Withdrawn':
-        return 'badge-danger';       // Red
+        return 'badge-danger';
       case 'Pending Follow-up':
-        return 'badge-warning';      // Yellow
+        return 'badge-warning';
       default:
-        return 'badge-default';      // Gray
+        return 'badge-default';
     }
   };
 
@@ -269,7 +504,6 @@ export default function ViewRoster({ onNavigate }) {
     return currentFilter === 'men' ? (app.m_cell || 'N/A') : (app.f_cell || 'N/A');
   };
 
-  // Filter applications based on gender
   const filteredApps = applications.filter(app => {
     const hasMan = app.m_first && app.m_first.trim() !== '';
     const hasWoman = app.f_first && app.f_first.trim() !== '';
@@ -278,13 +512,11 @@ export default function ViewRoster({ onNavigate }) {
     return false;
   });
 
-  // Calculate active candidates (excluding withdrawn)
   const activeCandidateCount = filteredApps.filter(app => {
     const status = getCalculatedStatus(app);
     return status !== 'Withdrawn';
   }).length;
 
-  // Sort applications by status priority
   const statusPriority = {
     'Withdrawn': 1,
     'Confirmed': 2,
@@ -297,7 +529,6 @@ export default function ViewRoster({ onNavigate }) {
 
     switch (sortColumn) {
       case 'name':
-        // Sort by candidate name
         const nameA = currentFilter === 'men' 
           ? `${a.m_first} ${a.c_lastname}`.toLowerCase()
           : `${a.f_first} ${a.c_lastname}`.toLowerCase();
@@ -308,25 +539,12 @@ export default function ViewRoster({ onNavigate }) {
         compareB = nameB;
         break;
 
-      case 'church':
-        compareA = (a.c_church || '').toLowerCase();
-        compareB = (b.c_church || '').toLowerCase();
-        break;
-
-      case 'city':
-        const cityA = [a.c_city, a.c_state].filter(Boolean).join(', ').toLowerCase();
-        const cityB = [b.c_city, b.c_state].filter(Boolean).join(', ').toLowerCase();
-        compareA = cityA;
-        compareB = cityB;
-        break;
-
       case 'sponsor':
         compareA = (a.s_sponsor || '').toLowerCase();
         compareB = (b.s_sponsor || '').toLowerCase();
         break;
 
       case 'status':
-        // Use status priority for sorting
         const statusA = getCalculatedStatus(a);
         const statusB = getCalculatedStatus(b);
         compareA = statusPriority[statusA] || 99;
@@ -337,14 +555,11 @@ export default function ViewRoster({ onNavigate }) {
         return 0;
     }
 
-    // Apply sort direction
     if (sortColumn === 'status') {
-      // For status, lower priority number = higher priority
       return sortDirection === 'asc' 
         ? compareA - compareB 
         : compareB - compareA;
     } else {
-      // For text fields, standard alphabetical sort
       if (compareA < compareB) return sortDirection === 'asc' ? -1 : 1;
       if (compareA > compareB) return sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -384,7 +599,7 @@ export default function ViewRoster({ onNavigate }) {
         <div 
           className="card pad"
           style={{
-            width: showFollowupForm ? '60%' : '100%',
+            width: (showFollowupForm || showEditForm) ? '60%' : '100%',
             transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             minWidth: 0
           }}
@@ -450,7 +665,6 @@ export default function ViewRoster({ onNavigate }) {
               </tr>
             ) : (
               sortedApps.map(app => {
-                // Build candidate name based on filter
                 let candName = '';
                 if (currentFilter === 'men') {
                   candName = `${app.m_first} ${app.m_pref ? `(${app.m_pref}) ` : ''}${app.c_lastname}`;
@@ -458,23 +672,18 @@ export default function ViewRoster({ onNavigate }) {
                   candName = `${app.f_first} ${app.f_pref ? `(${app.f_pref}) ` : ''}${app.c_lastname}`;
                 }
 
-                const sponsor = app.s_sponsor || 'N/A';
                 const weekendFee = getPaymentStatusString(app, 'wk');
                 const sponsorFee = getPaymentStatusString(app, 'sp');
                 const status = getCalculatedStatus(app);
                 const isExpanded = expandedRows.has(app.id);
 
-                // Highlight withdrawn applications with red background
                 const rowStyle = status === 'Withdrawn' 
                   ? { backgroundColor: 'rgba(220, 53, 69, 0.08)' }
-                  : currentApp?.id === app.id
+                  : (currentApp?.id === app.id || currentEditApp?.id === app.id)
                   ? { backgroundColor: 'rgba(40, 167, 69, 0.08)' }
                   : {};
 
-                // Construct sponsor name from s_first and s_last
                 const sponsorName = [app.s_first, app.s_last].filter(Boolean).join(' ') || 'N/A';
-
-                // Get gender-specific fields
                 const candPhone = currentFilter === 'men' ? (app.m_cell || 'N/A') : (app.f_cell || 'N/A');
                 const candEmail = currentFilter === 'men' ? (app.m_email || 'N/A') : (app.f_email || 'N/A');
                 const candDiet = currentFilter === 'men' ? (app.m_diettext || 'None') : (app.f_diettext || 'None');
@@ -482,7 +691,6 @@ export default function ViewRoster({ onNavigate }) {
 
                 return (
                   <>
-                    {/* Main Row */}
                     <tr key={app.id} style={rowStyle}>
                       <td 
                         onClick={() => toggleRowExpansion(app.id)}
@@ -505,7 +713,11 @@ export default function ViewRoster({ onNavigate }) {
                         <div style={{ display: 'flex', gap: '6px' }}>
                           <button 
                             className="btn btn-small"
-                            onClick={() => handleEdit(app.id)}
+                            onClick={() => openEditForm(app)}
+                            style={{
+                              backgroundColor: currentEditApp?.id === app.id ? 'var(--accentB)' : undefined,
+                              color: currentEditApp?.id === app.id ? 'white' : undefined
+                            }}
                           >
                             Edit
                           </button>
@@ -528,7 +740,6 @@ export default function ViewRoster({ onNavigate }) {
                       </td>
                     </tr>
 
-                    {/* Expanded Detail Row */}
                     {isExpanded && (
                       <tr className="expanded-row" style={{ ...rowStyle, borderTop: '1px solid var(--border)' }}>
                         <td colSpan="6" style={{ padding: '16px 24px', backgroundColor: 'var(--panel-header)' }}>
@@ -538,7 +749,6 @@ export default function ViewRoster({ onNavigate }) {
                             gap: '16px',
                             fontSize: '0.9rem'
                           }}>
-                            {/* Sponsor Info */}
                             <div>
                               <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 SPONSOR
@@ -547,7 +757,6 @@ export default function ViewRoster({ onNavigate }) {
                               <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{app.s_phone || 'No phone'}</div>
                             </div>
 
-                            {/* Candidate Contact */}
                             <div>
                               <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 CANDIDATE CONTACT
@@ -556,7 +765,6 @@ export default function ViewRoster({ onNavigate }) {
                               <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{candEmail}</div>
                             </div>
 
-                            {/* Church */}
                             <div>
                               <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 CHURCH
@@ -564,7 +772,6 @@ export default function ViewRoster({ onNavigate }) {
                               <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{app.c_church || 'N/A'}</div>
                             </div>
 
-                            {/* Weekend Payment Details */}
                             <div>
                               <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 WEEKEND FEE
@@ -587,7 +794,6 @@ export default function ViewRoster({ onNavigate }) {
                               )}
                             </div>
 
-                            {/* Sponsor Payment Details */}
                             <div>
                               <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 SPONSOR FEE
@@ -604,7 +810,6 @@ export default function ViewRoster({ onNavigate }) {
                               )}
                             </div>
 
-                            {/* Diet */}
                             <div>
                               <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 DIET
@@ -612,7 +817,6 @@ export default function ViewRoster({ onNavigate }) {
                               <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{candDiet}</div>
                             </div>
 
-                            {/* Smoking */}
                             <div>
                               <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 SMOKING
@@ -860,6 +1064,453 @@ export default function ViewRoster({ onNavigate }) {
                 style={{ flex: 1 }}
               >
                 Save & Complete
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* EDIT APPLICATION FORM - Side Panel */}
+        {showEditForm && currentEditApp && (
+          <div 
+            className="card pad"
+            style={{
+              width: '38%',
+              animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              maxHeight: 'calc(100vh - 200px)',
+              overflowY: 'auto'
+            }}
+          >
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '20px',
+              paddingBottom: '16px',
+              borderBottom: '2px solid var(--accentB)'
+            }}>
+              <h3 style={{ margin: 0, color: 'var(--accentB)', fontSize: '1.1rem' }}>
+                Edit Application: {getCandidateName(currentEditApp)}
+              </h3>
+              <button 
+                className="btn btn-small"
+                onClick={closeEditForm}
+                style={{ padding: '4px 12px', fontSize: '0.9rem' }}
+              >
+                Close ✕
+              </button>
+            </div>
+
+            {/* CANDIDATE INFORMATION */}
+            <div style={{ marginBottom: '24px' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
+                Candidate Information
+              </h4>
+              
+              <div className="grid grid-3" style={{ marginBottom: '12px' }}>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">First Name</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={currentFilter === 'men' ? editData.m_first : editData.f_first}
+                    onChange={(e) => handleEditFieldChange(currentFilter === 'men' ? 'm_first' : 'f_first', e.target.value)}
+                  />
+                </div>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Preferred Name</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={currentFilter === 'men' ? editData.m_pref : editData.f_pref}
+                    onChange={(e) => handleEditFieldChange(currentFilter === 'men' ? 'm_pref' : 'f_pref', e.target.value)}
+                  />
+                </div>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Last Name</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={editData.c_lastname}
+                    onChange={(e) => handleEditFieldChange('c_lastname', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-2" style={{ marginBottom: '12px' }}>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Cell Phone</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={currentFilter === 'men' ? editData.m_cell : editData.f_cell}
+                    onChange={(e) => handleEditFieldChange(currentFilter === 'men' ? 'm_cell' : 'f_cell', e.target.value)}
+                    onBlur={() => handlePhoneBlur(currentFilter === 'men' ? 'm_cell' : 'f_cell')}
+                    placeholder="(xxx) xxx-xxxx"
+                  />
+                </div>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Email</label>
+                  <input
+                    type="email"
+                    className="input"
+                    value={currentFilter === 'men' ? editData.m_email : editData.f_email}
+                    onChange={(e) => handleEditFieldChange(currentFilter === 'men' ? 'm_email' : 'f_email', e.target.value)}
+                    onBlur={() => handleEmailBlur(currentFilter === 'men' ? 'm_email' : 'f_email')}
+                  />
+                </div>
+              </div>
+
+              <div className="field" style={{ marginBottom: '12px' }}>
+                <label className="label">Address</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={editData.c_address}
+                  onChange={(e) => handleEditFieldChange('c_address', e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-3" style={{ marginBottom: '12px' }}>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">City</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={editData.c_city}
+                    onChange={(e) => handleEditFieldChange('c_city', e.target.value)}
+                  />
+                </div>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">State</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={editData.c_state}
+                    onChange={(e) => handleEditFieldChange('c_state', e.target.value)}
+                    maxLength={2}
+                  />
+                </div>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Zip</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={editData.c_zip}
+                    onChange={(e) => handleEditFieldChange('c_zip', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label className="label">Church</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={editData.c_church}
+                  onChange={(e) => handleEditFieldChange('c_church', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
+
+            {/* SPONSOR INFORMATION */}
+            <div style={{ marginBottom: '24px' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
+                Sponsor Information
+              </h4>
+              
+              <div className="grid grid-2" style={{ marginBottom: '12px' }}>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">First Name</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={editData.s_first}
+                    onChange={(e) => handleEditFieldChange('s_first', e.target.value)}
+                  />
+                </div>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Last Name</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={editData.s_last}
+                    onChange={(e) => handleEditFieldChange('s_last', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="field" style={{ marginBottom: 0 }}>
+                <label className="label">Phone</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={editData.s_phone}
+                  onChange={(e) => handleEditFieldChange('s_phone', e.target.value)}
+                  onBlur={() => handlePhoneBlur('s_phone')}
+                  placeholder="(xxx) xxx-xxxx"
+                />
+              </div>
+            </div>
+
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
+
+            {/* SPECIAL NEEDS */}
+            <div style={{ marginBottom: '24px' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
+                Special Needs
+              </h4>
+
+              <div className="grid grid-3">
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Smoker?</label>
+                  <div className="toggle toggle-compact">
+                    <div 
+                      className={`opt ${(currentFilter === 'men' ? editData.m_smoke : editData.f_smoke) === null ? 'active' : ''}`}
+                      onClick={() => handleEdit3StateToggle(currentFilter === 'men' ? 'm_smoke' : 'f_smoke', null)}
+                    >
+                      N/A
+                    </div>
+                    <div 
+                      className={`opt ${(currentFilter === 'men' ? editData.m_smoke : editData.f_smoke) === 'no' ? 'active' : ''}`}
+                      onClick={() => handleEdit3StateToggle(currentFilter === 'men' ? 'm_smoke' : 'f_smoke', 'no')}
+                    >
+                      No
+                    </div>
+                    <div 
+                      className={`opt ${(currentFilter === 'men' ? editData.m_smoke : editData.f_smoke) === 'yes' ? 'active' : ''}`}
+                      onClick={() => handleEdit3StateToggle(currentFilter === 'men' ? 'm_smoke' : 'f_smoke', 'yes')}
+                    >
+                      Yes
+                    </div>
+                  </div>
+                </div>
+
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Wheelchair?</label>
+                  <div className="toggle toggle-compact">
+                    <div 
+                      className={`opt ${(currentFilter === 'men' ? editData.m_wheelchair : editData.f_wheelchair) === null ? 'active' : ''}`}
+                      onClick={() => handleEdit3StateToggle(currentFilter === 'men' ? 'm_wheelchair' : 'f_wheelchair', null)}
+                    >
+                      N/A
+                    </div>
+                    <div 
+                      className={`opt ${(currentFilter === 'men' ? editData.m_wheelchair : editData.f_wheelchair) === 'no' ? 'active' : ''}`}
+                      onClick={() => handleEdit3StateToggle(currentFilter === 'men' ? 'm_wheelchair' : 'f_wheelchair', 'no')}
+                    >
+                      No
+                    </div>
+                    <div 
+                      className={`opt ${(currentFilter === 'men' ? editData.m_wheelchair : editData.f_wheelchair) === 'yes' ? 'active' : ''}`}
+                      onClick={() => handleEdit3StateToggle(currentFilter === 'men' ? 'm_wheelchair' : 'f_wheelchair', 'yes')}
+                    >
+                      Yes
+                    </div>
+                  </div>
+                </div>
+
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Special Diet?</label>
+                  <div className="toggle toggle-compact">
+                    <div 
+                      className={`opt ${(currentFilter === 'men' ? editData.m_diet : editData.f_diet) === null ? 'active' : ''}`}
+                      onClick={() => handleEdit3StateToggle(currentFilter === 'men' ? 'm_diet' : 'f_diet', null)}
+                    >
+                      N/A
+                    </div>
+                    <div 
+                      className={`opt ${(currentFilter === 'men' ? editData.m_diet : editData.f_diet) === 'no' ? 'active' : ''}`}
+                      onClick={() => handleEdit3StateToggle(currentFilter === 'men' ? 'm_diet' : 'f_diet', 'no')}
+                    >
+                      No
+                    </div>
+                    <div 
+                      className={`opt ${(currentFilter === 'men' ? editData.m_diet : editData.f_diet) === 'yes' ? 'active' : ''}`}
+                      onClick={() => handleEdit3StateToggle(currentFilter === 'men' ? 'm_diet' : 'f_diet', 'yes')}
+                    >
+                      Yes
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {(currentFilter === 'men' ? editData.m_diet : editData.f_diet) === 'yes' && (
+                <div className="field" style={{ marginTop: '12px', marginBottom: 0 }}>
+                  <label className="label">Dietary Details</label>
+                  <textarea 
+                    className="textarea"
+                    value={currentFilter === 'men' ? editData.m_diettext : editData.f_diettext}
+                    onChange={(e) => handleEditFieldChange(currentFilter === 'men' ? 'm_diettext' : 'f_diettext', e.target.value)}
+                    placeholder="e.g., Gluten-free, lactose intolerant, etc."
+                    rows={3}
+                  />
+                </div>
+              )}
+            </div>
+
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
+
+            {/* WEEKEND FEE */}
+            <div style={{ marginBottom: '24px' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
+                Weekend Fee
+              </h4>
+
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={editData.payment_wk_cash}
+                    onChange={() => handleEditToggle('payment_wk_cash')}
+                  />
+                  <span>Cash</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={editData.payment_wk_check}
+                    onChange={() => handleEditToggle('payment_wk_check')}
+                  />
+                  <span>Check</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={editData.payment_wk_scholarship}
+                    onChange={() => handleEditToggle('payment_wk_scholarship')}
+                  />
+                  <span>Scholarship</span>
+                </label>
+              </div>
+
+              {editData.payment_wk_scholarship && (
+                <div className="grid grid-2">
+                  <div className="field" style={{ marginBottom: 0 }}>
+                    <label className="label">Scholarship Type</label>
+                    <select
+                      className="input"
+                      value={editData.payment_wk_scholarshiptype}
+                      onChange={(e) => handleEditFieldChange('payment_wk_scholarshiptype', e.target.value)}
+                    >
+                      <option value="">Select Type</option>
+                      <option value="full">Full</option>
+                      <option value="partial">Partial</option>
+                    </select>
+                  </div>
+                  {editData.payment_wk_scholarshiptype === 'partial' && (
+                    <div className="field" style={{ marginBottom: 0 }}>
+                      <label className="label">Partial Amount</label>
+                      <input
+                        type="number"
+                        className="input"
+                        value={editData.payment_wk_partialamount}
+                        onChange={(e) => handleEditFieldChange('payment_wk_partialamount', e.target.value)}
+                        placeholder="Amount"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
+
+            {/* SPONSOR FEE */}
+            <div style={{ marginBottom: '24px' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
+                Sponsor Fee
+              </h4>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={editData.payment_sp_cash}
+                    onChange={() => handleEditToggle('payment_sp_cash')}
+                  />
+                  <span>Cash</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={editData.payment_sp_check}
+                    onChange={() => handleEditToggle('payment_sp_check')}
+                  />
+                  <span>Check</span>
+                </label>
+              </div>
+            </div>
+
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
+
+            {/* LETTERS */}
+            <div style={{ marginBottom: '24px' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
+                Letters
+              </h4>
+
+              <div className="grid grid-2">
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Sponsor Letter Sent?</label>
+                  <div className="toggle">
+                    <div 
+                      className={`opt ${!editData.letter_sent_sponsor ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('letter_sent_sponsor')}
+                    >
+                      No
+                    </div>
+                    <div 
+                      className={`opt ${editData.letter_sent_sponsor ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('letter_sent_sponsor')}
+                    >
+                      Yes
+                    </div>
+                  </div>
+                </div>
+
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Candidate Letter Sent?</label>
+                  <div className="toggle">
+                    <div 
+                      className={`opt ${!editData.letter_sent_candidate ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('letter_sent_candidate')}
+                    >
+                      No
+                    </div>
+                    <div 
+                      className={`opt ${editData.letter_sent_candidate ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('letter_sent_candidate')}
+                    >
+                      Yes
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ACTION BUTTONS */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '12px', 
+              marginTop: '24px',
+              paddingTop: '20px',
+              borderTop: '1px solid var(--border)'
+            }}>
+              <button 
+                className="btn" 
+                onClick={closeEditForm}
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={saveEdit}
+                style={{ flex: 1 }}
+              >
+                Save Changes
               </button>
             </div>
           </div>
