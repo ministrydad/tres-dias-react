@@ -688,7 +688,6 @@ export default function Reports() {
                     <th colSpan="2" style={{ textAlign: 'center', borderBottom: '2px solid var(--accentB)' }}>Team Fee</th>
                     <th style={{ textAlign: 'center' }}>Palanca</th>
                     <th style={{ textAlign: 'center' }}>Overall</th>
-                    <th style={{ textAlign: 'center', width: '50px' }}>Details</th>
                   </tr>
                   <tr>
                     <th></th>
@@ -700,13 +699,12 @@ export default function Reports() {
                     <th style={{ textAlign: 'left', fontSize: '0.85rem', paddingLeft: '8px' }}>Payment</th>
                     <th></th>
                     <th></th>
-                    <th></th>
                   </tr>
                 </thead>
                 <tbody id="statusTableBody">
                   {Object.keys(memberDetails).length === 0 ? (
                     <tr>
-                      <td colSpan="10" style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
+                      <td colSpan="9" style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
                         No team data loaded.
                       </td>
                     </tr>
@@ -754,8 +752,17 @@ export default function Reports() {
                         return (
                           <>
                             {/* Main Row */}
-                            <tr key={id}>
-                              <td>{m.name}</td>
+                            <tr 
+                              key={id}
+                              onClick={() => toggleExpandMember(id)}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <td>
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                                  {m.name}
+                                </span>
+                              </td>
                               <td>{m.role || ''}</td>
                               <td style={{ textAlign: 'center' }}>{renderMeetingDots(chk)}</td>
                               <td style={{ textAlign: 'left', paddingLeft: '12px' }}>
@@ -776,31 +783,12 @@ export default function Reports() {
                               </td>
                               <td style={{ textAlign: 'center' }}>{chk.palancaLetter ? 'Yes' : 'No'}</td>
                               <td style={{ textAlign: 'center' }}>{renderOverallStatus(chk, m)}</td>
-                              <td style={{ textAlign: 'center' }}>
-                                <button
-                                  onClick={() => toggleExpandMember(id)}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontSize: '1.2rem',
-                                    fontWeight: 700,
-                                    color: 'var(--accentB)',
-                                    padding: '4px 8px',
-                                    transition: 'transform 0.2s',
-                                    transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                                    display: 'inline-block'
-                                  }}
-                                >
-                                  ›
-                                </button>
-                              </td>
                             </tr>
 
                             {/* Expanded Detail Row */}
                             {isExpanded && (
                               <tr key={`${id}-expanded`} className="expanded-row">
-                                <td colSpan="10" style={{ padding: 0, backgroundColor: 'var(--panel-header)' }}>
+                                <td colSpan="9" style={{ padding: 0, backgroundColor: 'var(--panel-header)' }}>
                                   {renderPaymentHistory(id)}
                                 </td>
                               </tr>
