@@ -334,7 +334,7 @@ const Sidebar = memo(function Sidebar({ currentView, onNavigate, permissions, on
             </li>
 
             {/* Data Import - Only for admins or super admins */}
-{(hasPermission('data-import') || isSuperAdmin) && (
+{(hasPermission('data-import') || isSuperAdmin || user?.role === 'owner') && (
   <li className="nav-item">
     <a 
       href="#" 
