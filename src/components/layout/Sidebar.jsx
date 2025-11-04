@@ -333,6 +333,19 @@ const Sidebar = memo(function Sidebar({ currentView, onNavigate, permissions, on
               </a>
             </li>
 
+            {/* Data Import - Only for admins or super admins */}
+{(hasPermission('data-import') || isSuperAdmin) && (
+  <li className="nav-item">
+    <a 
+      href="#" 
+      className={currentView === 'data-import' ? 'active' : ''}
+      onClick={(e) => { e.preventDefault(); onNavigate('data-import'); }}
+    >
+      <span className="nav-text">Import Data</span>
+    </a>
+  </li>
+)}
+
             {/* Super Admin Link - Only shows if user is Super Admin */}
             {isSuperAdmin && (
               <li className="nav-item" id="superAdminLink">

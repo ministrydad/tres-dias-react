@@ -24,6 +24,7 @@ import Budget from './modules/TeamMeetings/Budget';
 import CombinedRoster from './modules/Weekend/CombinedRoster';
 import ConfirmModal from './components/common/ConfirmModal';
 import ChangelogModal from './components/common/ChangelogModal';
+import DataImport from './modules/Admin/DataImport';
 import { MainStatusBar } from './components/common/StatusBar';
 import './styles/globals.css';
 
@@ -92,6 +93,7 @@ function Dashboard() {
       case 'secretariat': return 'Secretariat';
       case 'app-settings': return 'App Settings';
       case 'super-admin': return 'Super Admin';
+      case 'data-import': return 'Import Data';
       default: return 'Dashboard';
     }
   };
@@ -131,6 +133,8 @@ function Dashboard() {
         return <MCIReports />;
       case 'mci-budget':
         return <Budget />;
+        case 'data-import':
+  return <DataImport />;
       default:
         return (
           <div className="app-panel" style={{ display: 'block', padding: '30px' }}>
