@@ -2,15 +2,17 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import FileUpload from './components/FileUpload';
+import ColumnMapper from './components/ColumnMapper';
 
 export default function DataImport() {
-  const { permissions, isSuperAdmin } = useAuth();
+  const { permissions, isSuperAdmin, user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadedData, setUploadedData] = useState(null);
   const [selectedGender, setSelectedGender] = useState('men');
+  const [mappedColumns, setMappedColumns] = useState(null);
 
-  // Access control - only admins or super admins
-  if (!isSuperAdmin && !permissions?.['data-import']) {
+  // Access control - only admins or super admins or owners
+  if (!isSuperAdmin && !permissions?.['data-import'] && user?.role !== 'owner') {
     return (
       <div className="app-panel" style={{ display: 'block' }}>
         <div className="card pad">
@@ -29,7 +31,14 @@ export default function DataImport() {
     console.log('📁 File uploaded:', data);
     setUploadedData(data);
     setSelectedGender(gender);
-    setCurrentStep(2); // Move to next step (will add in Phase 3)
+    setCurrentStep(2); // Move to column mapping
+  };
+
+  // Step 2: Column Mapping - callback when mapping is complete
+  const handleMappingComplete = (mappings) => {
+    console.log('✅ Mappings completed:', mappings);
+    setMappedColumns(mappings);
+    setCurrentStep(3); // Move to preview
   };
 
   // Navigation handlers
@@ -50,6 +59,7 @@ export default function DataImport() {
     setCurrentStep(1);
     setUploadedData(null);
     setSelectedGender('men');
+    setMappedColumns(null);
     window.showMainStatus('Import cancelled', false);
   };
 
@@ -139,11 +149,19 @@ export default function DataImport() {
         )}
 
         {currentStep === 2 && (
+          <ColumnMapper
+            uploadedData={uploadedData}
+            selectedGender={selectedGender}
+            onMappingComplete={handleMappingComplete}
+            onBack={handleBack}
+            onCancel={handleCancel}
+          />
+        )}
+
+        {currentStep === 3 && (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <h2 style={{ marginBottom: '16px' }}>Step 2: Column Mapping</h2>
-            <p style={{ color: 'var(--muted)', marginBottom: '24px' }}>
-              Coming in Phase 3! For now, this is where we'll map columns.
-            </p>
+            <h2 style={{ marginBottom: '16px' }}>Step 3: Preview Data</h2>
+            <p style={{ color: 'var(--muted)', marginBottom: '24px' }}>Coming in Phase 4!</p>
             <p style={{ 
               padding: '16px', 
               backgroundColor: 'var(--bg)', 
@@ -152,29 +170,10 @@ export default function DataImport() {
               fontFamily: 'monospace',
               fontSize: '0.85rem'
             }}>
-              Uploaded: {uploadedData?.rows?.length || 0} rows to <strong>{selectedGender}</strong> directory
+              Ready to import: {uploadedData?.rows?.length || 0} rows to <strong>{selectedGender}</strong> directory
               <br />
-              Columns detected: {uploadedData?.headers?.length || 0}
+              Mapped columns: {mappedColumns ? Object.values(mappedColumns).filter(v => v !== null).length : 0}
             </p>
-            
-            <div style={{ marginTop: '32px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button className="btn" onClick={handleBack}>
-                ← Back
-              </button>
-              <button className="btn" onClick={handleCancel}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleNext}>
-                Next →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 3 && (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <h2 style={{ marginBottom: '16px' }}>Step 3: Preview Data</h2>
-            <p style={{ color: 'var(--muted)' }}>Coming in Phase 4!</p>
             
             <div style={{ marginTop: '32px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button className="btn" onClick={handleBack}>
