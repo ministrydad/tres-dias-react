@@ -127,7 +127,7 @@ export function AuthProvider({ children }) {
       const { data, error } = await Promise.race([
         supabase
           .from('memberships')
-          .select('org_id, permissions, profiles!inner(full_name, display_name, email)')
+          .select('org_id, role, permissions, profiles!inner(full_name, display_name, email)')
           .eq('user_id', authUser.id),
         timeoutPromise
       ]);
