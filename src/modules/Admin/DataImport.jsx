@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import FileUpload from './components/FileUpload';
 import ColumnMapper from './components/ColumnMapper';
+import DataPreview from './components/DataPreview';
+import ImportProgress from './components/ImportProgress';
 
 export default function DataImport() {
   const { permissions, isSuperAdmin, user } = useAuth();
@@ -10,13 +12,14 @@ export default function DataImport() {
   const [uploadedData, setUploadedData] = useState(null);
   const [selectedGender, setSelectedGender] = useState('men');
   const [mappedColumns, setMappedColumns] = useState(null);
+  const [dryRun, setDryRun] = useState(true);
 
   // Access control - only admins or super admins or owners
   if (!isSuperAdmin && !permissions?.['data-import'] && user?.role !== 'owner') {
     return (
       <div className="app-panel" style={{ display: 'block' }}>
         <div className="card pad">
-          <h2 style={{ color: 'var(--danger)', marginBottom: '16px' }}>Access Denied</h2>
+          <h2 style={{ color: 'var(--accentD)', marginBottom: '16px' }}>Access Denied</h2>
           <p style={{ color: 'var(--muted)' }}>
             You do not have permission to access the Data Import tool. 
             Please contact your organization administrator.
@@ -41,13 +44,20 @@ export default function DataImport() {
     setCurrentStep(3); // Move to preview
   };
 
-  // Navigation handlers
-  const handleNext = () => {
-    if (currentStep < 4) {
-      setCurrentStep(currentStep + 1);
-    }
+  // Step 3: Preview - callback when ready to import
+  const handlePreviewNext = (dryRunMode) => {
+    console.log('📋 Preview complete, dry run:', dryRunMode);
+    setDryRun(dryRunMode);
+    setCurrentStep(4); // Move to import
   };
 
+  // Step 4: Import - callback when import is complete
+  const handleImportComplete = () => {
+    console.log('✨ Import complete!');
+    // Could navigate to directory here or show success message
+  };
+
+  // Navigation handlers
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -60,6 +70,7 @@ export default function DataImport() {
     setUploadedData(null);
     setSelectedGender('men');
     setMappedColumns(null);
+    setDryRun(true);
     window.showMainStatus('Import cancelled', false);
   };
 
@@ -159,56 +170,26 @@ export default function DataImport() {
         )}
 
         {currentStep === 3 && (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <h2 style={{ marginBottom: '16px' }}>Step 3: Preview Data</h2>
-            <p style={{ color: 'var(--muted)', marginBottom: '24px' }}>Coming in Phase 4!</p>
-            <p style={{ 
-              padding: '16px', 
-              backgroundColor: 'var(--bg)', 
-              borderRadius: '8px',
-              color: 'var(--ink)',
-              fontFamily: 'monospace',
-              fontSize: '0.85rem'
-            }}>
-              Ready to import: {uploadedData?.rows?.length || 0} rows to <strong>{selectedGender}</strong> directory
-              <br />
-              Mapped columns: {mappedColumns ? Object.values(mappedColumns).filter(v => v !== null).length : 0}
-            </p>
-            
-            <div style={{ marginTop: '32px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button className="btn" onClick={handleBack}>
-                ← Back
-              </button>
-              <button className="btn" onClick={handleCancel}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleNext}>
-                Next →
-              </button>
-            </div>
-          </div>
+          <DataPreview
+            uploadedData={uploadedData}
+            mappedColumns={mappedColumns}
+            selectedGender={selectedGender}
+            onNext={handlePreviewNext}
+            onBack={handleBack}
+            onCancel={handleCancel}
+          />
         )}
 
         {currentStep === 4 && (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <h2 style={{ marginBottom: '16px' }}>Step 4: Import Data</h2>
-            <p style={{ color: 'var(--muted)' }}>Coming in Phase 5!</p>
-            
-            <div style={{ marginTop: '32px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button className="btn" onClick={handleBack}>
-                ← Back
-              </button>
-              <button className="btn" onClick={handleCancel}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={() => {
-                window.showMainStatus('Import complete! (Phase 5 coming soon)', false);
-                handleCancel();
-              }}>
-                Import Now
-              </button>
-            </div>
-          </div>
+          <ImportProgress
+            uploadedData={uploadedData}
+            mappedColumns={mappedColumns}
+            selectedGender={selectedGender}
+            dryRun={dryRun}
+            onComplete={handleImportComplete}
+            onBack={handleBack}
+            onCancel={handleCancel}
+          />
         )}
       </div>
     </div>
