@@ -521,105 +521,91 @@ export default function CheckIn() {
                       className={`member-item ${isSelected ? 'selected' : ''}`}
                       onClick={() => handleSelectMember(id)}
                       style={{
-                        padding: '12px',
-                        marginBottom: '4px',
-                        borderRadius: '6px',
+                        padding: '15px 20px',
+                        borderBottom: '1px solid var(--border)',
                         cursor: 'pointer',
-                        background: isSelected ? 'var(--accentB)' : 'transparent',
-                        color: isSelected ? 'white' : 'var(--ink)',
-                        border: `1px solid ${isSelected ? 'var(--accentB)' : 'transparent'}`,
-                        transition: 'all 0.2s ease'
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: '.2s',
+                        borderLeft: isSelected ? '5px solid var(--accentB)' : '5px solid transparent',
+                        background: isSelected ? 'rgba(0, 163, 255, .08)' : 'transparent'
                       }}
                       onMouseEnter={(e) => {
                         if (!isSelected) {
-                          e.currentTarget.style.background = 'var(--surface)';
-                          e.currentTarget.style.borderColor = 'var(--border)';
+                          e.currentTarget.style.background = 'var(--panel-header)';
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (!isSelected) {
                           e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.borderColor = 'transparent';
                         }
                       }}
                     >
+                      <div>
+                        <div className="member-name" style={{ fontWeight: '700' }}>
+                          {member.name}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--muted)' }}>
+                          {member.role || ''}
+                        </div>
+                      </div>
                       <div style={{ 
                         display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center',
+                        alignItems: 'center', 
                         gap: '12px'
                       }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: '600', marginBottom: '2px' }}>
-                            {member.name}
-                          </div>
-                          <div style={{ 
-                            fontSize: '12px', 
-                            color: isSelected ? 'rgba(255,255,255,0.8)' : 'var(--muted)' 
-                          }}>
-                            {member.role || ''}
-                          </div>
-                        </div>
                         <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '12px',
-                          flexShrink: 0
+                          fontSize: '12px', 
+                          color: 'var(--muted)'
                         }}>
-                          <div style={{ 
-                            fontSize: '12px', 
-                            color: isSelected ? 'rgba(255,255,255,0.8)' : 'var(--muted)',
-                            minWidth: '30px',
-                            textAlign: 'right'
-                          }}>
-                            {status.meetingCount}/6
-                          </div>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <span 
-                              className={`status-dot ${status.hasMeetings ? 'complete' : ''}`}
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                background: status.hasMeetings 
-                                  ? (isSelected ? 'white' : 'var(--accentA)') 
-                                  : (isSelected ? 'rgba(255,255,255,0.3)' : 'var(--border)')
-                              }}
-                            />
-                            <span 
-                              className={`status-dot ${status.hasWeekendFee ? 'complete' : ''}`}
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                background: status.hasWeekendFee 
-                                  ? (isSelected ? 'white' : 'var(--accentA)') 
-                                  : (isSelected ? 'rgba(255,255,255,0.3)' : 'var(--border)')
-                              }}
-                            />
-                            <span 
-                              className={`status-dot ${status.hasTeamFee ? 'complete' : ''}`}
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                background: status.hasTeamFee 
-                                  ? (isSelected ? 'white' : 'var(--accentA)') 
-                                  : (isSelected ? 'rgba(255,255,255,0.3)' : 'var(--border)')
-                              }}
-                            />
-                            <span 
-                              className={`status-dot ${status.hasPalanca ? 'complete' : ''}`}
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                background: status.hasPalanca 
-                                  ? (isSelected ? 'white' : 'var(--accentA)') 
-                                  : (isSelected ? 'rgba(255,255,255,0.3)' : 'var(--border)')
-                              }}
-                            />
-                          </div>
+                          {status.meetingCount}/6
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <span 
+                            className="status-dot"
+                            style={{
+                              width: '12px',
+                              height: '12px',
+                              borderRadius: '50%',
+                              border: status.hasMeetings ? '2px solid var(--accentA)' : '2px solid var(--muted)',
+                              background: status.hasMeetings ? 'var(--accentA)' : 'transparent',
+                              display: 'inline-block'
+                            }}
+                          />
+                          <span 
+                            className="status-dot"
+                            style={{
+                              width: '12px',
+                              height: '12px',
+                              borderRadius: '50%',
+                              border: status.hasWeekendFee ? '2px solid var(--accentA)' : '2px solid var(--muted)',
+                              background: status.hasWeekendFee ? 'var(--accentA)' : 'transparent',
+                              display: 'inline-block'
+                            }}
+                          />
+                          <span 
+                            className="status-dot"
+                            style={{
+                              width: '12px',
+                              height: '12px',
+                              borderRadius: '50%',
+                              border: status.hasTeamFee ? '2px solid var(--accentA)' : '2px solid var(--muted)',
+                              background: status.hasTeamFee ? 'var(--accentA)' : 'transparent',
+                              display: 'inline-block'
+                            }}
+                          />
+                          <span 
+                            className="status-dot"
+                            style={{
+                              width: '12px',
+                              height: '12px',
+                              borderRadius: '50%',
+                              border: status.hasPalanca ? '2px solid var(--accentA)' : '2px solid var(--muted)',
+                              background: status.hasPalanca ? 'var(--accentA)' : 'transparent',
+                              display: 'inline-block'
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
@@ -930,32 +916,36 @@ function DetailPanel({
                 <div style={{ 
                   fontSize: '13px', 
                   fontWeight: '600', 
-                  marginBottom: '12px',
+                  marginBottom: '10px',
                   textTransform: 'capitalize'
                 }}>
                   {expandedPaymentType} Payment
                 </div>
                 
-                <button 
-                  className="btn btn-primary"
-                  onClick={() => onAddPayment(WEEKEND_FEE)}
-                  style={{ width: '100%', marginBottom: '10px' }}
-                >
-                  Accept Full Amount ({fmt(WEEKEND_FEE)})
-                </button>
-
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={{ 
-                    display: 'block', 
-                    fontSize: '12px', 
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '8px',
+                  alignItems: 'center'
+                }}>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => onAddPayment(WEEKEND_FEE)}
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    Full Amount
+                  </button>
+                  
+                  <span style={{ 
                     color: 'var(--muted)', 
-                    marginBottom: '6px' 
+                    fontSize: '13px',
+                    whiteSpace: 'nowrap'
                   }}>
-                    Or Enter Partial Amount:
-                  </label>
+                    or
+                  </span>
+                  
                   <input
                     type="number"
-                    placeholder="0.00"
+                    placeholder="Partial amount"
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
                     onKeyPress={(e) => {
@@ -964,7 +954,7 @@ function DetailPanel({
                       }
                     }}
                     style={{
-                      width: '100%',
+                      flex: 1,
                       padding: '8px 10px',
                       border: '1px solid var(--border)',
                       borderRadius: '4px',
@@ -972,16 +962,16 @@ function DetailPanel({
                     }}
                     autoFocus
                   />
+                  
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => onAddPayment(parseFloat(paymentAmount))}
+                    disabled={!paymentAmount || parseFloat(paymentAmount) <= 0}
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    Add
+                  </button>
                 </div>
-
-                <button 
-                  className="btn btn-primary"
-                  onClick={() => onAddPayment(parseFloat(paymentAmount))}
-                  disabled={!paymentAmount || parseFloat(paymentAmount) <= 0}
-                  style={{ width: '100%' }}
-                >
-                  Add Payment
-                </button>
               </div>
             )}
             
