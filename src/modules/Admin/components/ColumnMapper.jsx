@@ -17,11 +17,13 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
       'Email',
       'Phone1',
       'Phone2',
+      'Do_Not_Call',
+      'Deceased',
       'Church',
       'Address',
       'City',
       'State',
-      'zip',
+      'Zip',
       'Candidate Weekend',
       'Last weekend worked'
     ];
@@ -40,35 +42,58 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
       'Head Storeroom', 'Storeroom',
       'Head Floater Supply', 'Floater Supply',
       'Head Worship', 'Worship',
-      'media', 'prof_silent'
+      'Media', 'Prof_Silent'
     ];
 
     // Professor roles
     const profRoles = [
-      'Prof_Ideal', 'Prof_Church', 'Prof_Piety', 'Prof_Study',
+      'Prof_Ideals', 'Prof_Church', 'Prof_Piety', 'Prof_Study',
       'Prof_Action', 'Prof_Leaders', 'Prof_Environments',
       'Prof_CCIA', 'Prof_Reunion'
     ];
 
-    // Service history columns
+    // Service history columns - Format: [Role] Service and [Role]_Service_Qty
     const serviceColumns = [
-      'Rector Service', 'BUR Service', 'Rover Service',
-      'Head Service', 'Asst Head Service',
-      'Head Spiritual Director Service', 'Spiritual Director Service',
-      'Head Prayer Service', 'Prayer Service',
-      'Head Kitchen Service', 'Asst Head Kitchen Service', 'Kitchen Service',
-      'Head Table Service', 'Table Service',
-      'Head Chapel Service', 'Chapel Service',
-      'Head Dorm Service', 'Dorm Service',
-      'Head Palanca Service', 'Palanca Service',
-      'Head Gopher Service', 'Gopher Service',
-      'Head Storeroom Service', 'Storeroom Service',
-      'Head Floater Supply Service', 'Floater Supply Service',
-      'Head Worship Service', 'Worship Service',
-      'Media Service', 'Prof_Silent Service',
-      'Prof_Ideal Service', 'Prof_Church Service', 'Prof_Piety Service',
-      'Prof_Study Service', 'Prof_Action Service', 'Prof_Leaders Service',
-      'Prof_Environments Service', 'Prof_CCIA Service', 'Prof_Reunion Service'
+      'Rector Service', 'Rector_Service_Qty',
+      'BUR Service', 'BUR_Service_Qty',
+      'Rover Service', 'Rover_Service_Qty',
+      'Head Service', 'Head_Service_Qty',
+      'Asst Head Service', 'Asst_Head_Service_Qty',
+      'Head Spiritual Director Service', 'Head_Spiritual_Director_Service_Qty',
+      'Spiritual Director Service', 'Spiritual_Dir_Service_Qty',
+      'Head Prayer Service', 'Head_Prayer_Service_Qty',
+      'Prayer Service', 'Prayer_Service_Qty',
+      'Head Kitchen Service', 'Head_Kitchen_Service_Qty',
+      'Asst Head Kitchen Service', 'Asst_Head_Kitchen_Service_Qty',
+      'Kitchen Service', 'Kitchen_Service_Qty',
+      'Head Table Service', 'Head_Table_Service_Qty',
+      'Table Service', 'Table_Service_Qty',
+      'Head Chapel Service', 'Head_Chapel_Service_Qty',
+      'Chapel Service', 'Chapel_Service_Qty',
+      'Head Dorm Service', 'Head_Dorm_Service_Qty',
+      'Dorm Service', 'Dorm_Service_Qty',
+      'Head Palanca Service', 'Head_Palanca_Service_Qty',
+      'Palanca Service', 'Palanca_Service_Qty',
+      'Head Gopher Service', 'Head_Gopher_Service_Qty',
+      'Gopher Service', 'Gopher_Service_Qty',
+      'Head Storeroom Service', 'Head_Storeroom_Service_Qty',
+      'Storeroom Service', 'Storeroom_Service_Qty',
+      'Head Floater Supply Service', 'Head_Floater_Supply_Service_Qty',
+      'Floater Supply Service', 'Floater_Supply_Service_Qty',
+      'Head Worship Service', 'Head_Worship_Service_Qty',
+      'Worship Service', 'Worship_Service_Qty',
+      'Head Media Service', 'Head_Media_Service_Qty',
+      'Media Service', 'Media_Service_Qty',
+      'Prof_Silent Service', 'Prof_Silent_Service_Qty',
+      'Prof_Ideals Service', 'Prof_Ideals_Service_Qty',
+      'Prof_Church Service', 'Prof_Church_Service_Qty',
+      'Prof_Piety Service', 'Prof_Piety_Service_Qty',
+      'Prof_Study Service', 'Prof_Study_Service_Qty',
+      'Prof_Action Service', 'Prof_Action_Service_Qty',
+      'Prof_Leaders Service', 'Prof_Leaders_Service_Qty',
+      'Prof_Environments Service', 'Prof_Environments_Service_Qty',
+      'Prof_CCIA Service', 'Prof_CCIA_Service_Qty',
+      'Prof_Reunion Service', 'Prof_Reunion_Service_Qty'
     ];
 
     return [...coreColumns, ...teamRoles, ...profRoles, ...serviceColumns];
@@ -128,8 +153,13 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
       'church': 'Church',
       'churchname': 'Church',
       'parish': 'Church',
-      'parishname': 'Parish',
+      'parishname': 'Church',
       'homechurch': 'Church',
+      
+      // Flags
+      'donotcall': 'Do_Not_Call',
+      'deceased': 'Deceased',
+      'dead': 'Deceased',
       
       // Address
       'address': 'Address',
@@ -137,9 +167,9 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
       'street': 'Address',
       'city': 'City',
       'state': 'State',
-      'zip': 'zip',
-      'zipcode': 'zip',
-      'postalcode': 'zip',
+      'zip': 'Zip',
+      'zipcode': 'Zip',
+      'postalcode': 'Zip',
       
       // IDs
       'pescadorekey': 'PescadoreKey',
@@ -170,6 +200,7 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
       'headkitchen': 'Head Kitchen',
       'assistantheadkitchen': 'Asst Head Kitchen',
       'assistheadkitchen': 'Asst Head Kitchen',
+      'asstHeadkitchen': 'Asst Head Kitchen',
       'kitchen': 'Kitchen',
       'headtable': 'Head Table',
       'table': 'Table',
@@ -187,11 +218,13 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
       'floatersupply': 'Floater Supply',
       'headworship': 'Head Worship',
       'worship': 'Worship',
-      'media': 'media',
-      'profsilent': 'prof_silent',
+      'media': 'Media',
+      'headmedia': 'Head Media Service',
+      'profsilent': 'Prof_Silent',
       
       // Professor roles
-      'profideal': 'Prof_Ideal',
+      'profideals': 'Prof_Ideals',
+      'profideal': 'Prof_Ideals',
       'profchurch': 'Prof_Church',
       'profpiety': 'Prof_Piety',
       'profstudy': 'Prof_Study',
@@ -199,7 +232,52 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
       'profleaders': 'Prof_Leaders',
       'profenvironments': 'Prof_Environments',
       'profccia': 'Prof_CCIA',
-      'profreunion': 'Prof_Reunion'
+      'profreunion': 'Prof_Reunion',
+      
+      // Quantity columns - Format: [Role]_Service_Qty
+      'rectorserviceqty': 'Rector_Service_Qty',
+      'burserviceqty': 'BUR_Service_Qty',
+      'roverserviceqty': 'Rover_Service_Qty',
+      'headserviceqty': 'Head_Service_Qty',
+      'asstHeadserviceqty': 'Asst_Head_Service_Qty',
+      'headspiritdirectorserviceqty': 'Head_Spiritual_Director_Service_Qty',
+      'headspiritualdirectorserviceqty': 'Head_Spiritual_Director_Service_Qty',
+      'spiritualdirserviceqty': 'Spiritual_Dir_Service_Qty',
+      'spiritualdirectorserviceqty': 'Spiritual_Dir_Service_Qty',
+      'headprayerserviceqty': 'Head_Prayer_Service_Qty',
+      'prayerserviceqty': 'Prayer_Service_Qty',
+      'headkitchenserviceqty': 'Head_Kitchen_Service_Qty',
+      'asstHeadkitchenserviceqty': 'Asst_Head_Kitchen_Service_Qty',
+      'kitchenserviceqty': 'Kitchen_Service_Qty',
+      'headtableserviceqty': 'Head_Table_Service_Qty',
+      'tableserviceqty': 'Table_Service_Qty',
+      'headchapelserviceqty': 'Head_Chapel_Service_Qty',
+      'chapelserviceqty': 'Chapel_Service_Qty',
+      'headdormserviceqty': 'Head_Dorm_Service_Qty',
+      'dormserviceqty': 'Dorm_Service_Qty',
+      'headpalancaserviceqty': 'Head_Palanca_Service_Qty',
+      'palancaserviceqty': 'Palanca_Service_Qty',
+      'headgopherserviceqty': 'Head_Gopher_Service_Qty',
+      'gopherserviceqty': 'Gopher_Service_Qty',
+      'headstoreroomserviceqty': 'Head_Storeroom_Service_Qty',
+      'storeroomserviceqty': 'Storeroom_Service_Qty',
+      'headfloatersupplyserviceqty': 'Head_Floater_Supply_Service_Qty',
+      'floatersupplyserviceqty': 'Floater_Supply_Service_Qty',
+      'headworshipserviceqty': 'Head_Worship_Service_Qty',
+      'worshipserviceqty': 'Worship_Service_Qty',
+      'headmediaserviceqty': 'Head_Media_Service_Qty',
+      'mediaserviceqty': 'Media_Service_Qty',
+      'profsilentserviceqty': 'Prof_Silent_Service_Qty',
+      'profidealsserviceqty': 'Prof_Ideals_Service_Qty',
+      'profidealserviceqty': 'Prof_Ideals_Service_Qty',
+      'profchurchserviceqty': 'Prof_Church_Service_Qty',
+      'profpietyserviceqty': 'Prof_Piety_Service_Qty',
+      'profstudyserviceqty': 'Prof_Study_Service_Qty',
+      'profactionserviceqty': 'Prof_Action_Service_Qty',
+      'profleadersserviceqty': 'Prof_Leaders_Service_Qty',
+      'profenvironmentsserviceqty': 'Prof_Environments_Service_Qty',
+      'profcciaserviceqty': 'Prof_CCIA_Service_Qty',
+      'profreunionserviceqty': 'Prof_Reunion_Service_Qty'
     };
 
     // Try to match each source header
@@ -219,14 +297,30 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
       }
       
       // Try pattern matching for service history columns
-      // Pattern: "rectorservice" or "rector service" → "Prof_Rector Service"
-      if (normalized.includes('service')) {
+      // Pattern: "rectorservice" or "rector service" → "Rector Service"
+      if (normalized.includes('service') && !normalized.includes('qty')) {
         const rolePattern = normalized.replace('service', '').trim();
         
         // Check if it matches any role name
         targetColumns.forEach(target => {
-          if (target.includes('Service')) {
-            const targetRole = normalizeColumnName(target.replace('Service', '').trim());
+          if (target.includes(' Service') && !target.includes('_Qty')) {
+            const targetRole = normalizeColumnName(target.replace(' Service', '').trim());
+            if (targetRole === rolePattern || normalized === normalizeColumnName(target)) {
+              newMappings[sourceHeader] = target;
+            }
+          }
+        });
+      }
+      
+      // Try pattern matching for Qty columns
+      // Pattern: "rectorserviceqty" or "rector_service_qty" → "Rector_Service_Qty"
+      if (normalized.includes('serviceqty') || (normalized.includes('service') && normalized.includes('qty'))) {
+        const rolePattern = normalized.replace('service', '').replace('qty', '').trim();
+        
+        // Check if it matches any role name
+        targetColumns.forEach(target => {
+          if (target.includes('_Service_Qty')) {
+            const targetRole = normalizeColumnName(target.replace('_Service_Qty', '').trim());
             if (targetRole === rolePattern || normalized === normalizeColumnName(target)) {
               newMappings[sourceHeader] = target;
             }
