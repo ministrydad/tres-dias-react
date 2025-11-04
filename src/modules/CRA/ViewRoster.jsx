@@ -593,6 +593,9 @@ export default function ViewRoster({ onNavigate }) {
 
   return (
     <div id="cra-apps" className="cra-view">
+      <div style={{ fontSize: '10px', color: 'red', padding: '4px' }}>
+        DEBUG: showEditForm={showEditForm ? 'TRUE' : 'FALSE'}, showFollowupForm={showFollowupForm ? 'TRUE' : 'FALSE'}
+      </div>
       <div className="card pad" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div style={{ maxWidth: '300px' }}>
           <label className="label">Filter Applications</label>
@@ -625,8 +628,8 @@ export default function ViewRoster({ onNavigate }) {
           ref={tableRef}
           className="card pad"
           style={{
-            flex: (showFollowupForm || showEditForm) ? '0 0 60%' : '1',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            width: (showFollowupForm || showEditForm) ? '60%' : '100%',
+            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             minWidth: 0,
             display: 'flex',
             flexDirection: 'column',
