@@ -815,35 +815,11 @@ function DetailPanel({
                   color: (val === true || val === 'zoom') ? 'white' : 'var(--ink)',
                   cursor: 'pointer',
                   fontWeight: '600',
-                  fontSize: val === 'zoom' ? '20px' : '14px',
-                  transition: 'all 0.2s ease',
-                  position: 'relative'
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                {val === 'zoom' ? (
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    height: '100%'
-                  }}>
-                    <div style={{
-                      width: '28px',
-                      height: '28px',
-                      borderRadius: '50%',
-                      background: 'white',
-                      color: 'var(--accentB)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '18px',
-                      fontWeight: '700'
-                    }}>
-                      Z
-                    </div>
-                  </div>
-                ) : num}
+                {val === 'zoom' ? `${num} (Z)` : num}
               </button>
             );
           })}
