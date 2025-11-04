@@ -768,12 +768,24 @@ function DetailPanel({
       <div style={{ 
         marginBottom: '24px', 
         paddingBottom: '16px', 
-        borderBottom: '1px solid var(--border)' 
+        borderBottom: '1px solid var(--border)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
       }}>
-        <h2 style={{ margin: 0 }}>{member.name}</h2>
-        <div style={{ fontSize: '14px', color: 'var(--muted)', marginTop: '4px' }}>
-          {member.role}
+        <div>
+          <h2 style={{ margin: 0 }}>{member.name}</h2>
+          <div style={{ fontSize: '14px', color: 'var(--muted)', marginTop: '4px' }}>
+            {member.role}
+          </div>
         </div>
+        <button 
+          className={`btn ${hasUnsavedChanges ? 'btn-primary' : ''}`}
+          onClick={() => onSave(memberId)}
+          disabled={saving || !hasUnsavedChanges}
+        >
+          {saving ? 'Saving...' : hasUnsavedChanges ? 'Save Changes' : 'No Changes'}
+        </button>
       </div>
 
       {/* Meetings Section */}
@@ -1053,7 +1065,8 @@ function DetailPanel({
               justifyContent: 'space-between',
               fontSize: '0.85rem',
               paddingTop: '8px',
-              borderTop: '1px solid var(--border)'
+              borderTop: '1px solid var(--border)',
+              marginBottom: '12px'
             }}>
               <span>
                 <span style={{ color: 'var(--muted)' }}>Paid:</span>
@@ -1064,32 +1077,18 @@ function DetailPanel({
                 <span style={{ fontWeight: '600', marginLeft: '6px' }}>{fmt(tmDue)}</span>
               </span>
             </div>
+            
+            {/* Palanca Button */}
+            <div className="label" style={{ marginBottom: '8px', marginTop: '8px' }}>Palanca Letter</div>
+            <button 
+              className={`btn ${checkin.palancaLetter ? 'btn-primary' : ''}`}
+              onClick={() => onTogglePalanca(memberId)}
+              style={{ width: '100%' }}
+            >
+              {checkin.palancaLetter ? '✓ Received' : 'Mark as Received'}
+            </button>
           </div>
         </div>
-      </div>
-
-      {/* Palanca & Save Buttons */}
-      <div style={{ 
-        marginTop: 'auto', 
-        paddingTop: '24px',
-        display: 'flex',
-        gap: '10px'
-      }}>
-        <button 
-          className={`btn ${checkin.palancaLetter ? 'btn-primary' : ''}`}
-          onClick={() => onTogglePalanca(memberId)}
-          style={{ flex: 1 }}
-        >
-          {checkin.palancaLetter ? '✓ Palanca Letter Received' : 'Palanca Letter Received'}
-        </button>
-        <button 
-          className={`btn ${hasUnsavedChanges ? 'btn-primary' : ''}`}
-          onClick={() => onSave(memberId)}
-          disabled={saving || !hasUnsavedChanges}
-          style={{ flex: 1 }}
-        >
-          {saving ? 'Saving...' : hasUnsavedChanges ? 'Save Changes' : 'No Changes'}
-        </button>
       </div>
     </div>
   );
