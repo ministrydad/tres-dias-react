@@ -396,32 +396,20 @@ export default function Reports() {
     return (
       <div style={{ 
         padding: '16px 24px', 
-        background: 'var(--surface)',
         display: 'grid',
-        gridTemplateColumns: hasWeekendPayments && hasTeamPayment ? '1fr 1fr' : '1fr',
-        gap: '24px'
+        gridTemplateColumns: hasWeekendPayments && hasTeamPayment ? 'repeat(auto-fit, minmax(250px, 1fr))' : '1fr',
+        gap: '24px',
+        fontSize: '0.9rem'
       }}>
         {hasWeekendPayments && (
           <div>
-            <div style={{ fontWeight: '600', marginBottom: '8px', fontSize: '0.9rem' }}>
-              Weekend Fee Payments:
+            <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '8px' }}>
+              WEEKEND FEE PAYMENTS
             </div>
             {chk.weekendFee.map((payment, idx) => (
-              <div key={idx} style={{ 
-                padding: '8px 12px',
-                marginBottom: '6px',
-                background: 'var(--panel)',
-                borderRadius: '4px',
-                fontSize: '0.85rem',
-                borderLeft: '3px solid var(--accentB)'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                  <span style={{ fontWeight: '600', textTransform: 'capitalize' }}>
-                    {payment.method}
-                  </span>
-                  <span style={{ fontWeight: '700' }}>
-                    {fmt(payment.amount)}
-                  </span>
+              <div key={idx} style={{ marginBottom: idx < chk.weekendFee.length - 1 ? '12px' : '0' }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--muted)', textTransform: 'capitalize' }}>
+                  {payment.method}: {fmt(payment.amount)}
                 </div>
                 {payment.timestamp && (
                   <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>
@@ -436,29 +424,18 @@ export default function Reports() {
         
         {hasTeamPayment && (
           <div>
-            <div style={{ fontWeight: '600', marginBottom: '8px', fontSize: '0.9rem' }}>
-              Team Fee Payment:
+            <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '8px' }}>
+              TEAM FEE PAYMENT
             </div>
-            <div style={{ 
-              padding: '8px 12px',
-              background: 'var(--panel)',
-              borderRadius: '4px',
-              fontSize: '0.85rem',
-              borderLeft: '3px solid var(--accentA)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                <span style={{ fontWeight: '600' }}>Cash</span>
-                <span style={{ fontWeight: '700' }}>
-                  {fmt(chk.teamFee.amount)}
-                </span>
+            <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+              Cash: {fmt(chk.teamFee.amount)}
+            </div>
+            {chk.teamFee.timestamp && (
+              <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>
+                {formatTimestamp(chk.teamFee.timestamp)} by{' '}
+                {formatRecordedBy(chk.teamFee.recorded_by, user?.full_name)}
               </div>
-              {chk.teamFee.timestamp && (
-                <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>
-                  {formatTimestamp(chk.teamFee.timestamp)} by{' '}
-                  {formatRecordedBy(chk.teamFee.recorded_by, user?.full_name)}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         )}
       </div>
@@ -776,6 +753,7 @@ export default function Reports() {
                         
                         return (
                           <>
+                            {/* Main Row */}
                             <tr key={id}>
                               <td>{m.name}</td>
                               <td>{m.role || ''}</td>
@@ -818,9 +796,11 @@ export default function Reports() {
                                 </button>
                               </td>
                             </tr>
+
+                            {/* Expanded Detail Row */}
                             {isExpanded && (
-                              <tr key={`${id}-expanded`}>
-                                <td colSpan="10" style={{ padding: 0, background: 'var(--surface)' }}>
+                              <tr key={`${id}-expanded`} className="expanded-row">
+                                <td colSpan="10" style={{ padding: 0, backgroundColor: 'var(--panel-header)' }}>
                                   {renderPaymentHistory(id)}
                                 </td>
                               </tr>
@@ -838,6 +818,21 @@ export default function Reports() {
 
       <style>{`
         @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        #meeting-check-in-app tr.expanded-row {
+          animation: expandRow 0.2s ease-out;
+        }
+        
+        @keyframes expandRow {
           from {
             opacity: 0;
             transform: translateY(-10px);
