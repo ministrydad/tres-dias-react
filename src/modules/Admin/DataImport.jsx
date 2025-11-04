@@ -109,7 +109,7 @@ export default function DataImport() {
                 justifyContent: 'center',
                 fontWeight: 700,
                 fontSize: '0.875rem',
-                backgroundColor: isActive ? 'var(--accent)' : (isCompleted ? 'var(--success)' : 'var(--border)'),
+                backgroundColor: isActive ? 'var(--accentB)' : (isCompleted ? 'var(--accentA)' : 'var(--border)'),
                 color: isActive || isCompleted ? '#fff' : 'var(--muted)',
                 transition: 'all 0.3s ease'
               }}>

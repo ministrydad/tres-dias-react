@@ -403,18 +403,18 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
             Column Mapping Results
           </div>
           <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
-            <span style={{ color: 'var(--success)', fontWeight: 600 }}>{stats.mapped}</span> mapped, {' '}
-            <span style={{ color: 'var(--warning)', fontWeight: 600 }}>{stats.unmapped}</span> unmapped, {' '}
+            <span style={{ color: 'var(--accentA)', fontWeight: 600 }}>{stats.mapped}</span> mapped, {' '}
+            <span style={{ color: 'var(--accentC)', fontWeight: 600 }}>{stats.unmapped}</span> unmapped, {' '}
             <span style={{ fontWeight: 600 }}>{stats.total}</span> total columns
           </div>
         </div>
         <div style={{
           padding: '8px 16px',
-          backgroundColor: stats.mapped > stats.total / 2 ? 'var(--successL)' : 'var(--warningL)',
+          backgroundColor: stats.mapped > stats.total / 2 ? 'rgba(46, 164, 79, 0.15)' : 'rgba(255, 193, 7, 0.15)',
           borderRadius: '4px',
           fontSize: '0.85rem',
           fontWeight: 600,
-          color: stats.mapped > stats.total / 2 ? 'var(--success)' : 'var(--warning)'
+          color: stats.mapped > stats.total / 2 ? 'var(--accentA)' : 'var(--accentC)'
         }}>
           {Math.round((stats.mapped / stats.total) * 100)}% Complete
         </div>
@@ -423,9 +423,9 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
       {/* Instructions */}
       <div style={{
         padding: '12px 16px',
-        backgroundColor: 'var(--accentL)',
+        backgroundColor: 'rgba(0, 163, 255, 0.15)',
         borderRadius: '8px',
-        border: '1px solid var(--accent)',
+        border: '1px solid var(--accentB)',
         marginBottom: '24px',
         fontSize: '0.85rem',
         color: 'var(--ink)'
@@ -502,7 +502,7 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
                     width: '100%',
                     padding: '6px 8px',
                     fontSize: '0.85rem',
-                    border: `1px solid ${isMapped ? 'var(--success)' : 'var(--border)'}`,
+                    border: `1px solid ${isMapped ? 'var(--accentA)' : 'var(--border)'}`,
                     borderRadius: '4px',
                     backgroundColor: '#fff',
                     cursor: 'pointer'
@@ -522,8 +522,8 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
                 {isMapped ? (
                   <span style={{
                     padding: '4px 8px',
-                    backgroundColor: 'var(--successL)',
-                    color: 'var(--success)',
+                    backgroundColor: 'rgba(46, 164, 79, 0.15)',
+                    color: 'var(--accentA)',
                     borderRadius: '4px',
                     fontSize: '0.75rem',
                     fontWeight: 600
@@ -533,8 +533,8 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
                 ) : (
                   <span style={{
                     padding: '4px 8px',
-                    backgroundColor: 'var(--warningL)',
-                    color: 'var(--warning)',
+                    backgroundColor: 'rgba(255, 193, 7, 0.15)',
+                    color: 'var(--accentC)',
                     borderRadius: '4px',
                     fontSize: '0.75rem',
                     fontWeight: 600
