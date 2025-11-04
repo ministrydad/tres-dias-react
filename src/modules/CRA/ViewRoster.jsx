@@ -625,8 +625,8 @@ export default function ViewRoster({ onNavigate }) {
           ref={tableRef}
           className="card pad"
           style={{
-            width: (showFollowupForm || showEditForm) ? '60%' : '100%',
-            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            flex: (showFollowupForm || showEditForm) ? '0 0 60%' : '1',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             minWidth: 0,
             display: 'flex',
             flexDirection: 'column',
