@@ -5,6 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function ViewRoster({ onNavigate }) {
   const { orgId } = useAuth();
+  
+  // Constants
+  const WEEKEND_FEE = 265; // TODO: Load from app_settings table
+  
   const [applications, setApplications] = useState([]);
   const [currentFilter, setCurrentFilter] = useState('men');
   const [loading, setLoading] = useState(true);
@@ -56,6 +60,7 @@ export default function ViewRoster({ onNavigate }) {
     payment_wk_scholarship: false,
     payment_wk_scholarshiptype: '',
     payment_wk_partialamount: '',
+    payment_wk_candidate_paid: 0,  // NEW FIELD
     payment_sp_cash: false,
     payment_sp_check: false,
     
@@ -281,6 +286,7 @@ export default function ViewRoster({ onNavigate }) {
       payment_wk_scholarship: app.payment_wk_scholarship || false,
       payment_wk_scholarshiptype: app.payment_wk_scholarshiptype || '',
       payment_wk_partialamount: app.payment_wk_partialamount || '',
+      payment_wk_candidate_paid: app.payment_wk_candidate_paid || 0,
       payment_sp_cash: app.payment_sp_cash || false,
       payment_sp_check: app.payment_sp_check || false,
       
@@ -414,6 +420,7 @@ export default function ViewRoster({ onNavigate }) {
         payment_wk_scholarship: editData.payment_wk_scholarship,
         payment_wk_scholarshiptype: editData.payment_wk_scholarshiptype,
         payment_wk_partialamount: editData.payment_wk_partialamount,
+        payment_wk_candidate_paid: editData.payment_wk_candidate_paid,
         payment_sp_cash: editData.payment_sp_cash,
         payment_sp_check: editData.payment_sp_check,
         
@@ -464,9 +471,15 @@ export default function ViewRoster({ onNavigate }) {
   const getPaymentStatusString = (app, type) => {
     if (type === 'wk') {
       if (app.payment_wk_scholarship) {
-        return app.payment_wk_scholarshiptype === 'full'
-          ? 'Full Scholarship'
-          : `Partial ($${app.payment_wk_partialamount})`;
+        if (app.payment_wk_scholarshiptype === 'full') {
+          return 'Full Scholarship';
+        } else {
+          // Partial scholarship with candidate payment
+          const candidatePaid = app.payment_wk_candidate_paid || 0;
+          const scholarshipAmount = app.payment_wk_partialamount || 0;
+          const method = app.payment_wk_cash ? 'Cash' : app.payment_wk_check ? 'Check' : '';
+          return `Partial ($${candidatePaid} ${method}, $${scholarshipAmount} scholarship)`;
+        }
       } else {
         return (app.payment_wk_cash || app.payment_wk_check) ? 'Paid' : 'Due';
       }
@@ -708,8 +721,10 @@ export default function ViewRoster({ onNavigate }) {
 
                 const rowStyle = status === 'Withdrawn' 
                   ? { backgroundColor: 'rgba(220, 53, 69, 0.08)' }
-                  : (currentApp?.id === app.id || currentEditApp?.id === app.id)
+                  : (currentApp?.id === app.id && showFollowupForm)
                   ? { backgroundColor: 'rgba(40, 167, 69, 0.08)' }
+                  : (currentEditApp?.id === app.id && showEditForm)
+                  ? { backgroundColor: 'rgba(0, 163, 255, 0.08)' }
                   : {};
 
                 const sponsorName = [app.s_first, app.s_last].filter(Boolean).join(' ') || 'N/A';
@@ -744,8 +759,8 @@ export default function ViewRoster({ onNavigate }) {
                             className="btn btn-small"
                             onClick={() => openEditForm(app)}
                             style={{
-                              backgroundColor: currentEditApp?.id === app.id ? 'var(--accentB)' : undefined,
-                              color: currentEditApp?.id === app.id ? 'white' : undefined
+                              backgroundColor: (currentEditApp?.id === app.id && showEditForm) ? 'var(--accentB)' : undefined,
+                              color: (currentEditApp?.id === app.id && showEditForm) ? 'white' : undefined
                             }}
                           >
                             Edit
@@ -760,7 +775,7 @@ export default function ViewRoster({ onNavigate }) {
                             className="btn btn-small btn-primary"
                             onClick={() => openFollowupForm(app)}
                             style={{
-                              backgroundColor: currentApp?.id === app.id ? 'var(--accentA)' : undefined
+                              backgroundColor: (currentApp?.id === app.id && showFollowupForm) ? 'var(--accentA)' : undefined
                             }}
                           >
                             Contact
@@ -1388,89 +1403,211 @@ export default function ViewRoster({ onNavigate }) {
             {/* WEEKEND FEE */}
             <div style={{ marginBottom: '24px' }}>
               <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
-                Weekend Fee
+                Weekend Fee Payment
               </h4>
 
-              <div className="grid grid-3" style={{ marginBottom: '12px' }}>
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <label className="label">Cash</label>
-                  <div className="toggle">
-                    <div 
-                      className={`opt ${!editData.payment_wk_cash ? 'active' : ''}`}
-                      onClick={() => handleEditToggle('payment_wk_cash')}
-                    >
-                      No
-                    </div>
-                    <div 
-                      className={`opt ${editData.payment_wk_cash ? 'active' : ''}`}
-                      onClick={() => handleEditToggle('payment_wk_cash')}
-                    >
-                      Yes
-                    </div>
-                  </div>
+              {/* Main Payment Status - 3 Options */}
+              <div className="toggle" style={{ display: 'flex', gap: '0', marginBottom: '12px' }}>
+                <div 
+                  className={`opt ${!editData.payment_wk_scholarship && !editData.payment_wk_cash && !editData.payment_wk_check ? 'active' : ''}`}
+                  onClick={() => {
+                    handleEditFieldChange('payment_wk_scholarship', false);
+                    handleEditFieldChange('payment_wk_cash', false);
+                    handleEditFieldChange('payment_wk_check', false);
+                    handleEditFieldChange('payment_wk_scholarshiptype', '');
+                    handleEditFieldChange('payment_wk_partialamount', '');
+                    handleEditFieldChange('payment_wk_candidate_paid', 0);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Unpaid
                 </div>
-
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <label className="label">Check</label>
-                  <div className="toggle">
-                    <div 
-                      className={`opt ${!editData.payment_wk_check ? 'active' : ''}`}
-                      onClick={() => handleEditToggle('payment_wk_check')}
-                    >
-                      No
-                    </div>
-                    <div 
-                      className={`opt ${editData.payment_wk_check ? 'active' : ''}`}
-                      onClick={() => handleEditToggle('payment_wk_check')}
-                    >
-                      Yes
-                    </div>
-                  </div>
+                <div 
+                  className={`opt ${!editData.payment_wk_scholarship && (editData.payment_wk_cash || editData.payment_wk_check) ? 'active' : ''}`}
+                  onClick={() => {
+                    handleEditFieldChange('payment_wk_scholarship', false);
+                    handleEditFieldChange('payment_wk_cash', true);
+                    handleEditFieldChange('payment_wk_check', false);
+                    handleEditFieldChange('payment_wk_scholarshiptype', '');
+                    handleEditFieldChange('payment_wk_partialamount', '');
+                    handleEditFieldChange('payment_wk_candidate_paid', WEEKEND_FEE);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Paid
                 </div>
-
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <label className="label">Scholarship</label>
-                  <div className="toggle">
-                    <div 
-                      className={`opt ${!editData.payment_wk_scholarship ? 'active' : ''}`}
-                      onClick={() => handleEditToggle('payment_wk_scholarship')}
-                    >
-                      No
-                    </div>
-                    <div 
-                      className={`opt ${editData.payment_wk_scholarship ? 'active' : ''}`}
-                      onClick={() => handleEditToggle('payment_wk_scholarship')}
-                    >
-                      Yes
-                    </div>
-                  </div>
+                <div 
+                  className={`opt ${editData.payment_wk_scholarship ? 'active' : ''}`}
+                  onClick={() => {
+                    handleEditFieldChange('payment_wk_scholarship', true);
+                    handleEditFieldChange('payment_wk_scholarshiptype', 'full');
+                    handleEditFieldChange('payment_wk_cash', false);
+                    handleEditFieldChange('payment_wk_check', false);
+                    handleEditFieldChange('payment_wk_candidate_paid', 0);
+                    handleEditFieldChange('payment_wk_partialamount', WEEKEND_FEE);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Scholarship
                 </div>
               </div>
 
-              {editData.payment_wk_scholarship && (
-                <div className="grid grid-2">
-                  <div className="field" style={{ marginBottom: 0 }}>
-                    <label className="label">Scholarship Type</label>
-                    <select
-                      className="input"
-                      value={editData.payment_wk_scholarshiptype}
-                      onChange={(e) => handleEditFieldChange('payment_wk_scholarshiptype', e.target.value)}
-                    >
-                      <option value="">Select Type</option>
-                      <option value="full">Full</option>
-                      <option value="partial">Partial</option>
-                    </select>
+              {/* If Paid - Show Payment Method & Amount */}
+              {!editData.payment_wk_scholarship && (editData.payment_wk_cash || editData.payment_wk_check) && (
+                <div>
+                  <div className="field" style={{ marginBottom: '12px' }}>
+                    <label className="label">Payment Method</label>
+                    <div className="toggle" style={{ display: 'flex', gap: '0' }}>
+                      <div 
+                        className={`opt ${editData.payment_wk_cash ? 'active' : ''}`}
+                        onClick={() => {
+                          handleEditFieldChange('payment_wk_cash', true);
+                          handleEditFieldChange('payment_wk_check', false);
+                        }}
+                        style={{ flex: 1 }}
+                      >
+                        Cash
+                      </div>
+                      <div 
+                        className={`opt ${editData.payment_wk_check ? 'active' : ''}`}
+                        onClick={() => {
+                          handleEditFieldChange('payment_wk_cash', false);
+                          handleEditFieldChange('payment_wk_check', true);
+                        }}
+                        style={{ flex: 1 }}
+                      >
+                        Check
+                      </div>
+                    </div>
                   </div>
+                  <div className="field" style={{ marginBottom: 0 }}>
+                    <label className="label">Amount Paid</label>
+                    <input
+                      type="number"
+                      className="input"
+                      value={editData.payment_wk_candidate_paid}
+                      onChange={(e) => handleEditFieldChange('payment_wk_candidate_paid', parseFloat(e.target.value) || 0)}
+                      placeholder="Amount"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* If Scholarship - Show Type & Partial Details */}
+              {editData.payment_wk_scholarship && (
+                <div>
+                  <div className="field" style={{ marginBottom: '12px' }}>
+                    <label className="label">Scholarship Type</label>
+                    <div className="toggle" style={{ display: 'flex', gap: '0' }}>
+                      <div 
+                        className={`opt ${editData.payment_wk_scholarshiptype === 'full' ? 'active' : ''}`}
+                        onClick={() => {
+                          handleEditFieldChange('payment_wk_scholarshiptype', 'full');
+                          handleEditFieldChange('payment_wk_candidate_paid', 0);
+                          handleEditFieldChange('payment_wk_partialamount', WEEKEND_FEE);
+                          handleEditFieldChange('payment_wk_cash', false);
+                          handleEditFieldChange('payment_wk_check', false);
+                        }}
+                        style={{ flex: 1 }}
+                      >
+                        Full
+                      </div>
+                      <div 
+                        className={`opt ${editData.payment_wk_scholarshiptype === 'partial' ? 'active' : ''}`}
+                        onClick={() => {
+                          handleEditFieldChange('payment_wk_scholarshiptype', 'partial');
+                          handleEditFieldChange('payment_wk_cash', true);
+                          handleEditFieldChange('payment_wk_check', false);
+                          handleEditFieldChange('payment_wk_candidate_paid', 0);
+                          handleEditFieldChange('payment_wk_partialamount', WEEKEND_FEE);
+                        }}
+                        style={{ flex: 1 }}
+                      >
+                        Partial
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* If Partial Scholarship - Show Candidate Payment */}
                   {editData.payment_wk_scholarshiptype === 'partial' && (
-                    <div className="field" style={{ marginBottom: 0 }}>
-                      <label className="label">Partial Amount</label>
-                      <input
-                        type="number"
-                        className="input"
-                        value={editData.payment_wk_partialamount}
-                        onChange={(e) => handleEditFieldChange('payment_wk_partialamount', e.target.value)}
-                        placeholder="Amount"
-                      />
+                    <div style={{ 
+                      background: 'var(--surface)', 
+                      padding: '16px', 
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)'
+                    }}>
+                      <h5 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', fontWeight: 600 }}>
+                        Candidate Payment
+                      </h5>
+                      
+                      <div className="field" style={{ marginBottom: '12px' }}>
+                        <label className="label">Payment Method</label>
+                        <div className="toggle" style={{ display: 'flex', gap: '0' }}>
+                          <div 
+                            className={`opt ${editData.payment_wk_cash ? 'active' : ''}`}
+                            onClick={() => {
+                              handleEditFieldChange('payment_wk_cash', true);
+                              handleEditFieldChange('payment_wk_check', false);
+                            }}
+                            style={{ flex: 1 }}
+                          >
+                            Cash
+                          </div>
+                          <div 
+                            className={`opt ${editData.payment_wk_check ? 'active' : ''}`}
+                            onClick={() => {
+                              handleEditFieldChange('payment_wk_cash', false);
+                              handleEditFieldChange('payment_wk_check', true);
+                            }}
+                            style={{ flex: 1 }}
+                          >
+                            Check
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="field" style={{ marginBottom: '12px' }}>
+                        <label className="label">Amount Candidate Paid</label>
+                        <input
+                          type="number"
+                          className="input"
+                          value={editData.payment_wk_candidate_paid}
+                          onChange={(e) => {
+                            const candidatePaid = parseFloat(e.target.value) || 0;
+                            const scholarshipAmount = WEEKEND_FEE - candidatePaid;
+                            handleEditFieldChange('payment_wk_candidate_paid', candidatePaid);
+                            handleEditFieldChange('payment_wk_partialamount', scholarshipAmount);
+                          }}
+                          placeholder="Amount paid by candidate"
+                        />
+                      </div>
+
+                      <div style={{ 
+                        padding: '12px', 
+                        background: 'var(--panel)', 
+                        borderRadius: '6px',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gap: '8px',
+                        fontSize: '0.85rem'
+                      }}>
+                        <div>
+                          <div style={{ color: 'var(--muted)', marginBottom: '4px' }}>Weekend Fee</div>
+                          <div style={{ fontWeight: 700 }}>${WEEKEND_FEE}</div>
+                        </div>
+                        <div>
+                          <div style={{ color: 'var(--muted)', marginBottom: '4px' }}>Candidate Paid</div>
+                          <div style={{ fontWeight: 700, color: 'var(--accentA)' }}>
+                            ${editData.payment_wk_candidate_paid || 0}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ color: 'var(--muted)', marginBottom: '4px' }}>Scholarship</div>
+                          <div style={{ fontWeight: 700, color: 'var(--accentB)' }}>
+                            ${editData.payment_wk_partialamount || WEEKEND_FEE}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1482,44 +1619,29 @@ export default function ViewRoster({ onNavigate }) {
             {/* SPONSOR FEE */}
             <div style={{ marginBottom: '24px' }}>
               <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
-                Sponsor Fee
+                Sponsor Fee Payment Method
               </h4>
 
-              <div className="grid grid-2">
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <label className="label">Cash</label>
-                  <div className="toggle">
-                    <div 
-                      className={`opt ${!editData.payment_sp_cash ? 'active' : ''}`}
-                      onClick={() => handleEditToggle('payment_sp_cash')}
-                    >
-                      No
-                    </div>
-                    <div 
-                      className={`opt ${editData.payment_sp_cash ? 'active' : ''}`}
-                      onClick={() => handleEditToggle('payment_sp_cash')}
-                    >
-                      Yes
-                    </div>
-                  </div>
+              <div className="toggle" style={{ display: 'flex', gap: '0' }}>
+                <div 
+                  className={`opt ${editData.payment_sp_cash && !editData.payment_sp_check ? 'active' : ''}`}
+                  onClick={() => {
+                    handleEditFieldChange('payment_sp_cash', true);
+                    handleEditFieldChange('payment_sp_check', false);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Cash
                 </div>
-
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <label className="label">Check</label>
-                  <div className="toggle">
-                    <div 
-                      className={`opt ${!editData.payment_sp_check ? 'active' : ''}`}
-                      onClick={() => handleEditToggle('payment_sp_check')}
-                    >
-                      No
-                    </div>
-                    <div 
-                      className={`opt ${editData.payment_sp_check ? 'active' : ''}`}
-                      onClick={() => handleEditToggle('payment_sp_check')}
-                    >
-                      Yes
-                    </div>
-                  </div>
+                <div 
+                  className={`opt ${editData.payment_sp_check && !editData.payment_sp_cash ? 'active' : ''}`}
+                  onClick={() => {
+                    handleEditFieldChange('payment_sp_cash', false);
+                    handleEditFieldChange('payment_sp_check', true);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Check
                 </div>
               </div>
             </div>
