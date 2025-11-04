@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 
 export default function Reports() {
-  const { orgId } = useAuth();
+  const { orgId, user } = useAuth();
   const [currentGender, setCurrentGender] = useState('men');
   const [currentTeamId, setCurrentTeamId] = useState(null);
   const [memberDetails, setMemberDetails] = useState({});
@@ -12,6 +12,7 @@ export default function Reports() {
   const [totals, setTotals] = useState(null);
   const [noAttendanceMembers, setNoAttendanceMembers] = useState([]);
   const [showNoAttendanceModal, setShowNoAttendanceModal] = useState(false);
+  const [expandedMemberId, setExpandedMemberId] = useState(null);
 
   // Fee settings loaded from database
   const [weekendFee, setWeekendFee] = useState(265); // Default fallback
@@ -23,6 +24,39 @@ export default function Reports() {
   const feeExemptRoles = ['Rector', 'Head Spiritual Director', 'Spiritual Director'];
 
   const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
+
+  // Helper function to format recorded_by name
+  const formatRecordedBy = (email, fullName) => {
+    if (fullName) {
+      // "John Smith" → "J. Smith"
+      const parts = fullName.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return `${parts[0][0]}. ${parts[parts.length - 1]}`;
+      }
+      return fullName;
+    }
+    // Fallback: parse from email
+    // "john.smith@example.com" → "J. Smith"
+    const name = email.split('@')[0];
+    const parts = name.split('.');
+    if (parts.length >= 2) {
+      return `${parts[0][0].toUpperCase()}. ${parts[parts.length - 1].charAt(0).toUpperCase()}${parts[parts.length - 1].slice(1)}`;
+    }
+    return email.split('@')[0];
+  };
+
+  // Helper function to format timestamp
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).toLowerCase();
+  };
 
   // Load fee settings from database
   useEffect(() => {
@@ -63,6 +97,7 @@ export default function Reports() {
     setMemberDetails({});
     setCheckinData({});
     setTotals(null);
+    setExpandedMemberId(null);
     await loadLatestTeamByGender(gender);
   };
 
@@ -339,6 +374,97 @@ export default function Reports() {
     return 'var(--accentD)';
   };
 
+  const toggleExpandMember = (memberId) => {
+    setExpandedMemberId(expandedMemberId === memberId ? null : memberId);
+  };
+
+  const renderPaymentHistory = (memberId) => {
+    const chk = checkinData[memberId];
+    if (!chk) return null;
+
+    const hasWeekendPayments = chk.weekendFee && chk.weekendFee.length > 0;
+    const hasTeamPayment = chk.teamFee?.paid && chk.teamFee.timestamp;
+
+    if (!hasWeekendPayments && !hasTeamPayment) {
+      return (
+        <div style={{ padding: '16px', textAlign: 'center', color: 'var(--muted)', fontStyle: 'italic' }}>
+          No payment history recorded yet.
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ 
+        padding: '16px 24px', 
+        background: 'var(--surface)',
+        display: 'grid',
+        gridTemplateColumns: hasWeekendPayments && hasTeamPayment ? '1fr 1fr' : '1fr',
+        gap: '24px'
+      }}>
+        {hasWeekendPayments && (
+          <div>
+            <div style={{ fontWeight: '600', marginBottom: '8px', fontSize: '0.9rem' }}>
+              Weekend Fee Payments:
+            </div>
+            {chk.weekendFee.map((payment, idx) => (
+              <div key={idx} style={{ 
+                padding: '8px 12px',
+                marginBottom: '6px',
+                background: 'var(--panel)',
+                borderRadius: '4px',
+                fontSize: '0.85rem',
+                borderLeft: '3px solid var(--accentB)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span style={{ fontWeight: '600', textTransform: 'capitalize' }}>
+                    {payment.method}
+                  </span>
+                  <span style={{ fontWeight: '700' }}>
+                    {fmt(payment.amount)}
+                  </span>
+                </div>
+                {payment.timestamp && (
+                  <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>
+                    {formatTimestamp(payment.timestamp)} by{' '}
+                    {formatRecordedBy(payment.recorded_by, user?.full_name)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {hasTeamPayment && (
+          <div>
+            <div style={{ fontWeight: '600', marginBottom: '8px', fontSize: '0.9rem' }}>
+              Team Fee Payment:
+            </div>
+            <div style={{ 
+              padding: '8px 12px',
+              background: 'var(--panel)',
+              borderRadius: '4px',
+              fontSize: '0.85rem',
+              borderLeft: '3px solid var(--accentA)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                <span style={{ fontWeight: '600' }}>Cash</span>
+                <span style={{ fontWeight: '700' }}>
+                  {fmt(chk.teamFee.amount)}
+                </span>
+              </div>
+              {chk.teamFee.timestamp && (
+                <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>
+                  {formatTimestamp(chk.teamFee.timestamp)} by{' '}
+                  {formatRecordedBy(chk.teamFee.recorded_by, user?.full_name)}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <section id="meeting-check-in-app" className="app-panel mci-app" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div id="mciControls" style={{ marginBottom: '16px', display: 'flex', maxWidth: '250px' }}>
@@ -585,6 +711,7 @@ export default function Reports() {
                     <th colSpan="2" style={{ textAlign: 'center', borderBottom: '2px solid var(--accentB)' }}>Team Fee</th>
                     <th style={{ textAlign: 'center' }}>Palanca</th>
                     <th style={{ textAlign: 'center' }}>Overall</th>
+                    <th style={{ textAlign: 'center', width: '50px' }}>Details</th>
                   </tr>
                   <tr>
                     <th></th>
@@ -596,12 +723,13 @@ export default function Reports() {
                     <th style={{ textAlign: 'left', fontSize: '0.85rem', paddingLeft: '8px' }}>Payment</th>
                     <th></th>
                     <th></th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody id="statusTableBody">
                   {Object.keys(memberDetails).length === 0 ? (
                     <tr>
-                      <td colSpan="9" style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
+                      <td colSpan="10" style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
                         No team data loaded.
                       </td>
                     </tr>
@@ -611,6 +739,7 @@ export default function Reports() {
                       .map(id => {
                         const m = memberDetails[id];
                         const chk = checkinData[id];
+                        const isExpanded = expandedMemberId === id;
                         
                         const isFeeWaived = feeExemptRoles.includes(m.role);
                         const wkPaid = isFeeWaived ? weekendFee : (chk.weekendFee || []).reduce((sum, p) => sum + (p.amount || 0), 0);
@@ -646,29 +775,57 @@ export default function Reports() {
                         }
                         
                         return (
-                          <tr key={id}>
-                            <td>{m.name}</td>
-                            <td>{m.role || ''}</td>
-                            <td style={{ textAlign: 'center' }}>{renderMeetingDots(chk)}</td>
-                            <td style={{ textAlign: 'left', paddingLeft: '12px' }}>
-                              <span className={`payment-status-text ${weekendStatus.toLowerCase()}`}>
-                                {weekendStatus}
-                              </span>
-                            </td>
-                            <td style={{ textAlign: 'left', paddingLeft: '8px', fontSize: '0.85rem', color: 'var(--muted)' }}>
-                              {weekendDetail}
-                            </td>
-                            <td style={{ textAlign: 'left', paddingLeft: '12px' }}>
-                              <span className={`payment-status-text ${teamStatus.toLowerCase()}`}>
-                                {teamStatus}
-                              </span>
-                            </td>
-                            <td style={{ textAlign: 'left', paddingLeft: '8px', fontSize: '0.85rem', color: 'var(--muted)' }}>
-                              {teamDetail}
-                            </td>
-                            <td style={{ textAlign: 'center' }}>{chk.palancaLetter ? 'Yes' : 'No'}</td>
-                            <td style={{ textAlign: 'center' }}>{renderOverallStatus(chk, m)}</td>
-                          </tr>
+                          <>
+                            <tr key={id}>
+                              <td>{m.name}</td>
+                              <td>{m.role || ''}</td>
+                              <td style={{ textAlign: 'center' }}>{renderMeetingDots(chk)}</td>
+                              <td style={{ textAlign: 'left', paddingLeft: '12px' }}>
+                                <span className={`payment-status-text ${weekendStatus.toLowerCase()}`}>
+                                  {weekendStatus}
+                                </span>
+                              </td>
+                              <td style={{ textAlign: 'left', paddingLeft: '8px', fontSize: '0.85rem', color: 'var(--muted)' }}>
+                                {weekendDetail}
+                              </td>
+                              <td style={{ textAlign: 'left', paddingLeft: '12px' }}>
+                                <span className={`payment-status-text ${teamStatus.toLowerCase()}`}>
+                                  {teamStatus}
+                                </span>
+                              </td>
+                              <td style={{ textAlign: 'left', paddingLeft: '8px', fontSize: '0.85rem', color: 'var(--muted)' }}>
+                                {teamDetail}
+                              </td>
+                              <td style={{ textAlign: 'center' }}>{chk.palancaLetter ? 'Yes' : 'No'}</td>
+                              <td style={{ textAlign: 'center' }}>{renderOverallStatus(chk, m)}</td>
+                              <td style={{ textAlign: 'center' }}>
+                                <button
+                                  onClick={() => toggleExpandMember(id)}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '1.2rem',
+                                    fontWeight: 700,
+                                    color: 'var(--accentB)',
+                                    padding: '4px 8px',
+                                    transition: 'transform 0.2s',
+                                    transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                                    display: 'inline-block'
+                                  }}
+                                >
+                                  ›
+                                </button>
+                              </td>
+                            </tr>
+                            {isExpanded && (
+                              <tr key={`${id}-expanded`}>
+                                <td colSpan="10" style={{ padding: 0, background: 'var(--surface)' }}>
+                                  {renderPaymentHistory(id)}
+                                </td>
+                              </tr>
+                            )}
+                          </>
                         );
                       })
                   )}

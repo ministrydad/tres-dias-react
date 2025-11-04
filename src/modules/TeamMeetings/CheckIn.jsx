@@ -11,7 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 
 export default function CheckIn() {
-  const { orgId } = useAuth();
+  const { orgId, user } = useAuth();
   const [currentGender, setCurrentGender] = useState('men');
   const [currentTeamId, setCurrentTeamId] = useState(null);
   const [memberDetails, setMemberDetails] = useState({});
@@ -202,8 +202,14 @@ export default function CheckIn() {
       if (!newData[memberId]) newData[memberId] = { attendance: {}, weekendFee: [], teamFee: {}, palancaLetter: false };
       if (!newData[memberId].teamFee) newData[memberId].teamFee = {};
       
-      newData[memberId].teamFee.paid = !newData[memberId].teamFee.paid;
-      newData[memberId].teamFee.amount = newData[memberId].teamFee.paid ? TEAM_FEE : 0;
+      const willBePaid = !newData[memberId].teamFee.paid;
+      
+      newData[memberId].teamFee = {
+        paid: willBePaid,
+        amount: willBePaid ? TEAM_FEE : 0,
+        timestamp: willBePaid ? new Date().toISOString() : null,
+        recorded_by: willBePaid ? (user?.email || 'unknown') : null
+      };
       
       return newData;
     });
@@ -230,7 +236,12 @@ export default function CheckIn() {
       if (isAlreadyOnline) {
         newData[memberId].weekendFee = [];
       } else {
-        newData[memberId].weekendFee = [{ method: 'online', amount: WEEKEND_FEE }];
+        newData[memberId].weekendFee = [{
+          method: 'online',
+          amount: WEEKEND_FEE,
+          timestamp: new Date().toISOString(),
+          recorded_by: user?.email || 'unknown'
+        }];
       }
       
       return newData;
@@ -369,10 +380,12 @@ export default function CheckIn() {
         newData[selectedMemberId].weekendFee = [];
       }
 
-      // Add new payment
+      // Add new payment with timestamp and recorded_by
       newData[selectedMemberId].weekendFee.push({
         method: expandedPaymentType,
-        amount: amount
+        amount: amount,
+        timestamp: new Date().toISOString(),
+        recorded_by: user?.email || 'unknown'
       });
 
       return newData;
@@ -819,7 +832,7 @@ function DetailPanel({
                   transition: 'all 0.2s ease'
                 }}
               >
-                {val === 'zoom' ? `${num} (Z)` : num}
+                {val === 'zoom' ? `${num} - Zoom` : num}
               </button>
             );
           })}
