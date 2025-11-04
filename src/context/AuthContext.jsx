@@ -178,16 +178,17 @@ export function AuthProvider({ children }) {
       
       console.log('🔧 Step 3: Setting user state...');
       
-      setUser({
-        ...authUser,
-        full_name: membership.profiles?.full_name,
-        display_name: membership.profiles?.display_name,
-        email: membership.profiles?.email || authUser.email,
-        organization: {
-          id: membership.org_id,
-          name: orgData?.name || 'Team Tools Pro'
-        }
-      });
+     setUser({
+  ...authUser,
+  full_name: membership.profiles?.full_name,
+  display_name: membership.profiles?.display_name,
+  email: membership.profiles?.email || authUser.email,
+  role: membership.role,  // ← ADD THIS LINE
+  organization: {
+    id: membership.org_id,
+    name: orgData?.name || 'Team Tools Pro'
+  }
+});
       
       console.log('✅ User initialization complete');
       setLoading(false);
