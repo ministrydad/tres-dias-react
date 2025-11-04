@@ -593,8 +593,12 @@ export default function ViewRoster({ onNavigate }) {
 
   return (
     <div id="cra-apps" className="cra-view">
-      <div style={{ fontSize: '10px', color: 'red', padding: '4px' }}>
+      <div style={{ fontSize: '10px', color: 'red', padding: '4px', background: 'yellow' }}>
         DEBUG: showEditForm={showEditForm ? 'TRUE' : 'FALSE'}, showFollowupForm={showFollowupForm ? 'TRUE' : 'FALSE'}
+        <br/>
+        Table Width Style: {(showFollowupForm || showEditForm) ? '60%' : '100%'}
+        <br/>
+        Table Ref Width: {tableRef.current ? `${tableRef.current.offsetWidth}px` : 'not mounted'}
       </div>
       <div className="card pad" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div style={{ maxWidth: '300px' }}>
@@ -629,6 +633,7 @@ export default function ViewRoster({ onNavigate }) {
           className="card pad"
           style={{
             width: (showFollowupForm || showEditForm) ? '60%' : '100%',
+            maxWidth: (showFollowupForm || showEditForm) ? 'none' : 'none',
             transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             minWidth: 0,
             display: 'flex',
