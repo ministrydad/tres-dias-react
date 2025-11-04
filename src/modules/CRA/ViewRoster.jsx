@@ -591,23 +591,8 @@ export default function ViewRoster({ onNavigate }) {
     }
   });
 
-  // DEBUG: Log state at render time
-  console.log('🔍 RENDER STATE:', {
-    showEditForm,
-    showFollowupForm,
-    calculatedWidth: (showFollowupForm || showEditForm) ? '60%' : '100%',
-    cardRefExists: !!tableRef.current
-  });
-
   return (
     <div id="cra-apps" className="cra-view">
-      <div style={{ fontSize: '11px', padding: '8px', background: '#ffeb3b', border: '2px solid red' }}>
-        <strong>🔍 DEBUG:</strong><br/>
-        showEditForm: <strong>{showEditForm ? 'TRUE ❌' : 'FALSE ✓'}</strong> | 
-        showFollowupForm: <strong>{showFollowupForm ? 'TRUE ❌' : 'FALSE ✓'}</strong><br/>
-        Card Width (should be 1611px): <strong>{tableRef.current ? `${tableRef.current.offsetWidth}px` : 'loading...'}</strong><br/>
-        Calculated Width Style: <strong>{(showFollowupForm || showEditForm) ? '60%' : '100%'}</strong>
-      </div>
       <div className="card pad" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div style={{ maxWidth: '300px' }}>
           <label className="label">Filter Applications</label>
@@ -667,21 +652,6 @@ export default function ViewRoster({ onNavigate }) {
               opacity: 1;
               transform: translateY(0);
             }
-          }
-
-          #cra-apps .card.pad > .table {
-            display: block !important;
-            overflow-y: auto !important;
-            flex: 1 !important;
-            width: 100% !important;
-            max-width: none !important;
-          }
-
-          #cra-apps .card.pad > .table thead {
-            position: sticky;
-            top: 0;
-            background: var(--panel);
-            z-index: 10;
           }
         `}</style>
         <table className="table">
