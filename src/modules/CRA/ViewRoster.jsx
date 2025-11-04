@@ -620,7 +620,7 @@ export default function ViewRoster({ onNavigate }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', width: '100%' }}>
         <div 
           ref={tableRef}
           className="card pad"
