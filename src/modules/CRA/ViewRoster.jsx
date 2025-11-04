@@ -1,5 +1,5 @@
 // src/modules/CRA/ViewRoster.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -11,6 +11,10 @@ export default function ViewRoster({ onNavigate }) {
   const [sortColumn, setSortColumn] = useState('status');
   const [sortDirection, setSortDirection] = useState('asc');
   const [expandedRows, setExpandedRows] = useState(new Set());
+  
+  // Table height measurement
+  const tableRef = useRef(null);
+  const [editPanelHeight, setEditPanelHeight] = useState('auto');
   
   // Follow-up form state
   const [showFollowupForm, setShowFollowupForm] = useState(false);
@@ -65,6 +69,14 @@ export default function ViewRoster({ onNavigate }) {
       loadApplications();
     }
   }, [orgId]);
+
+  // Measure table height when edit panel opens
+  useEffect(() => {
+    if ((showEditForm || showFollowupForm) && tableRef.current) {
+      const height = tableRef.current.offsetHeight;
+      setEditPanelHeight(`${height}px`);
+    }
+  }, [showEditForm, showFollowupForm]);
 
   const loadApplications = async () => {
     console.log('🔍 ViewRoster: loadApplications called');
@@ -597,11 +609,15 @@ export default function ViewRoster({ onNavigate }) {
 
       <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
         <div 
+          ref={tableRef}
           className="card pad"
           style={{
             width: (showFollowupForm || showEditForm) ? '60%' : '100%',
             transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            minWidth: 0
+            minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
           }}
         >
         <style>{`
@@ -622,6 +638,19 @@ export default function ViewRoster({ onNavigate }) {
               opacity: 1;
               transform: translateY(0);
             }
+          }
+
+          #cra-apps .card.pad > .table {
+            display: block;
+            overflow-y: auto;
+            flex: 1;
+          }
+
+          #cra-apps .card.pad > .table thead {
+            position: sticky;
+            top: 0;
+            background: var(--panel);
+            z-index: 10;
           }
         `}</style>
         <table className="table">
@@ -842,7 +871,9 @@ export default function ViewRoster({ onNavigate }) {
             style={{
               width: '38%',
               animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              maxHeight: 'calc(100vh - 200px)',
+              height: editPanelHeight,
+              display: 'flex',
+              flexDirection: 'column',
               overflowY: 'auto'
             }}
           >
@@ -1076,7 +1107,9 @@ export default function ViewRoster({ onNavigate }) {
             style={{
               width: '38%',
               animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              maxHeight: 'calc(100vh - 200px)',
+              height: editPanelHeight,
+              display: 'flex',
+              flexDirection: 'column',
               overflowY: 'auto'
             }}
           >
@@ -1358,31 +1391,60 @@ export default function ViewRoster({ onNavigate }) {
                 Weekend Fee
               </h4>
 
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={editData.payment_wk_cash}
-                    onChange={() => handleEditToggle('payment_wk_cash')}
-                  />
-                  <span>Cash</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={editData.payment_wk_check}
-                    onChange={() => handleEditToggle('payment_wk_check')}
-                  />
-                  <span>Check</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={editData.payment_wk_scholarship}
-                    onChange={() => handleEditToggle('payment_wk_scholarship')}
-                  />
-                  <span>Scholarship</span>
-                </label>
+              <div className="grid grid-3" style={{ marginBottom: '12px' }}>
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Cash</label>
+                  <div className="toggle">
+                    <div 
+                      className={`opt ${!editData.payment_wk_cash ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('payment_wk_cash')}
+                    >
+                      No
+                    </div>
+                    <div 
+                      className={`opt ${editData.payment_wk_cash ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('payment_wk_cash')}
+                    >
+                      Yes
+                    </div>
+                  </div>
+                </div>
+
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Check</label>
+                  <div className="toggle">
+                    <div 
+                      className={`opt ${!editData.payment_wk_check ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('payment_wk_check')}
+                    >
+                      No
+                    </div>
+                    <div 
+                      className={`opt ${editData.payment_wk_check ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('payment_wk_check')}
+                    >
+                      Yes
+                    </div>
+                  </div>
+                </div>
+
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Scholarship</label>
+                  <div className="toggle">
+                    <div 
+                      className={`opt ${!editData.payment_wk_scholarship ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('payment_wk_scholarship')}
+                    >
+                      No
+                    </div>
+                    <div 
+                      className={`opt ${editData.payment_wk_scholarship ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('payment_wk_scholarship')}
+                    >
+                      Yes
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {editData.payment_wk_scholarship && (
@@ -1423,23 +1485,42 @@ export default function ViewRoster({ onNavigate }) {
                 Sponsor Fee
               </h4>
 
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={editData.payment_sp_cash}
-                    onChange={() => handleEditToggle('payment_sp_cash')}
-                  />
-                  <span>Cash</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={editData.payment_sp_check}
-                    onChange={() => handleEditToggle('payment_sp_check')}
-                  />
-                  <span>Check</span>
-                </label>
+              <div className="grid grid-2">
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Cash</label>
+                  <div className="toggle">
+                    <div 
+                      className={`opt ${!editData.payment_sp_cash ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('payment_sp_cash')}
+                    >
+                      No
+                    </div>
+                    <div 
+                      className={`opt ${editData.payment_sp_cash ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('payment_sp_cash')}
+                    >
+                      Yes
+                    </div>
+                  </div>
+                </div>
+
+                <div className="field" style={{ marginBottom: 0 }}>
+                  <label className="label">Check</label>
+                  <div className="toggle">
+                    <div 
+                      className={`opt ${!editData.payment_sp_check ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('payment_sp_check')}
+                    >
+                      No
+                    </div>
+                    <div 
+                      className={`opt ${editData.payment_sp_check ? 'active' : ''}`}
+                      onClick={() => handleEditToggle('payment_sp_check')}
+                    >
+                      Yes
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
