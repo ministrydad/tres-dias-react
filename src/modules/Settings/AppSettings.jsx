@@ -421,11 +421,11 @@ export default function AppSettings() {
             <input 
               id="communityCode" 
               className="input settings-input" 
-              placeholder="STL"
+              placeholder="i.e. STL or SETN"
               maxLength="4"
               value={communityCode}
               onChange={handleCommunityCodeChange}
-              style={{ textTransform: 'uppercase', fontWeight: 700 }}
+              style={{ textTransform: 'uppercase' }}
             />
             <small style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px', display: 'block' }}>
               2-4 letter code ({communityCode.length}/4)
