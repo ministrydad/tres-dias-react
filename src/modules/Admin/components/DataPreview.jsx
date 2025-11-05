@@ -5,6 +5,8 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
   const [dryRun, setDryRun] = useState(true);
   const [editedData, setEditedData] = useState({}); // Track edited cells: { rowIndex: { columnName: newValue } }
   const [editingCell, setEditingCell] = useState(null); // Track which cell is being edited: { rowIndex, column }
+  const [rowsToShow, setRowsToShow] = useState(50); // Pagination: show 50 at a time
+  const [showOnlyErrors, setShowOnlyErrors] = useState(false); // Filter: show only error rows
 
   // Filter mapped columns only (exclude skipped columns)
   const activeMappings = useMemo(() => {
@@ -184,10 +186,26 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
     return errorWarning.rowErrors.some(err => err.rowNumber === rowIndex + 1);
   };
 
+  // Count total errors
+  const errorCount = useMemo(() => {
+    return previewRows.filter((row, index) => rowHasError(index)).length;
+  }, [previewRows, warnings]);
+
+  // Filter and paginate rows for display
+  const displayedRows = useMemo(() => {
+    if (showOnlyErrors) {
+      // Show only rows with errors (no pagination)
+      return previewRows.filter((row, index) => rowHasError(index));
+    }
+    // Show first N rows (paginated)
+    return previewRows.slice(0, rowsToShow);
+  }, [previewRows, showOnlyErrors, rowsToShow, warnings]);
+
   const stats = {
     total: previewRows.length,
     mapped: activeMappings.length,
-    warnings: warnings.length
+    warnings: warnings.length,
+    errors: errorCount
   };
 
   return (
@@ -344,9 +362,44 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
 
       {/* Preview Table */}
       <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '12px' }}>
-          Preview: First 10 Rows {hasErrors && <span style={{ color: 'var(--accentD)' }}>(Click red cells to edit)</span>}
-        </h3>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '12px' 
+        }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>
+            Preview {showOnlyErrors ? `(${errorCount} ${errorCount === 1 ? 'Error' : 'Errors'})` : `(First ${Math.min(rowsToShow, previewRows.length)} of ${previewRows.length} Rows)`}
+            {hasErrors && !showOnlyErrors && <span style={{ color: 'var(--accentD)' }}> - Click red cells to edit</span>}
+          </h3>
+          
+          {/* Error Filter Checkbox */}
+          {errorCount > 0 && (
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              padding: '8px 12px',
+              backgroundColor: showOnlyErrors ? 'rgba(220, 53, 69, 0.1)' : 'var(--bg)',
+              border: `1px solid ${showOnlyErrors ? 'var(--accentD)' : 'var(--border)'}`,
+              borderRadius: '6px',
+              transition: 'all 0.2s'
+            }}>
+              <input
+                type="checkbox"
+                checked={showOnlyErrors}
+                onChange={(e) => setShowOnlyErrors(e.target.checked)}
+                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+              />
+              <span style={{ fontWeight: 600, color: showOnlyErrors ? 'var(--accentD)' : 'var(--ink)' }}>
+                Show only rows with errors ({errorCount})
+              </span>
+            </label>
+          )}
+        </div>
+        
         <div style={{
           border: '1px solid var(--border)',
           borderRadius: '8px',
@@ -401,13 +454,15 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
               </tr>
             </thead>
             <tbody>
-              {previewRows.slice(0, 10).map((row, rowIndex) => (
-                <tr
-                  key={rowIndex}
-                  style={{
-                    backgroundColor: rowHasError(rowIndex) ? 'rgba(220, 53, 69, 0.05)' : (rowIndex % 2 === 0 ? '#fff' : 'var(--bg)')
-                  }}
-                >
+              {displayedRows.map((row, displayIndex) => {
+                const rowIndex = row._originalIndex; // Get original row index
+                return (
+                  <tr
+                    key={rowIndex}
+                    style={{
+                      backgroundColor: rowHasError(rowIndex) ? 'rgba(220, 53, 69, 0.05)' : (displayIndex % 2 === 0 ? '#fff' : 'var(--bg)')
+                    }}
+                  >
                   <td style={{
                     padding: '12px',
                     borderBottom: '1px solid var(--border)',
@@ -495,18 +550,56 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
                     )}
                   </td>
                 </tr>
-              ))}
+              );
+            })}
             </tbody>
           </table>
         </div>
+        
+        {/* Table Footer with Pagination */}
         <div style={{ 
           fontSize: '0.85rem', 
           color: 'var(--muted)', 
-          marginTop: '8px',
-          textAlign: 'center'
+          marginTop: '12px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
-          Showing first 10 of {previewRows.length} total rows. 
-          {isRequiredColumn && <span style={{ color: 'var(--accentD)' }}> * = Required field</span>}
+          <div>
+            {showOnlyErrors ? (
+              <span>
+                Showing <strong style={{ color: 'var(--accentD)' }}>{errorCount}</strong> of {previewRows.length} total rows (rows with errors only)
+              </span>
+            ) : (
+              <span>
+                Showing <strong>{Math.min(rowsToShow, previewRows.length)}</strong> of <strong>{previewRows.length}</strong> total rows
+                {errorCount > 0 && <span style={{ color: 'var(--accentD)' }}> • {errorCount} with errors</span>}
+              </span>
+            )}
+            {isRequiredColumn && <span style={{ color: 'var(--accentD)' }}> • * = Required field</span>}
+          </div>
+          
+          {/* Load More Button */}
+          {!showOnlyErrors && rowsToShow < previewRows.length && (
+            <button
+              className="btn"
+              onClick={() => setRowsToShow(rowsToShow + 50)}
+              style={{ fontSize: '0.85rem' }}
+            >
+              Load Next 50 Rows
+            </button>
+          )}
+          
+          {/* Show All Button (only if more than 100 rows remaining) */}
+          {!showOnlyErrors && rowsToShow < previewRows.length && (previewRows.length - rowsToShow) > 100 && (
+            <button
+              className="btn"
+              onClick={() => setRowsToShow(previewRows.length)}
+              style={{ fontSize: '0.85rem', marginLeft: '8px' }}
+            >
+              Show All {previewRows.length} Rows
+            </button>
+          )}
         </div>
       </div>
 

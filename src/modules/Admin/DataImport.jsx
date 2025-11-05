@@ -45,11 +45,17 @@ export default function DataImport() {
   };
 
   // Step 3: Preview - callback when ready to import
-  const handlePreviewNext = (dryRunMode) => {
-    console.log('📋 Preview complete, dry run:', dryRunMode);
-    setDryRun(dryRunMode);
-    setCurrentStep(4); // Move to import
-  };
+  const handlePreviewNext = (dryRunMode, mergedData) => {
+  console.log('📋 Preview complete, dry run:', dryRunMode);
+  setDryRun(dryRunMode);
+  
+  // Update uploadedData with edited values if provided
+  if (mergedData) {
+    setUploadedData(mergedData);
+  }
+  
+  setCurrentStep(4);
+};
 
   // Step 4: Import - callback when import is complete
   const handleImportComplete = () => {
