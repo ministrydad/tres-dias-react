@@ -486,8 +486,8 @@ export default function CombinedRoster() {
   const [pdfReady, setPdfReady] = useState(false);
 
   // Table names for men and women
-  const MEN_TABLES = ['John', 'Paul', 'Matthew', 'Mark', 'Luke'];
-  const WOMEN_TABLES = ['Esther', 'Elizabeth', 'Ruth', 'Mary', 'Deborah'];
+  const MEN_TABLES = ['John', 'Paul', 'Matthew', 'Mark', 'Luke', 'Peter', 'James'];
+  const WOMEN_TABLES = ['Esther', 'Elizabeth', 'Ruth', 'Deborah', 'Sarah', 'Rebekah', 'Joanna'];
 
   // Role order (from TeamList.jsx)
   const ROLE_ORDER = [
