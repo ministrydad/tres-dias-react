@@ -44,6 +44,9 @@ export default function TablePlanner() {
   const [selectedTableName, setSelectedTableName] = useState('');
   const [selectedShape, setSelectedShape] = useState(null);
   
+  // Podium state
+  const [podiumPerson, setPodiumPerson] = useState(null); // { personId, name, type }
+  
   // Grid settings
   const GRID_SIZE = 120;
   const CANVAS_WIDTH = 1200;
@@ -239,9 +242,21 @@ export default function TablePlanner() {
       if (data?.layout_data) {
         const layoutData = data.layout_data;
         setTables(layoutData.tables || []);
+        setPodiumPerson(layoutData.podium || null);
         
         // Update people assignments from saved layout
         setPeople(prev => prev.map(person => {
+          // Check podium assignment
+          if (layoutData.podium?.personId === person.personId) {
+            return {
+              ...person,
+              assigned: true,
+              tableId: 'podium',
+              seatIndex: 0
+            };
+          }
+
+          // Check table assignments
           const assignment = layoutData.tables
             .flatMap(table => 
               table.assignments.map((a, idx) => ({ ...a, tableId: table.id, seatIndex: idx }))
@@ -277,6 +292,7 @@ export default function TablePlanner() {
 
       const layoutData = {
         tables: tables,
+        podium: podiumPerson,
         totalSeats: tables.reduce((sum, t) => sum + t.seats, 0),
         assignedSeats: tables.reduce((sum, t) => sum + t.assignments.filter(a => a.personId).length, 0),
         unassignedPeople: people.filter(p => !p.assigned).map(p => p.personId)
@@ -473,6 +489,11 @@ export default function TablePlanner() {
       assignPersonToSeat(active.id, tableId, seatIndex);
     }
 
+    // Handle person drops on podium
+    if ((active.id.startsWith('prof-') || active.id.startsWith('cand-')) && over.id === 'podium') {
+      assignPersonToPodium(active.id);
+    }
+
     setActiveDragId(null);
     setDragType(null);
   }
@@ -551,6 +572,54 @@ export default function TablePlanner() {
 
     const tableName = tables.find(t => t.id === tableId)?.name;
     window.showMainStatus?.(`${person.name} assigned to Table of ${tableName}`);
+  }
+
+  function assignPersonToPodium(personId) {
+    const person = people.find(p => p.id === personId);
+    if (!person) return;
+
+    console.log('🎤 Assigning person to podium:', person.name);
+
+    // Remove from old position if assigned
+    if (person.assigned) {
+      setTables(prev => {
+        const updated = prev.map(table => {
+          if (table.id === person.tableId) {
+            const newAssignments = [...table.assignments];
+            newAssignments[person.seatIndex] = { personId: null, name: null, type: null };
+            return { ...table, assignments: newAssignments };
+          }
+          return table;
+        });
+        return updated;
+      });
+    }
+
+    // Remove old podium person if exists
+    if (podiumPerson) {
+      const oldPersonId = `${podiumPerson.type === 'professor' ? 'prof' : 'cand'}-${podiumPerson.personId}`;
+      setPeople(prev => prev.map(p => 
+        p.id === oldPersonId
+          ? { ...p, assigned: false, tableId: null, seatIndex: null }
+          : p
+      ));
+    }
+
+    // Assign to podium
+    setPodiumPerson({
+      personId: person.personId,
+      name: person.name,
+      type: person.type
+    });
+
+    // Update person state
+    setPeople(prev => prev.map(p => 
+      p.id === personId
+        ? { ...p, assigned: true, tableId: 'podium', seatIndex: 0 }
+        : p
+    ));
+
+    window.showMainStatus?.(`${person.name} assigned to Podium`);
   }
 
   function handleRemoveTable(tableId) {
@@ -685,6 +754,20 @@ export default function TablePlanner() {
               gridSize={GRID_SIZE}
               width={CANVAS_WIDTH}
               height={CANVAS_HEIGHT}
+              podiumPerson={podiumPerson}
+              onRemovePodiumPerson={() => {
+                if (podiumPerson) {
+                  const personType = podiumPerson.type === 'professor' ? 'prof' : 'cand';
+                  const personId = `${personType}-${podiumPerson.personId}`;
+                  setPeople(prev => prev.map(p => 
+                    p.id === personId
+                      ? { ...p, assigned: false, tableId: null, seatIndex: null }
+                      : p
+                  ));
+                  setPodiumPerson(null);
+                  window.showMainStatus?.('Person removed from Podium');
+                }
+              }}
             />
 
             {/* Stats Bar */}
@@ -951,7 +1034,7 @@ function PersonChip({ person, isDragging = false }) {
   );
 }
 
-function Canvas({ tables, setTables, onRemoveTable, gridSize, width, height }) {
+function Canvas({ tables, setTables, onRemoveTable, gridSize, width, height, podiumPerson, onRemovePodiumPerson }) {
   const { setNodeRef } = useDroppable({
     id: 'canvas'
   });
@@ -970,6 +1053,9 @@ function Canvas({ tables, setTables, onRemoveTable, gridSize, width, height }) {
         overflow: 'hidden'
       }}
     >
+      {/* Podium at top center */}
+      <Podium person={podiumPerson} onRemove={onRemovePodiumPerson} />
+
       {tables.length === 0 ? (
         <div style={{
           position: 'absolute',
@@ -1011,16 +1097,16 @@ function DraggableTable({ table, setTables, onRemove, gridSize }) {
       
       setTables(prev => prev.map(t => 
         t.id === table.id 
-          ? { ...t, x: newX, y: newY }
+          ? { ...t, x: Math.round(newX), y: Math.round(newY) }
           : t
       ));
     }
-  }, [isDragging]);
+  }, [isDragging, transform]);
 
   const style = {
     position: 'absolute',
-    left: transform ? table.x + transform.x : table.x,
-    top: transform ? table.y + transform.y : table.y,
+    left: isDragging && transform ? table.x + transform.x : table.x,
+    top: isDragging && transform ? table.y + transform.y : table.y,
     cursor: isDragging ? 'grabbing' : 'grab',
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 1000 : 1
@@ -1112,6 +1198,77 @@ function TableShape({ table, onRemove }) {
   );
 }
 
+// ===== PODIUM COMPONENT =====
+
+function Podium({ person, onRemove }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'podium'
+  });
+
+  const isProfessor = person?.type === 'professor';
+
+  // Split name for double-stacking
+  const nameParts = person?.name?.split(' ') || [];
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+
+  return (
+    <div
+      ref={setNodeRef}
+      onClick={person ? onRemove : undefined}
+      style={{
+        position: 'absolute',
+        top: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '180px',
+        height: '80px',
+        border: isOver ? '2px solid var(--accentB)' : '2px solid #495057',
+        borderRadius: '8px',
+        background: isOver ? 'var(--accentB-light)' : person ? '#f8f9fa' : 'white',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '6px',
+        cursor: person ? 'pointer' : 'default',
+        transition: 'all 0.2s'
+      }}
+      title={person ? `Click to remove ${person.name}` : 'Drag person here for Podium'}
+    >
+      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#495057' }}>
+        PODIUM
+      </div>
+      {person ? (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            fontSize: '0.8rem', 
+            fontWeight: isProfessor ? 700 : 400,
+            color: '#212529'
+          }}>
+            {firstName}
+          </div>
+          {lastName && (
+            <div style={{ 
+              fontSize: '0.8rem', 
+              fontWeight: isProfessor ? 700 : 400,
+              color: '#212529'
+            }}>
+              {lastName}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', fontStyle: 'italic' }}>
+          Drop here
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== SEAT COMPONENT =====
+
 function Seat({ tableId, seatIndex, assignment, x, y }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `seat-${tableId}-${seatIndex}`
@@ -1141,10 +1298,16 @@ function Seat({ tableId, seatIndex, assignment, x, y }) {
     });
   };
 
-  // Auto-size based on content
-  const nameLength = assignment?.name?.length || 0;
+  // Split name into first and last for double-stacking
+  const nameParts = assignment?.name?.split(' ') || [];
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+
+  // Auto-size based on longest part
+  const longestPart = Math.max(firstName.length, lastName.length);
   const minWidth = 70;
-  const width = hasAssignment ? Math.max(minWidth, nameLength * 6 + 20) : minWidth;
+  const width = hasAssignment ? Math.max(minWidth, longestPart * 7 + 20) : minWidth;
+  const height = hasAssignment && lastName ? 42 : 32; // Taller if two lines
 
   return (
     <div
@@ -1153,28 +1316,39 @@ function Seat({ tableId, seatIndex, assignment, x, y }) {
       style={{
         position: 'absolute',
         left: x - (width / 2),
-        top: y - 16,
+        top: y - (height / 2),
         width: `${width}px`,
-        height: '32px',
+        height: `${height}px`,
         border: isOver ? '2px solid var(--accentB)' : '1px solid #dee2e6',
         borderRadius: '6px',
         background: isOver ? 'var(--accentB-light)' : hasAssignment ? '#f8f9fa' : 'white',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '0.75rem',
+        fontSize: '0.7rem',
         fontWeight: isProfessor ? 700 : 400,
         color: '#212529',
         overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        padding: '0 6px',
+        padding: '4px',
         transition: 'all 0.2s',
-        cursor: hasAssignment ? 'pointer' : 'default'
+        cursor: hasAssignment ? 'pointer' : 'default',
+        lineHeight: '1.2'
       }}
       title={hasAssignment ? `Click to remove ${assignment.name}` : 'Empty seat'}
     >
-      {assignment?.name || '—'}
+      {hasAssignment ? (
+        <>
+          <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: 'center' }}>
+            {firstName}
+          </div>
+          {lastName && (
+            <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: 'center' }}>
+              {lastName}
+            </div>
+          )}
+        </>
+      ) : '—'}
     </div>
   );
 }
