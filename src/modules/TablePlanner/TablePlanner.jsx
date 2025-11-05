@@ -467,7 +467,7 @@ export default function TablePlanner() {
   }
 
   function handleDragEnd(event) {
-    const { active, over } = event;
+    const { active, over, delta } = event;
     
     if (!over) {
       setActiveDragId(null);
@@ -475,8 +475,29 @@ export default function TablePlanner() {
       return;
     }
 
-    // Handle table movement (position updated by DraggableTable component)
-    // No action needed here for table drag
+    // Handle table movement - update position when table drag ends
+    if (active.id.startsWith('table-')) {
+      const tableId = active.id;
+      const table = tables.find(t => t.id === tableId);
+      
+      console.log('🚚 Table drag ended:', {
+        tableId,
+        oldPosition: { x: table?.x, y: table?.y },
+        delta: { x: delta.x, y: delta.y },
+        newPosition: { x: table?.x + delta.x, y: table?.y + delta.y }
+      });
+      
+      setTables(prev => prev.map(t => {
+        if (t.id === tableId) {
+          return {
+            ...t,
+            x: t.x + delta.x,
+            y: t.y + delta.y
+          };
+        }
+        return t;
+      }));
+    }
 
     // Handle person drops on seats
     if ((active.id.startsWith('prof-') || active.id.startsWith('cand-')) && over.id.startsWith('seat-')) {
@@ -1088,24 +1109,6 @@ function DraggableTable({ table, setTables, onRemove, gridSize }) {
     id: table.id,
     data: table
   });
-
-  // Only update position when drag completely ends (transform exists but not dragging anymore)
-  const prevIsDragging = useRef(isDragging);
-  
-  useEffect(() => {
-    // Detect transition from dragging to not dragging
-    if (prevIsDragging.current && !isDragging && transform) {
-      const newX = table.x + transform.x;
-      const newY = table.y + transform.y;
-      
-      setTables(prev => prev.map(t => 
-        t.id === table.id 
-          ? { ...t, x: newX, y: newY }
-          : t
-      ));
-    }
-    prevIsDragging.current = isDragging;
-  }, [isDragging]);
 
   const style = {
     position: 'absolute',
