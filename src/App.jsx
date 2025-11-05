@@ -1,6 +1,7 @@
 // src/App.jsx
 // FIXED: Moved PescadoresProvider to top level to prevent loading issues
 // UPDATED: Added CombinedRoster component for Weekend module
+// UPDATED: Added TablePlanner component for table seating assignments
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PescadoresProvider } from './context/PescadoresContext';
@@ -8,6 +9,7 @@ import LoginPage from './components/auth/LoginPage';
 import Sidebar from './components/layout/Sidebar';
 import Directory from './modules/TeamViewer/Directory';
 import TeamList from './modules/TeamViewer/TeamList';
+import TablePlanner from './modules/TablePlanner/TablePlanner';
 import ViewRoster from './modules/CRA/ViewRoster';
 import FollowUpCalls from './modules/CRA/FollowUpCalls';
 import LiveCheckIn from './modules/CRA/LiveCheckIn';
@@ -79,6 +81,7 @@ function Dashboard() {
     switch(currentView) {
       case 'directory': return 'Directory';
       case 'team-list': return 'Team List';
+      case 'table-planner': return 'Table Planner';
       case 'combined-roster': return 'Combined Weekend Roster';
       case 'mci-checkin': return 'Team Meetings - Check-In';
       case 'mci-reports': return 'Team Meetings - Reports';
@@ -105,6 +108,8 @@ function Dashboard() {
         return <Directory />;
       case 'team-list':
         return <TeamList />;
+      case 'table-planner':
+        return <TablePlanner />;
       case 'combined-roster':
         return <CombinedRoster />;
       case 'cra-view-roster':
@@ -133,8 +138,8 @@ function Dashboard() {
         return <MCIReports />;
       case 'mci-budget':
         return <Budget />;
-        case 'data-import':
-  return <DataImport />;
+      case 'data-import':
+        return <DataImport />;
       default:
         return (
           <div className="app-panel" style={{ display: 'block', padding: '30px' }}>
