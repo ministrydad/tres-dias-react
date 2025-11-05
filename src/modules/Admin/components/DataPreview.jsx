@@ -2,34 +2,41 @@
 import { useState, useMemo } from 'react';
 
 export default function DataPreview({ uploadedData, mappedColumns, selectedGender, onNext, onBack, onCancel }) {
-  const [dryRun, setDryRun] = useState(true); // Default to dry run for safety
+  const [dryRun, setDryRun] = useState(true);
+  const [editedData, setEditedData] = useState({}); // Track edited cells: { rowIndex: { columnName: newValue } }
+  const [editingCell, setEditingCell] = useState(null); // Track which cell is being edited: { rowIndex, column }
 
   // Filter mapped columns only (exclude skipped columns)
   const activeMappings = useMemo(() => {
     return Object.entries(mappedColumns).filter(([source, target]) => target !== null);
   }, [mappedColumns]);
 
-  // Build preview rows using mapped columns
+  // Build preview rows using mapped columns with edits applied
   const previewRows = useMemo(() => {
     if (!uploadedData?.rows) return [];
     
-    // Take first 10 rows for preview
-    return uploadedData.rows.slice(0, 10).map(row => {
-      const mappedRow = {};
+    return uploadedData.rows.map((row, rowIndex) => {
+      const mappedRow = { _originalIndex: rowIndex };
       
-      // Map each source column to target column
       activeMappings.forEach(([sourceColumn, targetColumn]) => {
-        mappedRow[targetColumn] = row[sourceColumn] || '';
+        // Check if this cell has been edited
+        const editedValue = editedData[rowIndex]?.[targetColumn];
+        mappedRow[targetColumn] = editedValue !== undefined ? editedValue : (row[sourceColumn] || '');
       });
       
       return mappedRow;
     });
-  }, [uploadedData, activeMappings]);
+  }, [uploadedData, activeMappings, editedData]);
 
   // Get columns to display (target columns only)
   const displayColumns = useMemo(() => {
     return activeMappings.map(([source, target]) => target);
   }, [activeMappings]);
+
+  // Check if column is required
+  const isRequiredColumn = (column) => {
+    return column === 'First' || column === 'Last';
+  };
 
   // Validation warnings
   const warnings = useMemo(() => {
@@ -40,31 +47,55 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
       return warningList;
     }
 
-    // Check for required fields
-    const hasFirstOrLast = displayColumns.includes('First') || displayColumns.includes('Last');
-    if (!hasFirstOrLast) {
+    // Check for required columns being mapped
+    const hasFirst = displayColumns.includes('First');
+    const hasLast = displayColumns.includes('Last');
+    
+    if (!hasFirst || !hasLast) {
       warningList.push({ 
         type: 'error', 
-        message: 'Missing required field: Must map either "First" or "Last" name column' 
+        message: 'Missing required columns: Both "First" and "Last" name columns must be mapped' 
+      });
+      return warningList; // Can't proceed without columns mapped
+    }
+
+    // Check individual rows for missing required values
+    let rowsWithErrors = [];
+    previewRows.forEach((row, index) => {
+      const firstName = row['First'];
+      const lastName = row['Last'];
+      
+      if (!firstName || firstName.trim() === '' || !lastName || lastName.trim() === '') {
+        rowsWithErrors.push({
+          rowNumber: index + 1,
+          missing: (!firstName || firstName.trim() === '') && (!lastName || lastName.trim() === '') 
+            ? 'First and Last' 
+            : (!firstName || firstName.trim() === '') 
+              ? 'First' 
+              : 'Last'
+        });
+      }
+    });
+
+    if (rowsWithErrors.length > 0) {
+      warningList.push({ 
+        type: 'error', 
+        message: `${rowsWithErrors.length} rows missing required First or Last name (click cells below to edit)`,
+        rowErrors: rowsWithErrors
       });
     }
 
-    // Count missing data
+    // Count missing optional data
     let missingEmailCount = 0;
     let missingPhoneCount = 0;
     let missingChurchCount = 0;
     let missingPescadoreKeyCount = 0;
 
-    uploadedData.rows.forEach(row => {
-      activeMappings.forEach(([sourceColumn, targetColumn]) => {
-        const value = row[sourceColumn];
-        if (!value || value === '' || value === null) {
-          if (targetColumn === 'Email') missingEmailCount++;
-          if (targetColumn === 'Phone1') missingPhoneCount++;
-          if (targetColumn === 'Church') missingChurchCount++;
-          if (targetColumn === 'PescadoreKey') missingPescadoreKeyCount++;
-        }
-      });
+    previewRows.forEach(row => {
+      if (!row['Email'] || row['Email'].trim() === '') missingEmailCount++;
+      if (!row['Phone1'] || row['Phone1'].trim() === '') missingPhoneCount++;
+      if (!row['Church'] || row['Church'].trim() === '') missingChurchCount++;
+      if (!row['PescadoreKey'] || row['PescadoreKey'].toString().trim() === '') missingPescadoreKeyCount++;
     });
 
     if (missingEmailCount > 0) {
@@ -96,7 +127,7 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
     }
 
     return warningList;
-  }, [uploadedData, activeMappings, displayColumns]);
+  }, [uploadedData, previewRows, displayColumns]);
 
   // Block proceed if there are errors
   const hasErrors = warnings.some(w => w.type === 'error');
@@ -106,7 +137,57 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
       window.showMainStatus('Please fix errors before proceeding', true);
       return;
     }
-    onNext(dryRun);
+    
+    // Merge edited data back into uploadedData before proceeding
+    const mergedData = {
+      ...uploadedData,
+      rows: uploadedData.rows.map((row, rowIndex) => {
+        if (editedData[rowIndex]) {
+          // Apply edits to this row
+          const updatedRow = { ...row };
+          Object.entries(editedData[rowIndex]).forEach(([targetColumn, newValue]) => {
+            // Find source column for this target
+            const sourceColumn = activeMappings.find(([s, t]) => t === targetColumn)?.[0];
+            if (sourceColumn) {
+              updatedRow[sourceColumn] = newValue;
+            }
+          });
+          return updatedRow;
+        }
+        return row;
+      })
+    };
+    
+    onNext(dryRun, mergedData);
+  };
+
+  // Handle cell edit
+  const handleCellEdit = (rowIndex, column, value) => {
+    setEditedData(prev => ({
+      ...prev,
+      [rowIndex]: {
+        ...(prev[rowIndex] || {}),
+        [column]: value
+      }
+    }));
+  };
+
+  // Check if cell value is missing/empty
+  const isCellEmpty = (value) => {
+    return !value || value.toString().trim() === '';
+  };
+
+  // Check if row has errors
+  const rowHasError = (rowIndex) => {
+    const errorWarning = warnings.find(w => w.rowErrors);
+    if (!errorWarning) return false;
+    return errorWarning.rowErrors.some(err => err.rowNumber === rowIndex + 1);
+  };
+
+  const stats = {
+    total: previewRows.length,
+    mapped: activeMappings.length,
+    warnings: warnings.length
   };
 
   return (
@@ -175,7 +256,7 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
             Total Rows
           </div>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' }}>
-            {uploadedData?.rows?.length || 0}
+            {stats.total}
           </div>
         </div>
 
@@ -189,7 +270,7 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
             Mapped Columns
           </div>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' }}>
-            {activeMappings.length}
+            {stats.mapped}
           </div>
         </div>
 
@@ -214,10 +295,10 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
           border: '1px solid var(--border)'
         }}>
           <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '4px' }}>
-            Warnings
+            Issues
           </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: warnings.length > 0 ? 'var(--accentC)' : 'var(--accentA)' }}>
-            {warnings.length}
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: hasErrors ? 'var(--accentD)' : stats.warnings > 0 ? 'var(--accentC)' : 'var(--accentA)' }}>
+            {stats.warnings}
           </div>
         </div>
       </div>
@@ -264,13 +345,13 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
       {/* Preview Table */}
       <div style={{ marginBottom: '24px' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '12px' }}>
-          Preview: First 10 Rows
+          Preview: First 10 Rows {hasErrors && <span style={{ color: 'var(--accentD)' }}>(Click red cells to edit)</span>}
         </h3>
         <div style={{
           border: '1px solid var(--border)',
           borderRadius: '8px',
           overflow: 'auto',
-          maxHeight: '400px'
+          maxHeight: '500px'
         }}>
           <table style={{
             width: '100%',
@@ -278,7 +359,7 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
             fontSize: '0.85rem'
           }}>
             <thead>
-              <tr style={{ backgroundColor: 'var(--bg)', position: 'sticky', top: 0 }}>
+              <tr style={{ backgroundColor: 'var(--bg)', position: 'sticky', top: 0, zIndex: 1 }}>
                 <th style={{
                   padding: '12px',
                   textAlign: 'left',
@@ -297,23 +378,34 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
                       padding: '12px',
                       textAlign: 'left',
                       fontWeight: 600,
-                      color: 'var(--muted)',
+                      color: isRequiredColumn(col) ? 'var(--accentD)' : 'var(--muted)',
                       borderBottom: '1px solid var(--border)',
                       whiteSpace: 'nowrap',
                       fontSize: '0.75rem'
                     }}
                   >
-                    {col}
+                    {col} {isRequiredColumn(col) && '*'}
                   </th>
                 ))}
+                <th style={{
+                  padding: '12px',
+                  textAlign: 'center',
+                  fontWeight: 600,
+                  color: 'var(--muted)',
+                  borderBottom: '1px solid var(--border)',
+                  whiteSpace: 'nowrap',
+                  fontSize: '0.75rem'
+                }}>
+                  Status
+                </th>
               </tr>
             </thead>
             <tbody>
-              {previewRows.map((row, rowIndex) => (
+              {previewRows.slice(0, 10).map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
                   style={{
-                    backgroundColor: rowIndex % 2 === 0 ? '#fff' : 'var(--bg)'
+                    backgroundColor: rowHasError(rowIndex) ? 'rgba(220, 53, 69, 0.05)' : (rowIndex % 2 === 0 ? '#fff' : 'var(--bg)')
                   }}
                 >
                   <td style={{
@@ -324,22 +416,84 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
                   }}>
                     {rowIndex + 1}
                   </td>
-                  {displayColumns.map(col => (
-                    <td
-                      key={col}
-                      style={{
-                        padding: '12px',
-                        borderBottom: '1px solid var(--border)',
-                        color: 'var(--ink)',
-                        whiteSpace: 'nowrap',
-                        maxWidth: '200px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {row[col] || <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>(empty)</span>}
-                    </td>
-                  ))}
+                  {displayColumns.map(col => {
+                    const value = row[col];
+                    const isEmpty = isCellEmpty(value);
+                    const isRequired = isRequiredColumn(col);
+                    const hasError = isRequired && isEmpty;
+                    const isEditing = editingCell?.rowIndex === rowIndex && editingCell?.column === col;
+
+                    return (
+                      <td
+                        key={col}
+                        style={{
+                          padding: '8px',
+                          borderBottom: '1px solid var(--border)',
+                          color: isEmpty ? 'var(--muted)' : 'var(--ink)',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '200px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          border: hasError ? '2px solid var(--accentD)' : '1px solid transparent',
+                          cursor: hasError || (isRequired && !isEditing) ? 'pointer' : 'default',
+                          position: 'relative'
+                        }}
+                        onClick={() => {
+                          if (hasError || isRequired) {
+                            setEditingCell({ rowIndex, column: col });
+                          }
+                        }}
+                      >
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            autoFocus
+                            defaultValue={value}
+                            onBlur={(e) => {
+                              handleCellEdit(rowIndex, col, e.target.value);
+                              setEditingCell(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleCellEdit(rowIndex, col, e.target.value);
+                                setEditingCell(null);
+                              }
+                              if (e.key === 'Escape') {
+                                setEditingCell(null);
+                              }
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '4px',
+                              border: '1px solid var(--accentB)',
+                              borderRadius: '4px',
+                              fontSize: '0.85rem'
+                            }}
+                          />
+                        ) : isEmpty ? (
+                          <span style={{ 
+                            fontStyle: 'italic',
+                            color: hasError ? 'var(--accentD)' : 'var(--muted)'
+                          }}>
+                            {hasError ? '[Click to edit]' : '(empty)'}
+                          </span>
+                        ) : (
+                          value
+                        )}
+                      </td>
+                    );
+                  })}
+                  <td style={{
+                    padding: '12px',
+                    borderBottom: '1px solid var(--border)',
+                    textAlign: 'center'
+                  }}>
+                    {rowHasError(rowIndex) ? (
+                      <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+                    ) : (
+                      <span style={{ fontSize: '1.2rem' }}>✓</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -351,7 +505,8 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
           marginTop: '8px',
           textAlign: 'center'
         }}>
-          Showing first 10 of {uploadedData?.rows?.length || 0} total rows
+          Showing first 10 of {previewRows.length} total rows. 
+          {isRequiredColumn && <span style={{ color: 'var(--accentD)' }}> * = Required field</span>}
         </div>
       </div>
 
