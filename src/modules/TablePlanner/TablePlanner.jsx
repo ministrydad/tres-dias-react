@@ -1,6 +1,6 @@
 // src/modules/TablePlanner/TablePlanner.jsx
 // Table seating planner with drag-and-drop functionality
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
@@ -1084,38 +1084,33 @@ function Canvas({ tables, setTables, onRemoveTable, gridSize, width, height, pod
 }
 
 function DraggableTable({ table, setTables, onRemove, gridSize }) {
-  const [dragStartPos, setDragStartPos] = useState({ x: table.x, y: table.y });
-  
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: table.id,
     data: table
   });
 
+  // Only update position when drag completely ends (transform exists but not dragging anymore)
+  const prevIsDragging = useRef(isDragging);
+  
   useEffect(() => {
-    if (isDragging && transform) {
-      // Store initial position when drag starts
-      setDragStartPos({ x: table.x, y: table.y });
-    }
-  }, [isDragging, transform, table.x, table.y]);
-
-  useEffect(() => {
-    if (!isDragging && transform) {
-      // Only update position once when drag ends
-      const newX = dragStartPos.x + transform.x;
-      const newY = dragStartPos.y + transform.y;
+    // Detect transition from dragging to not dragging
+    if (prevIsDragging.current && !isDragging && transform) {
+      const newX = table.x + transform.x;
+      const newY = table.y + transform.y;
       
       setTables(prev => prev.map(t => 
         t.id === table.id 
-          ? { ...t, x: Math.round(newX), y: Math.round(newY) }
+          ? { ...t, x: newX, y: newY }
           : t
       ));
     }
-  }, [isDragging, dragStartPos.x, dragStartPos.y, setTables, table.id, transform]);
+    prevIsDragging.current = isDragging;
+  }, [isDragging]);
 
   const style = {
     position: 'absolute',
-    left: isDragging ? dragStartPos.x + (transform?.x || 0) : table.x,
-    top: isDragging ? dragStartPos.y + (transform?.y || 0) : table.y,
+    left: transform ? table.x + transform.x : table.x,
+    top: transform ? table.y + transform.y : table.y,
     cursor: isDragging ? 'grabbing' : 'grab',
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 1000 : 1
