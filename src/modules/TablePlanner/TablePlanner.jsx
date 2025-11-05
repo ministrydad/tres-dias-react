@@ -1084,16 +1084,25 @@ function Canvas({ tables, setTables, onRemoveTable, gridSize, width, height, pod
 }
 
 function DraggableTable({ table, setTables, onRemove, gridSize }) {
+  const [dragStartPos, setDragStartPos] = React.useState({ x: table.x, y: table.y });
+  
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: table.id,
     data: table
   });
 
-  useEffect(() => {
-    if (transform && !isDragging) {
-      // Update position WITHOUT snapping to grid (free drag)
-      const newX = table.x + transform.x;
-      const newY = table.y + transform.y;
+  React.useEffect(() => {
+    if (isDragging && transform) {
+      // Store initial position when drag starts
+      setDragStartPos({ x: table.x, y: table.y });
+    }
+  }, [isDragging]);
+
+  React.useEffect(() => {
+    if (!isDragging && transform) {
+      // Only update position once when drag ends
+      const newX = dragStartPos.x + transform.x;
+      const newY = dragStartPos.y + transform.y;
       
       setTables(prev => prev.map(t => 
         t.id === table.id 
@@ -1101,12 +1110,12 @@ function DraggableTable({ table, setTables, onRemove, gridSize }) {
           : t
       ));
     }
-  }, [isDragging, transform]);
+  }, [isDragging]);
 
   const style = {
     position: 'absolute',
-    left: isDragging && transform ? table.x + transform.x : table.x,
-    top: isDragging && transform ? table.y + transform.y : table.y,
+    left: isDragging ? dragStartPos.x + (transform?.x || 0) : table.x,
+    top: isDragging ? dragStartPos.y + (transform?.y || 0) : table.y,
     cursor: isDragging ? 'grabbing' : 'grab',
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 1000 : 1
@@ -1319,9 +1328,9 @@ function Seat({ tableId, seatIndex, assignment, x, y }) {
         top: y - (height / 2),
         width: `${width}px`,
         height: `${height}px`,
-        border: isOver ? '2px solid var(--accentB)' : '1px solid #dee2e6',
+        border: isOver ? '2px solid var(--accentB)' : hasAssignment ? 'none' : '1px solid #dee2e6',
         borderRadius: '6px',
-        background: isOver ? 'var(--accentB-light)' : hasAssignment ? '#f8f9fa' : 'white',
+        background: isOver ? 'var(--accentB-light)' : hasAssignment ? 'transparent' : 'white',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
