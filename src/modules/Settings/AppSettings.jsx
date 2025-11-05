@@ -405,7 +405,7 @@ export default function AppSettings() {
       {/* General Configuration */}
       <div className="card pad" style={{ marginBottom: '16px' }}>
         <div className="section-title">General Configuration</div>
-        <div className="grid grid-4">
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: '16px' }}>
           <div className="field">
             <label className="label">Community Name</label>
             <input 
@@ -455,8 +455,6 @@ export default function AppSettings() {
               onChange={(e) => setTeamFee(e.target.value)}
             />
           </div>
-        </div>
-        <div className="grid grid-4" style={{ marginTop: '16px' }}>
           <div className="field">
             <label className="label">Sponsor Fee ($)</label>
             <input 
