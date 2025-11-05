@@ -5,7 +5,7 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
-import { MdPerson, MdSchool, MdSave, MdAutoFixHigh, MdRefresh } from 'react-icons/md';
+import { MdPerson, MdSave, MdAutoFixHigh, MdRefresh } from 'react-icons/md';
 
 // Table name constants
 const TABLE_NAMES = {
@@ -306,8 +306,8 @@ export default function TablePlanner() {
         }
       }
 
-      const x = 100 + (colIndex * GRID_SIZE * 1.5);
-      const y = 100 + (rowIndex * GRID_SIZE * 1.5);
+      const x = 100 + (colIndex * GRID_SIZE * 2.5);
+      const y = 100 + (rowIndex * GRID_SIZE * 2.5);
 
       return {
         ...table,
@@ -777,7 +777,7 @@ function PersonChip({ person, isDragging = false }) {
         transition: 'all 0.2s'
       }}
     >
-      {isProfessor ? <MdSchool size={16} color="var(--accentB)" /> : <MdPerson size={16} />}
+      <MdPerson size={16} color={isProfessor ? 'var(--accentB)' : undefined} />
       {person.name}
     </div>
   );
@@ -888,8 +888,8 @@ function DraggableTable({ table, setTables, onRemove, gridSize }) {
 }
 
 function TableShape({ table }) {
-  const size = table.shape === 'square' ? 80 : table.shape === 'rectangle' ? 100 : 90;
-  const height = table.shape === 'rectangle' ? 60 : size;
+  const size = table.shape === 'square' ? 100 : table.shape === 'rectangle' ? 125 : 112;
+  const height = table.shape === 'rectangle' ? 75 : size;
 
   return (
     <div style={{ position: 'relative' }}>
@@ -913,9 +913,9 @@ function TableShape({ table }) {
       {/* Seats */}
       {table.assignments.map((assignment, index) => {
         const angle = (index / table.seats) * 2 * Math.PI - Math.PI / 2;
-        const radius = table.shape === 'round' ? size / 2 + 20 : 
-                      table.shape === 'square' ? size / 2 + 15 :
-                      Math.max(size, height) / 2 + 15;
+        const radius = table.shape === 'round' ? size / 2 + 40 : 
+                      table.shape === 'square' ? size / 2 + 35 :
+                      Math.max(size, height) / 2 + 35;
         
         const x = size / 2 + Math.cos(angle) * radius;
         const y = height / 2 + Math.sin(angle) * radius;
@@ -948,17 +948,17 @@ function Seat({ tableId, seatIndex, assignment, x, y }) {
       ref={setNodeRef}
       style={{
         position: 'absolute',
-        left: x - 20,
-        top: y - 12,
-        width: '40px',
-        height: '24px',
+        left: x - 30,
+        top: y - 16,
+        width: '60px',
+        height: '32px',
         border: isOver ? '2px solid var(--accentB)' : hasAssignment ? '2px solid #28a745' : '2px solid #dee2e6',
         borderRadius: '4px',
         background: isOver ? 'var(--accentB-light)' : hasAssignment ? '#d4edda' : 'white',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '0.65rem',
+        fontSize: '0.7rem',
         fontWeight: isProfessor ? 700 : 400,
         color: hasAssignment ? '#155724' : '#6c757d',
         overflow: 'hidden',
@@ -969,7 +969,7 @@ function Seat({ tableId, seatIndex, assignment, x, y }) {
       }}
       title={assignment?.name || 'Empty seat'}
     >
-      {assignment?.name ? assignment.name.split(' ').map(n => n[0]).join('') : '—'}
+      {assignment?.name || '—'}
     </div>
   );
 }
