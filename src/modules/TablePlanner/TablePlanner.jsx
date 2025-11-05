@@ -436,8 +436,13 @@ export default function TablePlanner() {
 
     // Handle person drops on seats
     if ((active.id.startsWith('prof-') || active.id.startsWith('cand-')) && over.id.startsWith('seat-')) {
-      const [, tableId, seatIndex] = over.id.split('-');
-      assignPersonToSeat(active.id, tableId, parseInt(seatIndex));
+      const parts = over.id.split('-'); // ['seat', 'table', '1762366249726', '0']
+      const tableId = `${parts[1]}-${parts[2]}`; // 'table-1762366249726'
+      const seatIndex = parseInt(parts[3]); // 0
+      
+      console.log('🎯 Parsed drop:', { overId: over.id, tableId, seatIndex });
+      
+      assignPersonToSeat(active.id, tableId, seatIndex);
     }
 
     setActiveDragId(null);
