@@ -39,6 +39,11 @@ export default function TablePlanner() {
   const [activeDragId, setActiveDragId] = useState(null);
   const [dragType, setDragType] = useState(null); // 'shape', 'table', 'person'
   
+  // Table creation modal state
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [selectedTableName, setSelectedTableName] = useState('');
+  const [selectedShape, setSelectedShape] = useState(null);
+  
   // Grid settings
   const GRID_SIZE = 120;
   const CANVAS_WIDTH = 1000;
@@ -352,23 +357,37 @@ export default function TablePlanner() {
     });
   }
 
-  function handleAddTable(shapeConfig) {
+  function handleOpenTableModal() {
     const tableNames = TABLE_NAMES[currentGender];
     const usedNames = tables.map(t => t.name);
-    const availableName = tableNames.find(name => !usedNames.includes(name));
+    const availableNames = tableNames.filter(name => !usedNames.includes(name));
     
-    if (!availableName) {
+    if (availableNames.length === 0) {
       window.showMainStatus?.('All table names used', true);
       return;
     }
 
+    setSelectedTableName('');
+    setSelectedShape(null);
+    setShowTableModal(true);
+  }
+
+  function handleCreateTable() {
+    if (!selectedTableName || !selectedShape) {
+      window.showMainStatus?.('Please select a table name and shape', true);
+      return;
+    }
+
+    const shapeConfig = SHAPES.find(s => s.id === selectedShape);
+    if (!shapeConfig) return;
+
     const newTable = {
       id: `table-${Date.now()}`,
-      name: availableName,
+      name: selectedTableName,
       shape: shapeConfig.shape,
       seats: shapeConfig.seats,
-      x: 200,
-      y: 200,
+      x: 200 + (tables.length * 50), // Offset each new table
+      y: 150,
       assignments: Array(shapeConfig.seats).fill(null).map(() => ({
         personId: null,
         name: null,
@@ -377,7 +396,8 @@ export default function TablePlanner() {
     };
 
     setTables(prev => [...prev, newTable]);
-    window.showMainStatus?.(`Table of ${availableName} added`);
+    setShowTableModal(false);
+    window.showMainStatus?.(`Table of ${selectedTableName} added`);
   }
 
   function handleDragStart(event) {
@@ -402,19 +422,8 @@ export default function TablePlanner() {
       return;
     }
 
-    // Handle shape drops (add new table)
-    if (active.id.startsWith('shape-') && over.id === 'canvas') {
-      const shapeId = active.id.replace('shape-', '');
-      const shapeConfig = SHAPES.find(s => s.id === shapeId);
-      if (shapeConfig) {
-        handleAddTable(shapeConfig);
-      }
-    }
-
-    // Handle table movement
-    if (active.id.startsWith('table-') && over.id === 'canvas') {
-      // Table position updated by DraggableTable component
-    }
+    // Handle table movement (position updated by DraggableTable component)
+    // No action needed here for table drag
 
     // Handle person drops on seats
     if ((active.id.startsWith('prof-') || active.id.startsWith('cand-')) && over.id.startsWith('seat-')) {
@@ -429,6 +438,8 @@ export default function TablePlanner() {
   function assignPersonToSeat(personId, tableId, seatIndex) {
     const person = people.find(p => p.id === personId);
     if (!person) return;
+
+    console.log('🎯 Assigning person:', person.name, 'to table:', tableId, 'seat:', seatIndex);
 
     // Remove person from old seat if assigned
     if (person.assigned) {
@@ -450,18 +461,22 @@ export default function TablePlanner() {
         // Remove any existing person from this seat
         const existingPerson = newAssignments[seatIndex];
         if (existingPerson?.personId) {
+          const existingPersonId = `${existingPerson.type === 'professor' ? 'prof' : 'cand'}-${existingPerson.personId}`;
           setPeople(prevPeople => prevPeople.map(p => 
-            p.id === `${existingPerson.type === 'professor' ? 'prof' : 'cand'}-${existingPerson.personId}`
+            p.id === existingPersonId
               ? { ...p, assigned: false, tableId: null, seatIndex: null }
               : p
           ));
         }
         
+        // Assign new person
         newAssignments[seatIndex] = {
           personId: person.personId,
           name: person.name,
           type: person.type
         };
+        
+        console.log('✅ New assignments for table:', newAssignments);
         
         return { ...table, assignments: newAssignments };
       }
@@ -474,6 +489,8 @@ export default function TablePlanner() {
         ? { ...p, assigned: true, tableId, seatIndex }
         : p
     ));
+
+    window.showMainStatus?.(`${person.name} assigned to ${tables.find(t => t.id === tableId)?.name}`);
   }
 
   function handleRemoveTable(tableId) {
@@ -578,20 +595,19 @@ export default function TablePlanner() {
             </div>
           </div>
 
-          {/* Shape Palette */}
+          {/* Add Table Button */}
           <div style={{ 
-            display: 'flex', 
-            gap: '8px', 
             paddingTop: '16px', 
             borderTop: '1px solid var(--border)', 
             marginTop: '16px' 
           }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--muted)', alignSelf: 'center' }}>
-              Drag shapes:
-            </div>
-            {SHAPES.map(shape => (
-              <DraggableShape key={shape.id} shape={shape} />
-            ))}
+            <button
+              className="btn btn-primary"
+              onClick={handleOpenTableModal}
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              + Add Table
+            </button>
           </div>
         </div>
 
@@ -632,6 +648,124 @@ export default function TablePlanner() {
         </div>
       </section>
 
+      {/* Table Creation Modal */}
+      {showTableModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }}>
+          <div style={{
+            backgroundColor: 'var(--panel)',
+            borderRadius: '16px',
+            border: '1px solid var(--border)',
+            width: '90%',
+            maxWidth: '600px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
+            overflow: 'hidden'
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid var(--border)',
+              background: 'var(--panel-header)'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--ink)' }}>
+                Add New Table
+              </h3>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '24px' }}>
+              {/* Step 1: Select Table Name */}
+              <div style={{ marginBottom: '24px' }}>
+                <label className="label" style={{ display: 'block', marginBottom: '12px', fontSize: '0.9rem', fontWeight: 600 }}>
+                  Step 1: Select Table Name
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  {TABLE_NAMES[currentGender]
+                    .filter(name => !tables.map(t => t.name).includes(name))
+                    .map(name => (
+                      <button
+                        key={name}
+                        onClick={() => setSelectedTableName(name)}
+                        className="btn btn-small"
+                        style={{
+                          padding: '10px',
+                          backgroundColor: selectedTableName === name ? 'var(--accentB)' : 'transparent',
+                          color: selectedTableName === name ? 'white' : 'var(--ink)',
+                          border: selectedTableName === name ? 'none' : '1px solid var(--border)',
+                          fontWeight: selectedTableName === name ? 700 : 400
+                        }}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                </div>
+              </div>
+
+              {/* Step 2: Select Shape */}
+              <div>
+                <label className="label" style={{ display: 'block', marginBottom: '12px', fontSize: '0.9rem', fontWeight: 600 }}>
+                  Step 2: Select Shape & Seats
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  {SHAPES.map(shape => (
+                    <button
+                      key={shape.id}
+                      onClick={() => setSelectedShape(shape.id)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px',
+                        backgroundColor: selectedShape === shape.id ? 'var(--accentB)' : 'transparent',
+                        color: selectedShape === shape.id ? 'white' : 'var(--ink)',
+                        border: selectedShape === shape.id ? 'none' : '1px solid var(--border)',
+                        fontWeight: selectedShape === shape.id ? 700 : 400
+                      }}
+                    >
+                      {shape.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              padding: '16px 24px',
+              borderTop: '1px solid var(--border)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px',
+              background: 'var(--panel-header)'
+            }}>
+              <button 
+                className="btn"
+                onClick={() => setShowTableModal(false)}
+                style={{ minWidth: '100px' }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={handleCreateTable}
+                disabled={!selectedTableName || !selectedShape}
+                style={{ minWidth: '100px' }}
+              >
+                Add Table
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Drag Overlay */}
       <DragOverlay>
         {activeDragId && dragType === 'shape' && (
@@ -655,29 +789,6 @@ export default function TablePlanner() {
 }
 
 // ===== SUB-COMPONENTS =====
-
-function DraggableShape({ shape }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `shape-${shape.id}`
-  });
-
-  return (
-    <button
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      className="btn btn-small"
-      style={{
-        opacity: isDragging ? 0.5 : 1,
-        cursor: 'grab',
-        padding: '6px 12px',
-        fontSize: '0.85rem'
-      }}
-    >
-      {shape.label}
-    </button>
-  );
-}
 
 function PeopleList({ people, loading }) {
   const professors = people.filter(p => p.type === 'professor');
@@ -868,12 +979,14 @@ function DraggableTable({ table, setTables, onRemove, gridSize }) {
             fontSize: '0.9rem', 
             fontWeight: 700, 
             color: 'var(--ink)',
-            marginBottom: '4px',
             cursor: 'grab'
           }}
         >
           Table of {table.name}
         </div>
+      </div>
+      <TableShape table={table} />
+      <div style={{ textAlign: 'center', marginTop: '8px' }}>
         <button
           className="btn btn-small btn-danger"
           onClick={() => onRemove(table.id)}
@@ -882,14 +995,13 @@ function DraggableTable({ table, setTables, onRemove, gridSize }) {
           Remove
         </button>
       </div>
-      <TableShape table={table} />
     </div>
   );
 }
 
 function TableShape({ table }) {
-  const size = table.shape === 'square' ? 100 : table.shape === 'rectangle' ? 125 : 112;
-  const height = table.shape === 'rectangle' ? 75 : size;
+  const size = table.shape === 'square' ? 125 : table.shape === 'rectangle' ? 156 : 140;
+  const height = table.shape === 'rectangle' ? 94 : size;
 
   return (
     <div style={{ position: 'relative' }}>
@@ -903,11 +1015,11 @@ function TableShape({ table }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '0.75rem',
+        fontSize: '0.85rem',
         fontWeight: 700,
-        color: '#6c757d'
+        color: '#495057'
       }}>
-        {table.seats}
+        {table.name}
       </div>
 
       {/* Seats */}
