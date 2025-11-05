@@ -1005,9 +1005,9 @@ function DraggableTable({ table, setTables, onRemove, gridSize }) {
 
   useEffect(() => {
     if (transform && !isDragging) {
-      // Snap to grid on drag end
-      const newX = Math.round((table.x + transform.x) / gridSize) * gridSize;
-      const newY = Math.round((table.y + transform.y) / gridSize) * gridSize;
+      // Update position WITHOUT snapping to grid (free drag)
+      const newX = table.x + transform.x;
+      const newY = table.y + transform.y;
       
       setTables(prev => prev.map(t => 
         t.id === table.id 
@@ -1090,9 +1090,9 @@ function TableShape({ table, onRemove }) {
       {/* Seats */}
       {table.assignments.map((assignment, index) => {
         const angle = (index / table.seats) * 2 * Math.PI - Math.PI / 2;
-        const radius = table.shape === 'round' ? size / 2 + 40 : 
-                      table.shape === 'square' ? size / 2 + 35 :
-                      Math.max(size, height) / 2 + 35;
+        const radius = table.shape === 'round' ? size / 2 + 55 : 
+                      table.shape === 'square' ? size / 2 + 50 :
+                      Math.max(size, height) / 2 + 50;
         
         const x = size / 2 + Math.cos(angle) * radius;
         const y = height / 2 + Math.sin(angle) * radius;
@@ -1156,17 +1156,15 @@ function Seat({ tableId, seatIndex, assignment, x, y }) {
         top: y - 16,
         width: `${width}px`,
         height: '32px',
-        border: isOver ? '2px solid var(--accentB)' : 
-                hasAssignment ? (isProfessor ? '2px solid var(--accentB)' : '2px solid #28a745') : 
-                '2px solid #dee2e6',
+        border: isOver ? '2px solid var(--accentB)' : '1px solid #dee2e6',
         borderRadius: '6px',
-        background: isOver ? 'var(--accentB-light)' : hasAssignment ? '#d4edda' : 'white',
+        background: isOver ? 'var(--accentB-light)' : hasAssignment ? '#f8f9fa' : 'white',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '0.75rem',
         fontWeight: isProfessor ? 700 : 400,
-        color: hasAssignment ? '#155724' : '#6c757d',
+        color: '#212529',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
