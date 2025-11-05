@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { MdPerson, MdSave, MdAutoFixHigh, MdRefresh, MdPrint } from 'react-icons/md';
-import html2canvas from 'html2canvas';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Image } from '@react-pdf/renderer';
 
 // Table name constants
 const TABLE_NAMES = {
@@ -23,6 +23,186 @@ const SHAPES = [
   { id: 'rect-6', label: 'Rect (6)', seats: 6, shape: 'rectangle' },
   { id: 'rect-8', label: 'Rect (8)', seats: 8, shape: 'rectangle' }
 ];
+
+// PDF Styles
+const pdfStyles = StyleSheet.create({
+  page: {
+    padding: 40,
+    backgroundColor: '#ffffff',
+  },
+  header: {
+    textAlign: 'center',
+    marginBottom: 30,
+    paddingBottom: 15,
+    borderBottom: '2 solid #333',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  canvas: {
+    width: '100%',
+    minHeight: 500,
+    position: 'relative',
+  },
+  table: {
+    position: 'absolute',
+  },
+  tableShape: {
+    border: '2 solid #495057',
+    backgroundColor: '#f8f9fa',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tableName: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#495057',
+  },
+  seat: {
+    position: 'absolute',
+    fontSize: 8,
+    textAlign: 'center',
+    color: '#212529',
+  },
+  seatBold: {
+    fontWeight: 'bold',
+  },
+  podium: {
+    position: 'absolute',
+    top: 20,
+    left: '50%',
+    width: 180,
+    height: 80,
+    marginLeft: -90,
+    border: '2 solid #495057',
+    borderRadius: 8,
+    backgroundColor: '#f8f9fa',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  podiumLabel: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#495057',
+  },
+  podiumName: {
+    fontSize: 9,
+    textAlign: 'center',
+    color: '#212529',
+  },
+});
+
+// PDF Document Component
+const TablePlannerPDF = ({ communityName, weekendIdentifier, tables, podiumPerson }) => {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  const timeStr = now.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+
+  return (
+    <Document>
+      <Page size="LETTER" orientation="landscape" style={pdfStyles.page}>
+        {/* Header */}
+        <View style={pdfStyles.header}>
+          <Text style={pdfStyles.title}>
+            {communityName} - {weekendIdentifier}
+          </Text>
+          <Text style={pdfStyles.subtitle}>Table Assignments</Text>
+          <Text style={pdfStyles.subtitle}>
+            Generated: {dateStr} at {timeStr}
+          </Text>
+        </View>
+
+        {/* Canvas with tables */}
+        <View style={pdfStyles.canvas}>
+          {/* Podium */}
+          {podiumPerson && (
+            <View style={pdfStyles.podium}>
+              <Text style={pdfStyles.podiumLabel}>PODIUM</Text>
+              <View>
+                {podiumPerson.name.split(' ').map((part, idx) => (
+                  <Text key={idx} style={[pdfStyles.podiumName, podiumPerson.type === 'professor' && pdfStyles.seatBold]}>
+                    {part}
+                  </Text>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Tables */}
+          {tables.map((table, tableIdx) => {
+            const size = table.shape === 'square' ? 125 : table.shape === 'rectangle' ? 156 : 140;
+            const height = table.shape === 'rectangle' ? 94 : size;
+            const borderRadius = table.shape === 'round' ? size / 2 : table.shape === 'square' ? 4 : 8;
+
+            return (
+              <View key={tableIdx} style={[pdfStyles.table, { left: table.x, top: table.y }]}>
+                {/* Table shape */}
+                <View style={[pdfStyles.tableShape, { 
+                  width: size, 
+                  height: height,
+                  borderRadius: borderRadius
+                }]}>
+                  <Text style={pdfStyles.tableName}>Table of</Text>
+                  <Text style={pdfStyles.tableName}>{table.name}</Text>
+                </View>
+
+                {/* Seats */}
+                {table.assignments.map((assignment, seatIdx) => {
+                  if (!assignment.personId) return null;
+
+                  const angle = (seatIdx / table.seats) * 2 * Math.PI - Math.PI / 2;
+                  const radius = table.shape === 'round' ? size / 2 + 55 : 
+                                table.shape === 'square' ? size / 2 + 50 :
+                                Math.max(size, height) / 2 + 50;
+                  
+                  const x = size / 2 + Math.cos(angle) * radius;
+                  const y = height / 2 + Math.sin(angle) * radius;
+
+                  const nameParts = assignment.name.split(' ');
+                  const firstName = nameParts[0] || '';
+                  const lastName = nameParts.slice(1).join(' ') || '';
+
+                  return (
+                    <View key={seatIdx} style={[pdfStyles.seat, { left: x - 30, top: y - 16 }]}>
+                      <Text style={assignment.type === 'professor' ? pdfStyles.seatBold : {}}>
+                        {firstName}
+                      </Text>
+                      {lastName && (
+                        <Text style={assignment.type === 'professor' ? pdfStyles.seatBold : {}}>
+                          {lastName}
+                        </Text>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            );
+          })}
+        </View>
+      </Page>
+    </Document>
+  );
+};
 
 export default function TablePlanner() {
   const { orgId, user } = useAuth();
@@ -406,111 +586,8 @@ export default function TablePlanner() {
     });
   }
 
-  async function handlePrint() {
-    try {
-      const canvas = document.getElementById('print-canvas');
-      if (!canvas) {
-        window.showMainStatus?.('Canvas not found', true);
-        return;
-      }
-
-      window.showMainStatus?.('Generating printable layout...');
-
-      // Capture the canvas as an image
-      const capturedCanvas = await html2canvas(canvas, {
-        backgroundColor: '#ffffff',
-        scale: 2, // Higher quality
-        logging: false
-      });
-
-      // Create a new window for printing
-      const printWindow = window.open('', '_blank');
-      const imgData = capturedCanvas.toDataURL('image/png');
-      
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-      const timeStr = now.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
-
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Table Assignments - ${weekendIdentifier}</title>
-            <style>
-              @page {
-                size: landscape;
-                margin: 0.5in;
-              }
-              body {
-                margin: 0;
-                padding: 20px;
-                font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-              }
-              .header {
-                text-align: center;
-                margin-bottom: 20px;
-                padding-bottom: 15px;
-                border-bottom: 2px solid #333;
-              }
-              .header h1 {
-                margin: 0 0 8px 0;
-                font-size: 24px;
-                font-weight: 700;
-              }
-              .header .subtitle {
-                font-size: 14px;
-                color: #666;
-                margin: 4px 0;
-              }
-              .canvas-image {
-                width: 100%;
-                height: auto;
-                display: block;
-                margin: 0 auto;
-              }
-              @media print {
-                body {
-                  padding: 0;
-                }
-                .no-print {
-                  display: none;
-                }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>${communityName} - ${weekendIdentifier}</h1>
-              <div class="subtitle">Table Assignments</div>
-              <div class="subtitle">Generated: ${dateStr} at ${timeStr}</div>
-            </div>
-            <img src="${imgData}" class="canvas-image" alt="Table Layout" />
-            <div class="no-print" style="text-align: center; margin-top: 20px;">
-              <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">
-                Print
-              </button>
-              <button onclick="window.close()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; margin-left: 10px;">
-                Close
-              </button>
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      
-      window.showMainStatus?.('Print preview opened in new window');
-    } catch (error) {
-      console.error('Error generating print layout:', error);
-      window.showMainStatus?.('Failed to generate print layout', true);
-    }
+  function handlePrint() {
+    setShowPdfPreview(!showPdfPreview);
   }
 
   function handleOpenTableModal() {
@@ -1061,6 +1138,86 @@ export default function TablePlanner() {
           <PersonChip person={people.find(p => p.id === activeDragId)} isDragging />
         )}
       </DragOverlay>
+
+      {/* PDF Preview Modal */}
+      {showPdfPreview && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--panel)',
+            borderRadius: '16px',
+            width: '90%',
+            maxWidth: '1200px',
+            height: '90%',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '20px',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: 'var(--panel-header)'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
+                Table Assignments PDF Preview
+              </h3>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <PDFDownloadLink
+                  document={
+                    <TablePlannerPDF
+                      communityName={communityName}
+                      weekendIdentifier={weekendIdentifier}
+                      tables={tables}
+                      podiumPerson={podiumPerson}
+                    />
+                  }
+                  fileName={`${weekendIdentifier.replace(/[^a-zA-Z0-9]/g, '_')}_Table_Assignments.pdf`}
+                >
+                  {({ loading }) => (
+                    <button className="btn btn-primary" disabled={loading}>
+                      {loading ? 'Generating...' : 'Download PDF'}
+                    </button>
+                  )}
+                </PDFDownloadLink>
+                <button 
+                  className="btn"
+                  onClick={() => setShowPdfPreview(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {/* PDF Viewer */}
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <PDFViewer width="100%" height="100%">
+                <TablePlannerPDF
+                  communityName={communityName}
+                  weekendIdentifier={weekendIdentifier}
+                  tables={tables}
+                  podiumPerson={podiumPerson}
+                />
+              </PDFViewer>
+            </div>
+          </div>
+        </div>
+      )}
     </DndContext>
   );
 }
