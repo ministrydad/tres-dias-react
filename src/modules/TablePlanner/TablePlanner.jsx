@@ -46,8 +46,8 @@ export default function TablePlanner() {
   
   // Grid settings
   const GRID_SIZE = 120;
-  const CANVAS_WIDTH = 1000;
-  const CANVAS_HEIGHT = 600;
+  const CANVAS_WIDTH = 1200;
+  const CANVAS_HEIGHT = 800;
 
   // Configure drag sensors
   const sensors = useSensors(
@@ -381,13 +381,22 @@ export default function TablePlanner() {
     const shapeConfig = SHAPES.find(s => s.id === selectedShape);
     if (!shapeConfig) return;
 
+    // Calculate position in a grid layout to avoid stacking
+    const gridCols = 3; // 3 tables per row
+    const gridSpacing = 300; // Space between tables
+    const rowIndex = Math.floor(tables.length / gridCols);
+    const colIndex = tables.length % gridCols;
+    
+    const x = 100 + (colIndex * gridSpacing);
+    const y = 100 + (rowIndex * gridSpacing);
+
     const newTable = {
       id: `table-${Date.now()}`,
       name: selectedTableName,
       shape: shapeConfig.shape,
       seats: shapeConfig.seats,
-      x: 200 + (tables.length * 50), // Offset each new table
-      y: 150,
+      x: x,
+      y: y,
       assignments: Array(shapeConfig.seats).fill(null).map(() => ({
         personId: null,
         name: null,
@@ -437,60 +446,78 @@ export default function TablePlanner() {
 
   function assignPersonToSeat(personId, tableId, seatIndex) {
     const person = people.find(p => p.id === personId);
-    if (!person) return;
+    if (!person) {
+      console.error('❌ Person not found:', personId);
+      return;
+    }
 
     console.log('🎯 Assigning person:', person.name, 'to table:', tableId, 'seat:', seatIndex);
 
-    // Remove person from old seat if assigned
+    // First, remove person from old seat if assigned
     if (person.assigned) {
-      setTables(prev => prev.map(table => {
-        if (table.id === person.tableId) {
+      setTables(prev => {
+        const updated = prev.map(table => {
+          if (table.id === person.tableId) {
+            const newAssignments = [...table.assignments];
+            newAssignments[person.seatIndex] = { personId: null, name: null, type: null };
+            return { ...table, assignments: newAssignments };
+          }
+          return table;
+        });
+        console.log('🔄 Removed from old seat, tables:', updated);
+        return updated;
+      });
+    }
+
+    // Then assign to new seat
+    setTables(prev => {
+      const updated = prev.map(table => {
+        if (table.id === tableId) {
           const newAssignments = [...table.assignments];
-          newAssignments[person.seatIndex] = { personId: null, name: null, type: null };
+          
+          // Remove any existing person from this seat
+          const existingPerson = newAssignments[seatIndex];
+          if (existingPerson?.personId) {
+            const existingPersonId = `${existingPerson.type === 'professor' ? 'prof' : 'cand'}-${existingPerson.personId}`;
+            setPeople(prevPeople => prevPeople.map(p => 
+              p.id === existingPersonId
+                ? { ...p, assigned: false, tableId: null, seatIndex: null }
+                : p
+            ));
+          }
+          
+          // Assign new person
+          newAssignments[seatIndex] = {
+            personId: person.personId,
+            name: person.name,
+            type: person.type
+          };
+          
+          console.log('✅ Assigned to new seat. Seat data:', newAssignments[seatIndex]);
+          console.log('✅ Full assignments:', newAssignments);
+          
           return { ...table, assignments: newAssignments };
         }
         return table;
-      }));
-    }
-
-    // Assign to new seat
-    setTables(prev => prev.map(table => {
-      if (table.id === tableId) {
-        const newAssignments = [...table.assignments];
-        
-        // Remove any existing person from this seat
-        const existingPerson = newAssignments[seatIndex];
-        if (existingPerson?.personId) {
-          const existingPersonId = `${existingPerson.type === 'professor' ? 'prof' : 'cand'}-${existingPerson.personId}`;
-          setPeople(prevPeople => prevPeople.map(p => 
-            p.id === existingPersonId
-              ? { ...p, assigned: false, tableId: null, seatIndex: null }
-              : p
-          ));
-        }
-        
-        // Assign new person
-        newAssignments[seatIndex] = {
-          personId: person.personId,
-          name: person.name,
-          type: person.type
-        };
-        
-        console.log('✅ New assignments for table:', newAssignments);
-        
-        return { ...table, assignments: newAssignments };
-      }
-      return table;
-    }));
+      });
+      
+      console.log('✅ Updated tables state:', updated);
+      return updated;
+    });
 
     // Update person state
-    setPeople(prev => prev.map(p => 
-      p.id === personId
-        ? { ...p, assigned: true, tableId, seatIndex }
-        : p
-    ));
+    setPeople(prev => {
+      const updated = prev.map(p => 
+        p.id === personId
+          ? { ...p, assigned: true, tableId, seatIndex }
+          : p
+      );
+      console.log('✅ Updated people state:', updated.find(p => p.id === personId));
+      return updated;
+    });
 
-    window.showMainStatus?.(`${person.name} assigned to ${tables.find(t => t.id === tableId)?.name}`);
+    const tableName = tables.find(t => t.id === tableId)?.name;
+    window.showMainStatus?.(`${person.name} assigned to Table of ${tableName}`);
   }
 
   function handleRemoveTable(tableId) {
@@ -928,7 +955,7 @@ function Canvas({ tables, setTables, onRemoveTable, gridSize, width, height }) {
       ) : (
         tables.map(table => (
           <DraggableTable 
-            key={table.id} 
+            key={`${table.id}-${table.assignments.filter(a => a.personId).length}`}
             table={table} 
             setTables={setTables}
             onRemove={onRemoveTable}
@@ -971,28 +998,29 @@ function DraggableTable({ table, setTables, onRemove, gridSize }) {
 
   return (
     <div ref={setNodeRef} style={style}>
-      <div style={{ textAlign: 'center', marginBottom: '4px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
         <div 
           {...attributes}
           {...listeners}
           style={{ 
-            fontSize: '0.9rem', 
-            fontWeight: 700, 
-            color: 'var(--ink)',
-            cursor: 'grab'
+            fontSize: '0.75rem', 
+            fontWeight: 600, 
+            color: 'var(--muted)',
+            cursor: 'grab',
+            padding: '4px'
           }}
         >
-          Table of {table.name}
+          (Drag to move)
         </div>
       </div>
       <TableShape table={table} />
-      <div style={{ textAlign: 'center', marginTop: '8px' }}>
+      <div style={{ textAlign: 'center', marginTop: '12px' }}>
         <button
           className="btn btn-small btn-danger"
           onClick={() => onRemove(table.id)}
-          style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+          style={{ fontSize: '0.75rem', padding: '4px 12px' }}
         >
-          Remove
+          Remove Table
         </button>
       </div>
     </div>
@@ -1015,11 +1043,13 @@ function TableShape({ table }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '0.85rem',
+        fontSize: '0.95rem',
         fontWeight: 700,
-        color: '#495057'
+        color: '#495057',
+        textAlign: 'center',
+        padding: '8px'
       }}>
-        {table.name}
+        Table of<br/>{table.name}
       </div>
 
       {/* Seats */}
@@ -1055,6 +1085,9 @@ function Seat({ tableId, seatIndex, assignment, x, y }) {
   const hasAssignment = assignment?.personId;
   const isProfessor = assignment?.type === 'professor';
 
+  // Debug logging
+  console.log(`Seat ${tableId}-${seatIndex}:`, assignment);
+
   return (
     <div
       ref={setNodeRef}
@@ -1077,7 +1110,8 @@ function Seat({ tableId, seatIndex, assignment, x, y }) {
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
         padding: '0 4px',
-        transition: 'all 0.2s'
+        transition: 'all 0.2s',
+        cursor: 'pointer'
       }}
       title={assignment?.name || 'Empty seat'}
     >
