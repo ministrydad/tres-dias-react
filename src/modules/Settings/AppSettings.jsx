@@ -25,7 +25,7 @@ const BUDGET_KEYS = [
 ];
 
 export default function AppSettings() {
-  const { orgId } = useAuth();
+  const { orgId, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   
@@ -46,6 +46,8 @@ export default function AppSettings() {
   // User management
   const [users, setUsers] = useState([]);
   const [showInviteForm, setShowInviteForm] = useState(false);
+  const [editMode, setEditMode] = useState(false); // 'invite' or 'manage'
+  const [editingUser, setEditingUser] = useState(null); // User being edited
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [inviteFormData, setInviteFormData] = useState({
     firstName: '',
@@ -263,6 +265,8 @@ export default function AppSettings() {
 
   function openInviteForm() {
     setShowInviteForm(true);
+    setEditMode('invite');
+    setEditingUser(null);
     setSelectedPerson(null);
     setInviteFormData({
       firstName: '',
@@ -271,6 +275,31 @@ export default function AppSettings() {
       phone: '',
       role: 'user',
       permissions: {
+        'team-viewer-app': true,
+        'team-book': true,
+        'meeting-check-in-app': true,
+        'candidate-registration': true,
+        'secretariat-app': true,
+        'app-settings': true
+      }
+    });
+  }
+
+  function openManageForm(user) {
+    setShowInviteForm(true);
+    setEditMode('manage');
+    setEditingUser(user);
+    setSelectedPerson(null);
+    
+    // Pre-fill form with user's current data
+    const nameParts = (user.full_name || '').split(' ');
+    setInviteFormData({
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
+      email: user.email || '',
+      phone: '', // We don't store phone in memberships, so leave blank
+      role: user.role || 'user',
+      permissions: user.permissions || {
         'team-viewer-app': true,
         'team-book': true,
         'meeting-check-in-app': true,
@@ -380,6 +409,36 @@ export default function AppSettings() {
       
       console.error('❌ Detailed message:', detailedMessage);
       window.showMainStatus(`Failed to invite user: ${detailedMessage}`, true);
+    } finally {
+      setInviteLoading(false);
+    }
+  }
+
+  async function handleUpdateUser() {
+    if (!editingUser) return;
+
+    setInviteLoading(true);
+    
+    try {
+      // Update memberships table with new role and permissions
+      const { error } = await supabase
+        .from('memberships')
+        .update({
+          role: inviteFormData.role.toLowerCase(),
+          permissions: inviteFormData.permissions
+        })
+        .eq('user_id', editingUser.id)
+        .eq('org_id', orgId);
+
+      if (error) throw error;
+
+      window.showMainStatus('User updated successfully!');
+      closeInviteForm();
+      setHasLoaded(false);
+      await loadAllData();
+    } catch (error) {
+      console.error('Error updating user:', error);
+      window.showMainStatus(`Failed to update user: ${error.message}`, true);
     } finally {
       setInviteLoading(false);
     }
@@ -545,29 +604,53 @@ export default function AppSettings() {
                     </td>
                   </tr>
                 ) : (
-                  users.map(user => (
-                    <tr key={user.id}>
-                      <td>
-                        <strong>{user.full_name || 'Name not found'}</strong><br />
-                        <span style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>
-                          {user.email || 'Email not found'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`role-badge ${(user.role || 'user').toLowerCase()}`}>
-                          {user.role || 'USER'}
-                        </span>
-                      </td>
-                      <td className="actions-cell">
-                        <button className="btn btn-small" onClick={() => console.log('Manage', user.id)}>
-                          Manage
-                        </button>
-                        <button className="btn btn-small btn-danger" onClick={() => console.log('Delete', user.id)}>
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                  users.map(userRow => {
+                    const isOwner = userRow.role?.toLowerCase() === 'owner';
+                    const isSelf = userRow.id === user?.id; // Check if this is current user
+                    const canManage = !isOwner && !isSelf;
+                    
+                    return (
+                      <tr key={userRow.id}>
+                        <td>
+                          <strong>{userRow.full_name || 'Name not found'}</strong>
+                          {isSelf && <span style={{ color: 'var(--muted)', fontSize: '0.85rem' }}> (You)</span>}
+                          <br />
+                          <span style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>
+                            {userRow.email || 'Email not found'}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`role-badge ${(userRow.role || 'user').toLowerCase()}`}>
+                            {(userRow.role || 'USER').toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="actions-cell">
+                          <button 
+                            className="btn btn-small" 
+                            onClick={() => openManageForm(userRow)}
+                            disabled={!canManage}
+                            style={{ 
+                              opacity: canManage ? 1 : 0.5,
+                              cursor: canManage ? 'pointer' : 'not-allowed'
+                            }}
+                          >
+                            Manage
+                          </button>
+                          <button 
+                            className="btn btn-small btn-danger" 
+                            onClick={() => console.log('Delete', userRow.id)}
+                            disabled={!canManage}
+                            style={{ 
+                              opacity: canManage ? 1 : 0.5,
+                              cursor: canManage ? 'pointer' : 'not-allowed'
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -590,7 +673,9 @@ export default function AppSettings() {
               alignItems: 'center',
               marginBottom: '20px'
             }}>
-              <div className="section-title">Invite New User</div>
+              <div className="section-title">
+                {editMode === 'manage' ? 'Manage User' : 'Invite New User'}
+              </div>
               <button 
                 className="btn btn-small"
                 onClick={closeInviteForm}
@@ -600,21 +685,24 @@ export default function AppSettings() {
               </button>
             </div>
 
-            <div className="field">
-              <label className="label">Select Person from Directory</label>
-              <select 
-                className="input"
-                value={selectedPerson?.PescadoreKey || ''}
-                onChange={handlePersonSelection}
-              >
-                <option value="">-- Select from directory (optional) --</option>
-                {allMembers.map(person => (
-                  <option key={person.PescadoreKey} value={person.PescadoreKey}>
-                    {person.Last}, {person.Preferred || person.First}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Only show person selector in invite mode */}
+            {editMode === 'invite' && (
+              <div className="field">
+                <label className="label">Select Person from Directory</label>
+                <select 
+                  className="input"
+                  value={selectedPerson?.PescadoreKey || ''}
+                  onChange={handlePersonSelection}
+                >
+                  <option value="">-- Select from directory (optional) --</option>
+                  {allMembers.map(person => (
+                    <option key={person.PescadoreKey} value={person.PescadoreKey}>
+                      {person.Last}, {person.Preferred || person.First}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="grid grid-3">
               <div className="field">
@@ -624,7 +712,8 @@ export default function AppSettings() {
                   type="text"
                   value={inviteFormData.firstName}
                   onChange={(e) => setInviteFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                  readOnly={!!selectedPerson}
+                  readOnly={editMode === 'manage' || !!selectedPerson}
+                  style={{ backgroundColor: editMode === 'manage' ? 'var(--bg)' : undefined }}
                 />
               </div>
               <div className="field">
@@ -634,20 +723,23 @@ export default function AppSettings() {
                   type="text"
                   value={inviteFormData.lastName}
                   onChange={(e) => setInviteFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                  readOnly={!!selectedPerson}
+                  readOnly={editMode === 'manage' || !!selectedPerson}
+                  style={{ backgroundColor: editMode === 'manage' ? 'var(--bg)' : undefined }}
                 />
               </div>
-              <div className="field">
-                <label className="label">Phone *</label>
-                <input 
-                  className="input"
-                  type="tel"
-                  placeholder="5551234567"
-                  value={inviteFormData.phone}
-                  onChange={(e) => setInviteFormData(prev => ({ ...prev, phone: e.target.value }))}
-                  readOnly={!!selectedPerson}
-                />
-              </div>
+              {editMode === 'invite' && (
+                <div className="field">
+                  <label className="label">Phone *</label>
+                  <input 
+                    className="input"
+                    type="tel"
+                    placeholder="5551234567"
+                    value={inviteFormData.phone}
+                    onChange={(e) => setInviteFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    readOnly={!!selectedPerson}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="grid grid-2">
@@ -658,7 +750,8 @@ export default function AppSettings() {
                   type="email"
                   value={inviteFormData.email}
                   onChange={(e) => setInviteFormData(prev => ({ ...prev, email: e.target.value }))}
-                  readOnly={!!selectedPerson}
+                  readOnly={editMode === 'manage' || !!selectedPerson}
+                  style={{ backgroundColor: editMode === 'manage' ? 'var(--bg)' : undefined }}
                 />
               </div>
               <div className="field">
@@ -756,11 +849,11 @@ export default function AppSettings() {
               </button>
               <button 
                 className="btn btn-primary"
-                onClick={handleInviteUser}
+                onClick={editMode === 'manage' ? handleUpdateUser : handleInviteUser}
                 disabled={inviteLoading}
                 style={{ flex: 1 }}
               >
-                {inviteLoading ? 'Sending...' : 'Send Invitation'}
+                {inviteLoading ? 'Saving...' : editMode === 'manage' ? 'Save Changes' : 'Send Invitation'}
               </button>
             </div>
           </div>
