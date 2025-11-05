@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { MdPerson, MdSave, MdAutoFixHigh, MdRefresh, MdPrint } from 'react-icons/md';
+import html2canvas from 'html2canvas';
 
 // Table name constants
 const TABLE_NAMES = {
@@ -46,6 +47,9 @@ export default function TablePlanner() {
   
   // Podium state
   const [podiumPerson, setPodiumPerson] = useState(null); // { personId, name, type }
+  
+  // PDF generation state
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
   
   // Grid settings
   const GRID_SIZE = 120;
@@ -402,8 +406,111 @@ export default function TablePlanner() {
     });
   }
 
-  function handlePrint() {
-    window.print();
+  async function handlePrint() {
+    try {
+      const canvas = document.getElementById('print-canvas');
+      if (!canvas) {
+        window.showMainStatus?.('Canvas not found', true);
+        return;
+      }
+
+      window.showMainStatus?.('Generating printable layout...');
+
+      // Capture the canvas as an image
+      const capturedCanvas = await html2canvas(canvas, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Higher quality
+        logging: false
+      });
+
+      // Create a new window for printing
+      const printWindow = window.open('', '_blank');
+      const imgData = capturedCanvas.toDataURL('image/png');
+      
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      const timeStr = now.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Table Assignments - ${weekendIdentifier}</title>
+            <style>
+              @page {
+                size: landscape;
+                margin: 0.5in;
+              }
+              body {
+                margin: 0;
+                padding: 20px;
+                font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+                border-bottom: 2px solid #333;
+              }
+              .header h1 {
+                margin: 0 0 8px 0;
+                font-size: 24px;
+                font-weight: 700;
+              }
+              .header .subtitle {
+                font-size: 14px;
+                color: #666;
+                margin: 4px 0;
+              }
+              .canvas-image {
+                width: 100%;
+                height: auto;
+                display: block;
+                margin: 0 auto;
+              }
+              @media print {
+                body {
+                  padding: 0;
+                }
+                .no-print {
+                  display: none;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>${communityName} - ${weekendIdentifier}</h1>
+              <div class="subtitle">Table Assignments</div>
+              <div class="subtitle">Generated: ${dateStr} at ${timeStr}</div>
+            </div>
+            <img src="${imgData}" class="canvas-image" alt="Table Layout" />
+            <div class="no-print" style="text-align: center; margin-top: 20px;">
+              <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">
+                Print
+              </button>
+              <button onclick="window.close()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; margin-left: 10px;">
+                Close
+              </button>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      
+      window.showMainStatus?.('Print preview opened in new window');
+    } catch (error) {
+      console.error('Error generating print layout:', error);
+      window.showMainStatus?.('Failed to generate print layout', true);
+    }
   }
 
   function handleOpenTableModal() {
@@ -681,65 +788,6 @@ export default function TablePlanner() {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <style>{`
-        @media print {
-          /* Hide everything except the canvas */
-          .app-panel > .card:first-child,
-          .app-panel > div:first-of-type > .card:first-child,
-          button,
-          .toggle,
-          header,
-          nav,
-          .sidebar,
-          [class*="stats"] {
-            display: none !important;
-          }
-          
-          /* Make canvas full page */
-          .app-panel {
-            padding: 0 !important;
-            display: block !important;
-          }
-          
-          /* Remove borders and make background white */
-          .card {
-            border: none !important;
-            box-shadow: none !important;
-            background: white !important;
-          }
-          
-          /* Show canvas at full size */
-          #print-canvas {
-            border: none !important;
-            width: 100% !important;
-            height: auto !important;
-            min-height: 800px !important;
-            page-break-inside: avoid;
-          }
-          
-          /* Hide drag hints */
-          [style*="Drag to move"] {
-            display: none !important;
-          }
-          
-          /* Make tables and text crisp */
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          
-          /* Add page title */
-          .app-panel::before {
-            content: "${communityName} - ${weekendIdentifier} - Table Assignments";
-            display: block;
-            font-size: 18pt;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 10px;
-          }
-        }
-      `}</style>
       <section className="app-panel" style={{ display: 'block', padding: 0 }}>
         {/* Header Card */}
         <div className="card pad" style={{ marginBottom: '12px' }}>
