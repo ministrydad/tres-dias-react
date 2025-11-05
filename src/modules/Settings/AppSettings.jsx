@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 // Position definitions from original (same as Secretariat)
 const POSITIONS = [
@@ -444,6 +445,35 @@ export default function AppSettings() {
     }
   }
 
+  function handleDeleteUser(userToDelete) {
+    window.showConfirm({
+      title: 'Delete User',
+      message: `Are you sure you want to remove ${userToDelete.full_name || userToDelete.email} from your organization? They will lose access to all modules and data. This cannot be undone.`,
+      confirmText: 'Delete User',
+      cancelText: 'Cancel',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          // Delete from memberships table (removes access to this org)
+          const { error } = await supabase
+            .from('memberships')
+            .delete()
+            .eq('user_id', userToDelete.id)
+            .eq('org_id', orgId);
+
+          if (error) throw error;
+
+          window.showMainStatus(`${userToDelete.full_name || userToDelete.email} has been removed from your organization.`);
+          setHasLoaded(false);
+          await loadAllData();
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          window.showMainStatus(`Failed to delete user: ${error.message}`, true);
+        }
+      }
+    });
+  }
+
   function handleCommunityCodeChange(e) {
     const value = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase();
     setCommunityCode(value);
@@ -638,7 +668,7 @@ export default function AppSettings() {
                           </button>
                           <button 
                             className="btn btn-small btn-danger" 
-                            onClick={() => console.log('Delete', userRow.id)}
+                            onClick={() => handleDeleteUser(userRow)}
                             disabled={!canManage}
                             style={{ 
                               opacity: canManage ? 1 : 0.5,
@@ -1082,6 +1112,9 @@ export default function AppSettings() {
           </div>
         </div>
       </div>
+
+      {/* Confirm Modal */}
+      <ConfirmModal />
 
       <style>{`
         @keyframes slideInRight {
