@@ -216,7 +216,9 @@ export default function TeamList() {
 
   const loadTeamRoster = async (identifier) => {
     const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
-    const rawTableData = allPescadores[currentGender];
+    const rawTableData = currentGender === 'men' 
+  ? allPescadores['men']
+  : [...allPescadores['women'], ...allPescadores['men']];
 
     try {
       const { data, error } = await supabase
