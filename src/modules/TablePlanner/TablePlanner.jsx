@@ -7,6 +7,7 @@ import { usePescadores } from '../../context/PescadoresContext';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { MdPerson, MdSave, MdAutoFixHigh, MdRefresh, MdPrint } from 'react-icons/md';
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Image } from '@react-pdf/renderer';
+import html2canvas from 'html2canvas';
 
 // Table name constants
 const TABLE_NAMES = {
@@ -24,109 +25,37 @@ const SHAPES = [
   { id: 'rect-8', label: 'Rect (8)', seats: 8, shape: 'rectangle' }
 ];
 
-// PDF Styles - Clean list-based layout
+// PDF Styles - Image-based layout
 const pdfStyles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 30,
     backgroundColor: '#ffffff',
   },
   header: {
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
     paddingBottom: 15,
     borderBottom: '2 solid #333',
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
     marginTop: 4,
   },
-  podiumSection: {
-    marginBottom: 30,
-    padding: 15,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    border: '2 solid #495057',
-  },
-  podiumLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#495057',
-    textAlign: 'center',
-  },
-  podiumName: {
-    fontSize: 12,
-    textAlign: 'center',
-    color: '#212529',
-  },
-  tableSection: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: '#fafafa',
-    borderRadius: 6,
-    border: '1 solid #ddd',
-  },
-  tableHeader: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#495057',
-    textAlign: 'center',
-    backgroundColor: '#e8e8e8',
-    padding: 8,
-    borderRadius: 4,
-  },
-  seatRow: {
-    flexDirection: 'row',
-    marginBottom: 6,
-    paddingBottom: 6,
-    borderBottom: '0.5 solid #e0e0e0',
-  },
-  seatNumber: {
-    width: 60,
-    fontSize: 10,
-    color: '#666',
-  },
-  seatName: {
-    flex: 1,
-    fontSize: 10,
-    color: '#212529',
-  },
-  seatNameBold: {
-    fontWeight: 'bold',
-  },
-  emptyText: {
-    fontSize: 10,
-    color: '#999',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 10,
-  },
-  statsSection: {
-    marginTop: 30,
-    padding: 15,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 6,
-  },
-  statsTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  statsText: {
-    fontSize: 10,
-    marginBottom: 4,
+  canvasImage: {
+    width: '100%',
+    height: 'auto',
+    objectFit: 'contain',
   },
 });
 
-// PDF Document Component - List-based layout
-const TablePlannerPDF = ({ communityName, weekendIdentifier, tables, podiumPerson }) => {
+// PDF Document Component - Shows captured canvas image
+const TablePlannerPDF = ({ communityName, weekendIdentifier, canvasImage }) => {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -139,14 +68,9 @@ const TablePlannerPDF = ({ communityName, weekendIdentifier, tables, podiumPerso
     minute: '2-digit' 
   });
 
-  // Calculate stats
-  const totalSeats = tables.reduce((sum, t) => sum + t.seats, 0);
-  const filledSeats = tables.reduce((sum, t) => sum + t.assignments.filter(a => a.personId).length, 0);
-  const totalPeople = podiumPerson ? filledSeats + 1 : filledSeats;
-
   return (
     <Document>
-      <Page size="LETTER" style={pdfStyles.page}>
+      <Page size="LETTER" orientation="landscape" style={pdfStyles.page}>
         {/* Header */}
         <View style={pdfStyles.header}>
           <Text style={pdfStyles.title}>
@@ -158,52 +82,13 @@ const TablePlannerPDF = ({ communityName, weekendIdentifier, tables, podiumPerso
           </Text>
         </View>
 
-        {/* Podium */}
-        {podiumPerson && (
-          <View style={pdfStyles.podiumSection}>
-            <Text style={pdfStyles.podiumLabel}>PODIUM</Text>
-            <Text style={[pdfStyles.podiumName, podiumPerson.type === 'professor' && { fontWeight: 'bold' }]}>
-              {podiumPerson.name}
-            </Text>
-          </View>
+        {/* Canvas Image */}
+        {canvasImage && (
+          <Image
+            src={canvasImage}
+            style={pdfStyles.canvasImage}
+          />
         )}
-
-        {/* Tables */}
-        {tables.map((table, tableIdx) => (
-          <View key={tableIdx} style={pdfStyles.tableSection} wrap={false}>
-            <Text style={pdfStyles.tableHeader}>
-              Table of {table.name} ({table.shape} - {table.seats} seats)
-            </Text>
-            
-            {table.assignments.some(a => a.personId) ? (
-              table.assignments.map((assignment, seatIdx) => (
-                assignment.personId ? (
-                  <View key={seatIdx} style={pdfStyles.seatRow}>
-                    <Text style={pdfStyles.seatNumber}>Seat {seatIdx + 1}:</Text>
-                    <Text style={[
-                      pdfStyles.seatName,
-                      assignment.type === 'professor' && pdfStyles.seatNameBold
-                    ]}>
-                      {assignment.name}
-                      {assignment.type === 'professor' && ' (Professor)'}
-                    </Text>
-                  </View>
-                ) : null
-              ))
-            ) : (
-              <Text style={pdfStyles.emptyText}>No assignments yet</Text>
-            )}
-          </View>
-        ))}
-
-        {/* Statistics */}
-        <View style={pdfStyles.statsSection}>
-          <Text style={pdfStyles.statsTitle}>Summary</Text>
-          <Text style={pdfStyles.statsText}>Total Tables: {tables.length}</Text>
-          <Text style={pdfStyles.statsText}>Total Seats: {totalSeats}</Text>
-          <Text style={pdfStyles.statsText}>Filled Seats: {filledSeats}</Text>
-          <Text style={pdfStyles.statsText}>Total People Assigned: {totalPeople}</Text>
-        </View>
       </Page>
     </Document>
   );
@@ -235,6 +120,8 @@ export default function TablePlanner() {
   
   // PDF generation state
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [canvasImage, setCanvasImage] = useState(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   
   // Grid settings
   const GRID_SIZE = 120;
@@ -591,8 +478,36 @@ export default function TablePlanner() {
     });
   }
 
-  function handlePrint() {
-    setShowPdfPreview(!showPdfPreview);
+  async function handlePrint() {
+    try {
+      setGeneratingPdf(true);
+      window.showMainStatus?.('Capturing table layout...');
+      
+      const canvas = document.getElementById('print-canvas');
+      if (!canvas) {
+        window.showMainStatus?.('Canvas not found', true);
+        setGeneratingPdf(false);
+        return;
+      }
+
+      // Capture the canvas as high-quality image
+      const capturedCanvas = await html2canvas(canvas, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        logging: false,
+        useCORS: true
+      });
+
+      const imgData = capturedCanvas.toDataURL('image/png');
+      setCanvasImage(imgData);
+      setShowPdfPreview(true);
+      setGeneratingPdf(false);
+      window.showMainStatus?.('PDF preview ready');
+    } catch (error) {
+      console.error('Error capturing canvas:', error);
+      window.showMainStatus?.('Failed to capture layout', true);
+      setGeneratingPdf(false);
+    }
   }
 
   function handleOpenTableModal() {
@@ -922,11 +837,11 @@ export default function TablePlanner() {
               <button 
                 className="btn btn-primary"
                 onClick={handlePrint}
-                disabled={tables.length === 0}
+                disabled={tables.length === 0 || generatingPdf}
                 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
               >
                 <MdPrint size={18} />
-                Print
+                {generatingPdf ? 'Generating...' : 'Print'}
               </button>
               <button 
                 className="btn btn-primary"
@@ -1145,7 +1060,7 @@ export default function TablePlanner() {
       </DragOverlay>
 
       {/* PDF Preview Modal */}
-      {showPdfPreview && (
+      {showPdfPreview && canvasImage && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -1188,8 +1103,7 @@ export default function TablePlanner() {
                     <TablePlannerPDF
                       communityName={communityName}
                       weekendIdentifier={weekendIdentifier}
-                      tables={tables}
-                      podiumPerson={podiumPerson}
+                      canvasImage={canvasImage}
                     />
                   }
                   fileName={`${weekendIdentifier.replace(/[^a-zA-Z0-9]/g, '_')}_Table_Assignments.pdf`}
@@ -1202,7 +1116,10 @@ export default function TablePlanner() {
                 </PDFDownloadLink>
                 <button 
                   className="btn"
-                  onClick={() => setShowPdfPreview(false)}
+                  onClick={() => {
+                    setShowPdfPreview(false);
+                    setCanvasImage(null);
+                  }}
                 >
                   Close
                 </button>
@@ -1215,8 +1132,7 @@ export default function TablePlanner() {
                 <TablePlannerPDF
                   communityName={communityName}
                   weekendIdentifier={weekendIdentifier}
-                  tables={tables}
-                  podiumPerson={podiumPerson}
+                  canvasImage={canvasImage}
                 />
               </PDFViewer>
             </div>
