@@ -5,7 +5,7 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
-import { MdPerson, MdSave, MdAutoFixHigh, MdRefresh } from 'react-icons/md';
+import { MdPerson, MdSave, MdAutoFixHigh, MdRefresh, MdPrint } from 'react-icons/md';
 
 // Table name constants
 const TABLE_NAMES = {
@@ -396,9 +396,14 @@ export default function TablePlanner() {
       onConfirm: () => {
         setTables([]);
         setPeople(prev => prev.map(p => ({ ...p, assigned: false, tableId: null, seatIndex: null })));
+        setPodiumPerson(null);
         window.showMainStatus?.('Layout reset');
       }
     });
+  }
+
+  function handlePrint() {
+    window.print();
   }
 
   function handleOpenTableModal() {
@@ -478,14 +483,6 @@ export default function TablePlanner() {
     // Handle table movement - update position when table drag ends
     if (active.id.startsWith('table-')) {
       const tableId = active.id;
-      const table = tables.find(t => t.id === tableId);
-      
-      console.log('🚚 Table drag ended:', {
-        tableId,
-        oldPosition: { x: table?.x, y: table?.y },
-        delta: { x: delta.x, y: delta.y },
-        newPosition: { x: table?.x + delta.x, y: table?.y + delta.y }
-      });
       
       setTables(prev => prev.map(t => {
         if (t.id === tableId) {
@@ -684,6 +681,65 @@ export default function TablePlanner() {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <style>{`
+        @media print {
+          /* Hide everything except the canvas */
+          .app-panel > .card:first-child,
+          .app-panel > div:first-of-type > .card:first-child,
+          button,
+          .toggle,
+          header,
+          nav,
+          .sidebar,
+          [class*="stats"] {
+            display: none !important;
+          }
+          
+          /* Make canvas full page */
+          .app-panel {
+            padding: 0 !important;
+            display: block !important;
+          }
+          
+          /* Remove borders and make background white */
+          .card {
+            border: none !important;
+            box-shadow: none !important;
+            background: white !important;
+          }
+          
+          /* Show canvas at full size */
+          #print-canvas {
+            border: none !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 800px !important;
+            page-break-inside: avoid;
+          }
+          
+          /* Hide drag hints */
+          [style*="Drag to move"] {
+            display: none !important;
+          }
+          
+          /* Make tables and text crisp */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          
+          /* Add page title */
+          .app-panel::before {
+            content: "${communityName} - ${weekendIdentifier} - Table Assignments";
+            display: block;
+            font-size: 18pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+          }
+        }
+      `}</style>
       <section className="app-panel" style={{ display: 'block', padding: 0 }}>
         {/* Header Card */}
         <div className="card pad" style={{ marginBottom: '12px' }}>
@@ -732,6 +788,15 @@ export default function TablePlanner() {
               >
                 <MdRefresh size={18} />
                 Reset
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={handlePrint}
+                disabled={tables.length === 0}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <MdPrint size={18} />
+                Print
               </button>
               <button 
                 className="btn btn-primary"
@@ -1063,6 +1128,7 @@ function Canvas({ tables, setTables, onRemoveTable, gridSize, width, height, pod
   return (
     <div 
       ref={setNodeRef}
+      id="print-canvas"
       className="card"
       style={{
         width: '100%',
@@ -1246,7 +1312,7 @@ function Podium({ person, onRemove }) {
       <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#495057' }}>
         PODIUM
       </div>
-      {person ? (
+      {person && (
         <div style={{ textAlign: 'center' }}>
           <div style={{ 
             fontSize: '0.8rem', 
@@ -1264,10 +1330,6 @@ function Podium({ person, onRemove }) {
               {lastName}
             </div>
           )}
-        </div>
-      ) : (
-        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', fontStyle: 'italic' }}>
-          Drop here
         </div>
       )}
     </div>
