@@ -31,6 +31,7 @@ export default function AppSettings() {
   
   // General settings
   const [communityName, setCommunityName] = useState('');
+  const [communityCode, setCommunityCode] = useState('');
   const [weekendFee, setWeekendFee] = useState('');
   const [teamFee, setTeamFee] = useState('');
   const [sponsorFee, setSponsorFee] = useState('');
@@ -92,6 +93,7 @@ export default function AppSettings() {
       // Load general settings
       if (settingsResult.data) {
         setCommunityName(settingsResult.data.community_name || '');
+        setCommunityCode(settingsResult.data.community_code || '');
         setWeekendFee(settingsResult.data.weekend_fee || '');
         setTeamFee(settingsResult.data.team_fee || '');
         setSponsorFee(settingsResult.data.sponsor_fee || '');
@@ -175,9 +177,16 @@ export default function AppSettings() {
 
   async function saveGeneralSettings() {
     try {
+      // Validate community code
+      if (communityCode && (communityCode.length < 2 || communityCode.length > 4)) {
+        window.showMainStatus('Community code must be 2-4 characters', true);
+        return;
+      }
+
       const payload = {
         org_id: orgId,
         community_name: communityName,
+        community_code: communityCode.toUpperCase(),
         weekend_fee: parseFloat(weekendFee) || 0,
         team_fee: parseFloat(teamFee) || 0,
         sponsor_fee: parseFloat(sponsorFee) || 0
@@ -258,10 +267,9 @@ export default function AppSettings() {
     setInviteFormData({
       firstName: '',
       lastName: '',
-      phone: '',
       email: '',
       phone: '',
-      role: 'User',
+      role: 'user',
       permissions: {
         'team-viewer-app': true,
         'team-book': true,
@@ -286,12 +294,13 @@ export default function AppSettings() {
         ...prev,
         firstName: '',
         lastName: '',
-        email: ''
+        email: '',
+        phone: ''
       }));
       return;
     }
 
-   const person = allMembers.find(p => p.PescadoreKey === parseInt(personKey));
+    const person = allMembers.find(p => p.PescadoreKey === parseInt(personKey));
     if (person) {
       setSelectedPerson(person);
       setInviteFormData(prev => ({
@@ -299,7 +308,7 @@ export default function AppSettings() {
         firstName: person.Preferred || person.First || '',
         lastName: person.Last || '',
         email: person.Email || '',
-        phone: person.Phone1 || '',
+        phone: person.Phone1 || ''
       }));
     }
   }
@@ -314,70 +323,72 @@ export default function AppSettings() {
     }));
   }
 
- async function handleInviteUser() {
- if (!inviteFormData.email || !inviteFormData.firstName || !inviteFormData.lastName || !inviteFormData.phone) {
-  window.showMainStatus('Please fill in all required fields (including phone number).', true);
-  return;
-}
+  async function handleInviteUser() {
+    if (!inviteFormData.email || !inviteFormData.firstName || !inviteFormData.lastName || !inviteFormData.phone) {
+      window.showMainStatus('Please fill in all required fields (including phone number).', true);
+      return;
+    }
 
-  setInviteLoading(true);  // ⬅️ ADD THIS
-  
-  try {
-    // ✅ Get the current session token
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw new Error("Could not get user session.");
-    if (!session) throw new Error("User not authenticated.");
+    setInviteLoading(true);
+    
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw new Error("Could not get user session.");
+      if (!session) throw new Error("User not authenticated.");
 
-    // ✅ Call Edge Function with Authorization header
-    const { data, error } = await supabase.functions.invoke('invite-user', {
-      body: {
-        email: inviteFormData.email,
-        full_name: `${inviteFormData.firstName} ${inviteFormData.lastName}`,
-        phone: inviteFormData.phone,
-        role: inviteFormData.role.toLowerCase(),
-        permissions: inviteFormData.permissions,
-        org_id: orgId
-      },
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`
+      const { data, error } = await supabase.functions.invoke('invite-user', {
+        body: {
+          email: inviteFormData.email,
+          full_name: `${inviteFormData.firstName} ${inviteFormData.lastName}`,
+          phone: inviteFormData.phone,
+          role: inviteFormData.role.toLowerCase(),
+          permissions: inviteFormData.permissions,
+          org_id: orgId
+        },
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      console.log('✅ Edge Function Response - data:', data);
+      console.log('✅ Edge Function Response - error:', error);
+
+      if (error) {
+        console.error('🔴 Full Edge Function Error:', error);
+        console.error('🔴 Error message:', error.message);
+        console.error('🔴 Error context:', error.context);
+        console.error('🔴 Error stringified:', JSON.stringify(error, null, 2));
+        throw error;
       }
-    });
 
-    console.log('✅ Edge Function Response - data:', data);
-    console.log('✅ Edge Function Response - error:', error);
-
-    if (error) {
-  console.error('🔴 Full Edge Function Error:', error);
-  console.error('🔴 Error message:', error.message);
-  console.error('🔴 Error context:', error.context);
-  console.error('🔴 Error stringified:', JSON.stringify(error, null, 2));
-  throw error;
-}
-
-    window.showMainStatus('Invitation sent successfully! User will receive an email to set up their account.');
-    closeInviteForm();
-    setHasLoaded(false);
-    await loadAllData();
-  } catch (error) {
-  console.error('❌ Full catch error:', error);
-  console.error('❌ Error name:', error.name);
-  console.error('❌ Error message:', error.message);
-  console.error('❌ Error context:', error.context);
-  
-  // Try to get detailed error from Edge Function
-  let detailedMessage = error.message;
-  if (error.context?.json?.error) {
-    detailedMessage = error.context.json.error;
-  } else if (error.context?.body) {
-    detailedMessage = error.context.body;
+      window.showMainStatus('Invitation sent successfully! User will receive an email to set up their account.');
+      closeInviteForm();
+      setHasLoaded(false);
+      await loadAllData();
+    } catch (error) {
+      console.error('❌ Full catch error:', error);
+      console.error('❌ Error name:', error.name);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error context:', error.context);
+      
+      let detailedMessage = error.message;
+      if (error.context?.json?.error) {
+        detailedMessage = error.context.json.error;
+      } else if (error.context?.body) {
+        detailedMessage = error.context.body;
+      }
+      
+      console.error('❌ Detailed message:', detailedMessage);
+      window.showMainStatus(`Failed to invite user: ${detailedMessage}`, true);
+    } finally {
+      setInviteLoading(false);
+    }
   }
-  
-  console.error('❌ Detailed message:', detailedMessage);
-  window.showMainStatus(`Failed to invite user: ${detailedMessage}`, true);
-} finally {
-    setInviteLoading(false);
+
+  function handleCommunityCodeChange(e) {
+    const value = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase();
+    setCommunityCode(value);
   }
-}
 
   if (loading) {
     return (
@@ -400,10 +411,25 @@ export default function AppSettings() {
             <input 
               id="communityName" 
               className="input settings-input" 
-              placeholder="Placeholder Inc."
+              placeholder="Tres Dias of St. Louis"
               value={communityName}
               onChange={(e) => setCommunityName(e.target.value)}
             />
+          </div>
+          <div className="field">
+            <label className="label">Community Code</label>
+            <input 
+              id="communityCode" 
+              className="input settings-input" 
+              placeholder="STL"
+              maxLength="4"
+              value={communityCode}
+              onChange={handleCommunityCodeChange}
+              style={{ textTransform: 'uppercase', fontWeight: 700 }}
+            />
+            <small style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px', display: 'block' }}>
+              2-4 letter code ({communityCode.length}/4)
+            </small>
           </div>
           <div className="field">
             <label className="label">Weekend Fee ($)</label>
@@ -429,6 +455,8 @@ export default function AppSettings() {
               onChange={(e) => setTeamFee(e.target.value)}
             />
           </div>
+        </div>
+        <div className="grid grid-4" style={{ marginTop: '16px' }}>
           <div className="field">
             <label className="label">Sponsor Fee ($)</label>
             <input 
@@ -636,16 +664,16 @@ export default function AppSettings() {
                 />
               </div>
               <div className="field">
-  <label className="label">Role</label>
-  <select 
-    className="input"
-    value={inviteFormData.role}
-    onChange={(e) => setInviteFormData(prev => ({ ...prev, role: e.target.value }))}
-  >
-    <option value="user">User</option>
-    <option value="admin">Admin</option>
-  </select>
-</div>
+                <label className="label">Role</label>
+                <select 
+                  className="input"
+                  value={inviteFormData.role}
+                  onChange={(e) => setInviteFormData(prev => ({ ...prev, role: e.target.value }))}
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
             </div>
 
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '20px 0' }} />
@@ -729,13 +757,13 @@ export default function AppSettings() {
                 Cancel
               </button>
               <button 
-  className="btn btn-primary"
-  onClick={handleInviteUser}
-  disabled={inviteLoading}
-  style={{ flex: 1 }}
->
-  {inviteLoading ? 'Sending...' : 'Send Invitation'}
-</button>
+                className="btn btn-primary"
+                onClick={handleInviteUser}
+                disabled={inviteLoading}
+                style={{ flex: 1 }}
+              >
+                {inviteLoading ? 'Sending...' : 'Send Invitation'}
+              </button>
             </div>
           </div>
         )}
