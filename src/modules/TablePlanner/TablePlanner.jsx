@@ -24,7 +24,7 @@ const SHAPES = [
   { id: 'rect-8', label: 'Rect (8)', seats: 8, shape: 'rectangle' }
 ];
 
-// PDF Styles
+// PDF Styles - Clean list-based layout
 const pdfStyles = StyleSheet.create({
   page: {
     padding: 40,
@@ -46,65 +46,86 @@ const pdfStyles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
-  canvas: {
-    width: '100%',
-    minHeight: 500,
-    position: 'relative',
-  },
-  table: {
-    position: 'absolute',
-  },
-  tableShape: {
-    border: '2 solid #495057',
+  podiumSection: {
+    marginBottom: 30,
+    padding: 15,
     backgroundColor: '#f8f9fa',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tableName: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#495057',
-  },
-  seat: {
-    position: 'absolute',
-    fontSize: 8,
-    textAlign: 'center',
-    color: '#212529',
-  },
-  seatBold: {
-    fontWeight: 'bold',
-  },
-  podium: {
-    position: 'absolute',
-    top: 20,
-    left: '50%',
-    width: 180,
-    height: 80,
-    marginLeft: -90,
-    border: '2 solid #495057',
     borderRadius: 8,
-    backgroundColor: '#f8f9fa',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
+    border: '2 solid #495057',
   },
   podiumLabel: {
-    fontSize: 10,
+    fontSize: 14,
     fontWeight: 'bold',
+    marginBottom: 8,
     color: '#495057',
+    textAlign: 'center',
   },
   podiumName: {
-    fontSize: 9,
+    fontSize: 12,
     textAlign: 'center',
     color: '#212529',
+  },
+  tableSection: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#fafafa',
+    borderRadius: 6,
+    border: '1 solid #ddd',
+  },
+  tableHeader: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#495057',
+    textAlign: 'center',
+    backgroundColor: '#e8e8e8',
+    padding: 8,
+    borderRadius: 4,
+  },
+  seatRow: {
+    flexDirection: 'row',
+    marginBottom: 6,
+    paddingBottom: 6,
+    borderBottom: '0.5 solid #e0e0e0',
+  },
+  seatNumber: {
+    width: 60,
+    fontSize: 10,
+    color: '#666',
+  },
+  seatName: {
+    flex: 1,
+    fontSize: 10,
+    color: '#212529',
+  },
+  seatNameBold: {
+    fontWeight: 'bold',
+  },
+  emptyText: {
+    fontSize: 10,
+    color: '#999',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  statsSection: {
+    marginTop: 30,
+    padding: 15,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 6,
+  },
+  statsTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  statsText: {
+    fontSize: 10,
+    marginBottom: 4,
   },
 });
 
-// PDF Document Component
+// PDF Document Component - List-based layout
 const TablePlannerPDF = ({ communityName, weekendIdentifier, tables, podiumPerson }) => {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { 
@@ -118,9 +139,14 @@ const TablePlannerPDF = ({ communityName, weekendIdentifier, tables, podiumPerso
     minute: '2-digit' 
   });
 
+  // Calculate stats
+  const totalSeats = tables.reduce((sum, t) => sum + t.seats, 0);
+  const filledSeats = tables.reduce((sum, t) => sum + t.assignments.filter(a => a.personId).length, 0);
+  const totalPeople = podiumPerson ? filledSeats + 1 : filledSeats;
+
   return (
     <Document>
-      <Page size="LETTER" orientation="landscape" style={pdfStyles.page}>
+      <Page size="LETTER" style={pdfStyles.page}>
         {/* Header */}
         <View style={pdfStyles.header}>
           <Text style={pdfStyles.title}>
@@ -132,72 +158,51 @@ const TablePlannerPDF = ({ communityName, weekendIdentifier, tables, podiumPerso
           </Text>
         </View>
 
-        {/* Canvas with tables */}
-        <View style={pdfStyles.canvas}>
-          {/* Podium */}
-          {podiumPerson && (
-            <View style={pdfStyles.podium}>
-              <Text style={pdfStyles.podiumLabel}>PODIUM</Text>
-              <View>
-                {podiumPerson.name.split(' ').map((part, idx) => (
-                  <Text key={idx} style={[pdfStyles.podiumName, podiumPerson.type === 'professor' && pdfStyles.seatBold]}>
-                    {part}
-                  </Text>
-                ))}
-              </View>
-            </View>
-          )}
+        {/* Podium */}
+        {podiumPerson && (
+          <View style={pdfStyles.podiumSection}>
+            <Text style={pdfStyles.podiumLabel}>PODIUM</Text>
+            <Text style={[pdfStyles.podiumName, podiumPerson.type === 'professor' && { fontWeight: 'bold' }]}>
+              {podiumPerson.name}
+            </Text>
+          </View>
+        )}
 
-          {/* Tables */}
-          {tables.map((table, tableIdx) => {
-            const size = table.shape === 'square' ? 125 : table.shape === 'rectangle' ? 156 : 140;
-            const height = table.shape === 'rectangle' ? 94 : size;
-            const borderRadius = table.shape === 'round' ? size / 2 : table.shape === 'square' ? 4 : 8;
+        {/* Tables */}
+        {tables.map((table, tableIdx) => (
+          <View key={tableIdx} style={pdfStyles.tableSection} wrap={false}>
+            <Text style={pdfStyles.tableHeader}>
+              Table of {table.name} ({table.shape} - {table.seats} seats)
+            </Text>
+            
+            {table.assignments.some(a => a.personId) ? (
+              table.assignments.map((assignment, seatIdx) => (
+                assignment.personId ? (
+                  <View key={seatIdx} style={pdfStyles.seatRow}>
+                    <Text style={pdfStyles.seatNumber}>Seat {seatIdx + 1}:</Text>
+                    <Text style={[
+                      pdfStyles.seatName,
+                      assignment.type === 'professor' && pdfStyles.seatNameBold
+                    ]}>
+                      {assignment.name}
+                      {assignment.type === 'professor' && ' (Professor)'}
+                    </Text>
+                  </View>
+                ) : null
+              ))
+            ) : (
+              <Text style={pdfStyles.emptyText}>No assignments yet</Text>
+            )}
+          </View>
+        ))}
 
-            return (
-              <View key={tableIdx} style={[pdfStyles.table, { left: table.x, top: table.y }]}>
-                {/* Table shape */}
-                <View style={[pdfStyles.tableShape, { 
-                  width: size, 
-                  height: height,
-                  borderRadius: borderRadius
-                }]}>
-                  <Text style={pdfStyles.tableName}>Table of</Text>
-                  <Text style={pdfStyles.tableName}>{table.name}</Text>
-                </View>
-
-                {/* Seats */}
-                {table.assignments.map((assignment, seatIdx) => {
-                  if (!assignment.personId) return null;
-
-                  const angle = (seatIdx / table.seats) * 2 * Math.PI - Math.PI / 2;
-                  const radius = table.shape === 'round' ? size / 2 + 55 : 
-                                table.shape === 'square' ? size / 2 + 50 :
-                                Math.max(size, height) / 2 + 50;
-                  
-                  const x = size / 2 + Math.cos(angle) * radius;
-                  const y = height / 2 + Math.sin(angle) * radius;
-
-                  const nameParts = assignment.name.split(' ');
-                  const firstName = nameParts[0] || '';
-                  const lastName = nameParts.slice(1).join(' ') || '';
-
-                  return (
-                    <View key={seatIdx} style={[pdfStyles.seat, { left: x - 30, top: y - 16 }]}>
-                      <Text style={assignment.type === 'professor' ? pdfStyles.seatBold : {}}>
-                        {firstName}
-                      </Text>
-                      {lastName && (
-                        <Text style={assignment.type === 'professor' ? pdfStyles.seatBold : {}}>
-                          {lastName}
-                        </Text>
-                      )}
-                    </View>
-                  );
-                })}
-              </View>
-            );
-          })}
+        {/* Statistics */}
+        <View style={pdfStyles.statsSection}>
+          <Text style={pdfStyles.statsTitle}>Summary</Text>
+          <Text style={pdfStyles.statsText}>Total Tables: {tables.length}</Text>
+          <Text style={pdfStyles.statsText}>Total Seats: {totalSeats}</Text>
+          <Text style={pdfStyles.statsText}>Filled Seats: {filledSeats}</Text>
+          <Text style={pdfStyles.statsText}>Total People Assigned: {totalPeople}</Text>
         </View>
       </Page>
     </Document>
