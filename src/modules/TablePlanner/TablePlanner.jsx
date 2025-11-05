@@ -58,6 +58,34 @@ export default function TablePlanner() {
     })
   );
 
+  // Global function for removing person from seat (called by Seat component)
+  useEffect(() => {
+    window.removePersonFromSeat = (tableId, seatIndex, personId) => {
+      // Remove from table
+      setTables(prev => prev.map(table => {
+        if (table.id === tableId) {
+          const newAssignments = [...table.assignments];
+          newAssignments[seatIndex] = { personId: null, name: null, type: null };
+          return { ...table, assignments: newAssignments };
+        }
+        return table;
+      }));
+
+      // Update person state
+      setPeople(prev => prev.map(p => 
+        p.id === personId
+          ? { ...p, assigned: false, tableId: null, seatIndex: null }
+          : p
+      ));
+
+      window.showMainStatus?.('Person removed from seat');
+    };
+
+    return () => {
+      delete window.removePersonFromSeat;
+    };
+  }, []);
+
   // Load latest weekend on mount and gender change
   useEffect(() => {
     if (!pescadoresLoading && orgId) {
@@ -311,8 +339,8 @@ export default function TablePlanner() {
         }
       }
 
-      const x = 100 + (colIndex * GRID_SIZE * 2.5);
-      const y = 100 + (rowIndex * GRID_SIZE * 2.5);
+      const x = 100 + (colIndex * GRID_SIZE * 3.5);
+      const y = 100 + (rowIndex * GRID_SIZE * 3.5);
 
       return {
         ...table,
@@ -383,7 +411,7 @@ export default function TablePlanner() {
 
     // Calculate position in a grid layout to avoid stacking
     const gridCols = 3; // 3 tables per row
-    const gridSpacing = 300; // Space between tables
+    const gridSpacing = 400; // Space between tables (increased from 300)
     const rowIndex = Math.floor(tables.length / gridCols);
     const colIndex = tables.length % gridCols;
     
@@ -897,8 +925,6 @@ function PersonChip({ person, isDragging = false }) {
     data: person
   });
 
-  const isProfessor = person.type === 'professor';
-
   return (
     <div
       ref={setNodeRef}
@@ -908,10 +934,9 @@ function PersonChip({ person, isDragging = false }) {
         padding: '8px 12px',
         marginBottom: '6px',
         background: 'var(--panel-header)',
-        border: isProfessor ? '2px solid var(--accentB)' : '1px solid var(--border)',
+        border: '1px solid var(--border)',
         borderRadius: '6px',
         cursor: isDragging ? 'grabbing' : 'grab',
-        fontWeight: isProfessor ? 700 : 400,
         fontSize: '0.85rem',
         display: 'flex',
         alignItems: 'center',
@@ -920,7 +945,7 @@ function PersonChip({ person, isDragging = false }) {
         transition: 'all 0.2s'
       }}
     >
-      <MdPerson size={16} color={isProfessor ? 'var(--accentB)' : undefined} />
+      <MdPerson size={16} />
       {person.name}
     </div>
   );
@@ -1018,21 +1043,12 @@ function DraggableTable({ table, setTables, onRemove, gridSize }) {
           (Drag to move)
         </div>
       </div>
-      <TableShape table={table} />
-      <div style={{ textAlign: 'center', marginTop: '12px' }}>
-        <button
-          className="btn btn-small btn-danger"
-          onClick={() => onRemove(table.id)}
-          style={{ fontSize: '0.75rem', padding: '4px 12px' }}
-        >
-          Remove Table
-        </button>
-      </div>
+      <TableShape table={table} onRemove={onRemove} />
     </div>
   );
 }
 
-function TableShape({ table }) {
+function TableShape({ table, onRemove }) {
   const size = table.shape === 'square' ? 125 : table.shape === 'rectangle' ? 156 : 140;
   const height = table.shape === 'rectangle' ? 94 : size;
 
@@ -1046,15 +1062,29 @@ function TableShape({ table }) {
         borderRadius: table.shape === 'round' ? '50%' : table.shape === 'square' ? '4px' : '8px',
         background: '#f8f9fa',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '0.95rem',
         fontWeight: 700,
         color: '#495057',
         textAlign: 'center',
-        padding: '8px'
+        padding: '8px',
+        gap: '8px'
       }}>
-        Table of<br/>{table.name}
+        <div>
+          Table of<br/>{table.name}
+        </div>
+        <button
+          className="btn btn-small btn-danger"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(table.id);
+          }}
+          style={{ fontSize: '0.65rem', padding: '3px 8px', marginTop: '4px' }}
+        >
+          Remove
+        </button>
       </div>
 
       {/* Seats */}
@@ -1090,35 +1120,61 @@ function Seat({ tableId, seatIndex, assignment, x, y }) {
   const hasAssignment = assignment?.personId;
   const isProfessor = assignment?.type === 'professor';
 
-  // Debug logging
-  console.log(`Seat ${tableId}-${seatIndex}:`, assignment);
+  const handleRemovePerson = (e) => {
+    e.stopPropagation();
+    if (!hasAssignment) return;
+    
+    window.showConfirm({
+      title: 'Remove Person',
+      message: `Remove ${assignment.name} from this seat?`,
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      isDangerous: true,
+      onConfirm: () => {
+        // Find the table and update it
+        const personType = assignment.type === 'professor' ? 'prof' : 'cand';
+        const personId = `${personType}-${assignment.personId}`;
+        
+        // This will be called from parent - need to add this function
+        window.removePersonFromSeat?.(tableId, seatIndex, personId);
+      }
+    });
+  };
+
+  // Auto-size based on content
+  const nameLength = assignment?.name?.length || 0;
+  const minWidth = 70;
+  const width = hasAssignment ? Math.max(minWidth, nameLength * 6 + 20) : minWidth;
 
   return (
     <div
       ref={setNodeRef}
+      onClick={handleRemovePerson}
       style={{
         position: 'absolute',
-        left: x - 30,
+        left: x - (width / 2),
         top: y - 16,
-        width: '60px',
+        width: `${width}px`,
         height: '32px',
-        border: isOver ? '2px solid var(--accentB)' : hasAssignment ? '2px solid #28a745' : '2px solid #dee2e6',
-        borderRadius: '4px',
+        border: isOver ? '2px solid var(--accentB)' : 
+                hasAssignment ? (isProfessor ? '2px solid var(--accentB)' : '2px solid #28a745') : 
+                '2px solid #dee2e6',
+        borderRadius: '6px',
         background: isOver ? 'var(--accentB-light)' : hasAssignment ? '#d4edda' : 'white',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '0.7rem',
+        fontSize: '0.75rem',
         fontWeight: isProfessor ? 700 : 400,
         color: hasAssignment ? '#155724' : '#6c757d',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
-        padding: '0 4px',
+        padding: '0 6px',
         transition: 'all 0.2s',
-        cursor: 'pointer'
+        cursor: hasAssignment ? 'pointer' : 'default'
       }}
-      title={assignment?.name || 'Empty seat'}
+      title={hasAssignment ? `Click to remove ${assignment.name}` : 'Empty seat'}
     >
       {assignment?.name || '—'}
     </div>
