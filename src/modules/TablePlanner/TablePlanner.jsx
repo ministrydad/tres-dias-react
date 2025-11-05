@@ -1084,21 +1084,21 @@ function Canvas({ tables, setTables, onRemoveTable, gridSize, width, height, pod
 }
 
 function DraggableTable({ table, setTables, onRemove, gridSize }) {
-  const [dragStartPos, setDragStartPos] = React.useState({ x: table.x, y: table.y });
+  const [dragStartPos, setDragStartPos] = useState({ x: table.x, y: table.y });
   
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: table.id,
     data: table
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isDragging && transform) {
       // Store initial position when drag starts
       setDragStartPos({ x: table.x, y: table.y });
     }
-  }, [isDragging]);
+  }, [isDragging, transform, table.x, table.y]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isDragging && transform) {
       // Only update position once when drag ends
       const newX = dragStartPos.x + transform.x;
@@ -1110,7 +1110,7 @@ function DraggableTable({ table, setTables, onRemove, gridSize }) {
           : t
       ));
     }
-  }, [isDragging]);
+  }, [isDragging, dragStartPos.x, dragStartPos.y, setTables, table.id, transform]);
 
   const style = {
     position: 'absolute',
