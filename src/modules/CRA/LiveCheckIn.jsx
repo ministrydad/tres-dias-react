@@ -16,6 +16,30 @@ export default function LiveCheckIn() {
   useEffect(() => {
     if (orgId) {
       loadApplications();
+      
+      // 🔔 Subscribe to realtime changes
+      const channel = supabase
+        .channel('cra_checkin_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'cra_applications',
+            filter: `org_id=eq.${orgId}`
+          },
+          (payload) => {
+            console.log('🔔 Realtime update received:', payload);
+            // Reload applications when any update happens
+            loadApplications();
+          }
+        )
+        .subscribe();
+
+      // Cleanup subscription on unmount
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [orgId]);
 
@@ -179,11 +203,19 @@ export default function LiveCheckIn() {
     document.querySelector('.app-container')?.classList.remove('presentation-mode');
   };
 
- const awaitingCheckin = applications.filter(app => {
-  const hasPerson = (currentFilter === 'men' && app.m_first) || (currentFilter === 'women' && app.f_first);
-  const isAttending = app.attendance === 'yes';  // ← Only include confirmed attendees
-  return hasPerson && !app.is_checked_in && isAttending;
-});
+  // Filter for awaiting check-in
+  const awaitingCheckin = applications.filter(app => {
+    const hasPerson = (currentFilter === 'men' && app.m_first) || (currentFilter === 'women' && app.f_first);
+    const isAttending = app.attendance === 'yes';
+    return hasPerson && !app.is_checked_in && isAttending;
+  });
+
+  // Filter for checked-in candidates
+  const checkedIn = applications.filter(app => {
+    const hasPerson = (currentFilter === 'men' && app.m_first) || (currentFilter === 'women' && app.f_first);
+    const isAttending = app.attendance === 'yes';
+    return hasPerson && app.is_checked_in && isAttending;
+  });
 
   const getCandidateName = (app) => {
     if (currentFilter === 'men') {
@@ -418,61 +450,135 @@ export default function LiveCheckIn() {
         )}
 
         {currentMode === 'team' && (
-          <div id="checkin-team-mode" className="card pad">
-            <div className="section-title">Team Management View</div>
-            <p style={{ color: 'var(--muted)', marginTop: '-10px', marginBottom: '20px' }}>
-              This view allows direct editing of candidate data.
-            </p>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Contact</th>
-                  <th>Sponsor</th>
-                  <th>Emergency Contact</th>
-                  <th style={{ width: '100px' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
-                      Loading check-in list...
-                    </td>
-                  </tr>
-                ) : awaitingCheckin.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
-                      No {currentFilter} candidates are awaiting check-in.
-                    </td>
-                  </tr>
-                ) : (
-                  awaitingCheckin.map(app => {
-                    const p = currentFilter === 'men' ? 'm_' : 'f_';
-                    return (
-                      <tr key={app.id}>
-                        <td><strong>{getFullCandidateName(app)}</strong></td>
-                        <td dangerouslySetInnerHTML={{
-                          __html: `${app[p+'cell'] || 'N/A'}<br>${app[p+'email'] || 'N/A'}`
-                        }} />
-                        <td>{app.s_first || ''} {app.s_last || ''}</td>
-                        <td dangerouslySetInnerHTML={{
-                          __html: `${app[p+'emerg'] || 'N/A'}<br>${app[p+'emergphone'] || 'N/A'}`
-                        }} />
-                        <td>
-                          <button 
-                            className="btn btn-small"
-                            onClick={() => handleEdit(app.id)}
-                          >
-                            Edit
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+          <div id="checkin-team-mode">
+            {/* Stats Summary */}
+            <div className="card pad" style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accentB)' }}>
+                    {checkedIn.length}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Checked In
+                  </div>
+                </div>
+                <div style={{ borderRight: '1px solid var(--border)' }}></div>
+                <div>
+                  <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accentD)' }}>
+                    {awaitingCheckin.length}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Awaiting
+                  </div>
+                </div>
+                <div style={{ borderRight: '1px solid var(--border)' }}></div>
+                <div>
+                  <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--ink)' }}>
+                    {checkedIn.length + awaitingCheckin.length}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Total
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Checked In Section */}
+            <div className="card pad" style={{ marginBottom: '16px' }}>
+              <div className="section-title" style={{ color: 'var(--accentB)' }}>
+                ✓ Checked In ({checkedIn.length})
+              </div>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--muted)' }}>
+                  Loading...
+                </div>
+              ) : checkedIn.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
+                  No {currentFilter} candidates checked in yet.
+                </div>
+              ) : (
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Contact</th>
+                      <th>Sponsor</th>
+                      <th>Emergency Contact</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {checkedIn.map(app => {
+                      const p = currentFilter === 'men' ? 'm_' : 'f_';
+                      return (
+                        <tr key={app.id} style={{ backgroundColor: '#d4edda' }}>
+                          <td><strong>{getFullCandidateName(app)}</strong></td>
+                          <td dangerouslySetInnerHTML={{
+                            __html: `${app[p+'cell'] || 'N/A'}<br>${app[p+'email'] || 'N/A'}`
+                          }} />
+                          <td>{app.s_first || ''} {app.s_last || ''}</td>
+                          <td dangerouslySetInnerHTML={{
+                            __html: `${app[p+'emerg'] || 'N/A'}<br>${app[p+'emergphone'] || 'N/A'}`
+                          }} />
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Awaiting Check-In Section */}
+            <div className="card pad">
+              <div className="section-title" style={{ color: 'var(--accentD)' }}>
+                ⏳ Awaiting Check-In ({awaitingCheckin.length})
+              </div>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--muted)' }}>
+                  Loading...
+                </div>
+              ) : awaitingCheckin.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
+                  All {currentFilter} candidates have been checked in! 🎉
+                </div>
+              ) : (
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Contact</th>
+                      <th>Sponsor</th>
+                      <th>Emergency Contact</th>
+                      <th style={{ width: '100px' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {awaitingCheckin.map(app => {
+                      const p = currentFilter === 'men' ? 'm_' : 'f_';
+                      return (
+                        <tr key={app.id}>
+                          <td><strong>{getFullCandidateName(app)}</strong></td>
+                          <td dangerouslySetInnerHTML={{
+                            __html: `${app[p+'cell'] || 'N/A'}<br>${app[p+'email'] || 'N/A'}`
+                          }} />
+                          <td>{app.s_first || ''} {app.s_last || ''}</td>
+                          <td dangerouslySetInnerHTML={{
+                            __html: `${app[p+'emerg'] || 'N/A'}<br>${app[p+'emergphone'] || 'N/A'}`
+                          }} />
+                          <td>
+                            <button 
+                              className="btn btn-small"
+                              onClick={() => handleEdit(app.id)}
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         )}
       </div>
