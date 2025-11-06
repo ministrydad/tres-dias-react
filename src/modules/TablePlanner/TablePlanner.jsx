@@ -1152,7 +1152,13 @@ function PeopleList({ people, loading }) {
   const unassignedCandidates = candidates.filter(p => !p.assigned);
 
   return (
-    <div className="card pad" style={{ width: '280px', height: '800px', display: 'flex', flexDirection: 'column' }}>
+    <div className="card pad" style={{ 
+      width: '280px', 
+      height: '800px', 
+      display: 'flex', 
+      flexDirection: 'column',
+      boxSizing: 'border-box'
+    }}>
       <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '16px', color: 'var(--ink)' }}>
         People ({people.length})
       </div>
@@ -1163,7 +1169,6 @@ function PeopleList({ people, loading }) {
         </div>
       ) : (
         <div style={{ flex: 1, overflowY: 'auto' }}>
-        <>
           {/* Professors */}
           <div style={{ marginBottom: '20px' }}>
             <div style={{ 
@@ -1209,9 +1214,8 @@ function PeopleList({ people, loading }) {
               ))
             )}
           </div>
-        </>
+        </div>
       )}
-      </div>
     </div>
   );
 }
