@@ -268,24 +268,12 @@ export default function TablePlanner() {
       
       if (candidatesError) throw candidatesError;
 
-      console.log('🔍 Total candidates from DB:', candidatesData?.length);
-      console.log('🔍 Current gender:', currentGender);
-      console.log('🔍 Raw candidate data (first 3):', candidatesData?.slice(0, 3));
-
       const candidates = (candidatesData || [])
         .filter(c => {
           if (currentGender === 'men') {
-            const hasName = c.m_first || c.m_pref;
-            if (!hasName) {
-              console.log('❌ Filtered out (no male name):', { id: c.id, lastname: c.c_lastname, attendance: c.attendance });
-            }
-            return hasName;
+            return c.m_first || c.m_pref;
           } else {
-            const hasName = c.f_first || c.f_pref;
-            if (!hasName) {
-              console.log('❌ Filtered out (no female name):', { id: c.id, lastname: c.c_lastname, attendance: c.attendance });
-            }
-            return hasName;
+            return c.f_first || c.f_pref;
           }
         })
         .map(c => {
@@ -293,8 +281,6 @@ export default function TablePlanner() {
             ? (c.m_pref || c.m_first || '')
             : (c.f_pref || c.f_first || '');
           const lastName = c.c_lastname || '';
-          
-          console.log('✅ Including candidate:', { name: `${firstName} ${lastName}`, attendance: c.attendance });
           
           return {
             id: `cand-${c.id}`,
@@ -307,9 +293,6 @@ export default function TablePlanner() {
             seatIndex: null
           };
         });
-
-      console.log('✅ Final candidates loaded:', candidates.length);
-      console.log('✅ Candidate names:', candidates.map(c => c.name));
 
       setPeople([...professors, ...candidates]);
     } catch (error) {
@@ -623,8 +606,6 @@ export default function TablePlanner() {
       const tableId = `${parts[1]}-${parts[2]}`; // 'table-1762366249726'
       const seatIndex = parseInt(parts[3]); // 0
       
-      console.log('🎯 Parsed drop:', { overId: over.id, tableId, seatIndex });
-      
       assignPersonToSeat(active.id, tableId, seatIndex);
     }
 
@@ -644,8 +625,6 @@ export default function TablePlanner() {
       return;
     }
 
-    console.log('🎯 Assigning person:', person.name, 'to table:', tableId, 'seat:', seatIndex);
-
     // First, remove person from old seat if assigned
     if (person.assigned) {
       setTables(prev => {
@@ -657,7 +636,6 @@ export default function TablePlanner() {
           }
           return table;
         });
-        console.log('🔄 Removed from old seat, tables:', updated);
         return updated;
       });
     }
@@ -686,15 +664,11 @@ export default function TablePlanner() {
             type: person.type
           };
           
-          console.log('✅ Assigned to new seat. Seat data:', newAssignments[seatIndex]);
-          console.log('✅ Full assignments:', newAssignments);
-          
           return { ...table, assignments: newAssignments };
         }
         return table;
       });
       
-      console.log('✅ Updated tables state:', updated);
       return updated;
     });
 
@@ -705,7 +679,6 @@ export default function TablePlanner() {
           ? { ...p, assigned: true, tableId, seatIndex }
           : p
       );
-      console.log('✅ Updated people state:', updated.find(p => p.id === personId));
       return updated;
     });
 
@@ -716,8 +689,6 @@ export default function TablePlanner() {
   function assignPersonToPodium(personId) {
     const person = people.find(p => p.id === personId);
     if (!person) return;
-
-    console.log('🎤 Assigning person to podium:', person.name);
 
     // Remove from old position if assigned
     if (person.assigned) {
