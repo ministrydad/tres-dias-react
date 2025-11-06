@@ -264,25 +264,26 @@ export default function TablePlanner() {
         .from('cra_applications')
         .select('id, m_first, m_pref, f_first, f_pref, c_lastname, attendance')
         .eq('org_id', orgId)
-        .neq('attendance', 'no');
+        .neq('attendance', 'no'); // Only exclude explicit 'no' - include 'yes' and NULL (pending)
       
       if (candidatesError) throw candidatesError;
 
       console.log('🔍 Total candidates from DB:', candidatesData?.length);
       console.log('🔍 Current gender:', currentGender);
+      console.log('🔍 Raw candidate data (first 3):', candidatesData?.slice(0, 3));
 
       const candidates = (candidatesData || [])
         .filter(c => {
           if (currentGender === 'men') {
             const hasName = c.m_first || c.m_pref;
             if (!hasName) {
-              console.log('❌ Filtered out (no male name):', c);
+              console.log('❌ Filtered out (no male name):', { id: c.id, lastname: c.c_lastname, attendance: c.attendance });
             }
             return hasName;
           } else {
             const hasName = c.f_first || c.f_pref;
             if (!hasName) {
-              console.log('❌ Filtered out (no female name):', c);
+              console.log('❌ Filtered out (no female name):', { id: c.id, lastname: c.c_lastname, attendance: c.attendance });
             }
             return hasName;
           }
@@ -292,6 +293,8 @@ export default function TablePlanner() {
             ? (c.m_pref || c.m_first || '')
             : (c.f_pref || c.f_first || '');
           const lastName = c.c_lastname || '';
+          
+          console.log('✅ Including candidate:', { name: `${firstName} ${lastName}`, attendance: c.attendance });
           
           return {
             id: `cand-${c.id}`,
