@@ -530,7 +530,7 @@ export default function LiveCheckIn() {
             {/* Awaiting Check-In Section */}
             <div className="card pad">
               <div className="section-title" style={{ color: 'var(--accentD)' }}>
-                ⏳ Awaiting Check-In ({awaitingCheckin.length})
+                Awaiting Check-In ({awaitingCheckin.length})
               </div>
               {loading ? (
                 <div style={{ textAlign: 'center', padding: '20px', color: 'var(--muted)' }}>
