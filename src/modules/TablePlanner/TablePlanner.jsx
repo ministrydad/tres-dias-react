@@ -259,12 +259,12 @@ export default function TablePlanner() {
         }
       });
 
-      // Load candidates
+      // Load candidates - include 'yes' and NULL (pending), exclude 'no'
       const { data: candidatesData, error: candidatesError } = await supabase
         .from('cra_applications')
         .select('id, m_first, m_pref, f_first, f_pref, c_lastname, attendance')
         .eq('org_id', orgId)
-        .neq('attendance', 'no'); // Only exclude explicit 'no' - include 'yes' and NULL (pending)
+        .or('attendance.eq.yes,attendance.is.null'); // Explicitly include 'yes' OR NULL
       
       if (candidatesError) throw candidatesError;
 
