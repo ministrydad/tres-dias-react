@@ -216,7 +216,7 @@ export default function Directory() {
         data = data.filter(p => p['Head Kitchen'] === 'E' || p['Asst Head Kitchen'] === 'E');
         break;
       case 'bur-qualified':
-        data = data.filter(p => p['BUR'] === 'E');
+        data = data.filter(p => p['BUR'] === 'E' || p['Rector'] === 'E');
         break;
       case 'dorm-qualified':
         data = data.filter(p => p['Head Dorm'] === 'E');
