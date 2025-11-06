@@ -1260,7 +1260,7 @@ function Canvas({ tables, setTables, onRemoveTable, gridSize, width, height, pod
         width: '100%',
         height: `${height}px`,
         background: 'var(--panel)',
-        border: '2px dashed var(--border)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
         borderRadius: '8px',
         position: 'relative',
         overflow: 'hidden'
