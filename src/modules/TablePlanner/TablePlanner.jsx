@@ -268,12 +268,23 @@ export default function TablePlanner() {
       
       if (candidatesError) throw candidatesError;
 
+      console.log('🔍 Total candidates from DB:', candidatesData?.length);
+      console.log('🔍 Current gender:', currentGender);
+
       const candidates = (candidatesData || [])
         .filter(c => {
           if (currentGender === 'men') {
-            return c.m_first || c.m_pref;
+            const hasName = c.m_first || c.m_pref;
+            if (!hasName) {
+              console.log('❌ Filtered out (no male name):', c);
+            }
+            return hasName;
           } else {
-            return c.f_first || c.f_pref;
+            const hasName = c.f_first || c.f_pref;
+            if (!hasName) {
+              console.log('❌ Filtered out (no female name):', c);
+            }
+            return hasName;
           }
         })
         .map(c => {
@@ -293,6 +304,9 @@ export default function TablePlanner() {
             seatIndex: null
           };
         });
+
+      console.log('✅ Final candidates loaded:', candidates.length);
+      console.log('✅ Candidate names:', candidates.map(c => c.name));
 
       setPeople([...professors, ...candidates]);
     } catch (error) {
