@@ -95,6 +95,7 @@ export default function Directory() {
     includeContactedCheckbox: false,
     includeAcceptedCheckbox: false
   });
+  const controlsCardRef = useRef(null);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(-1);
   
   // Team management state
@@ -715,7 +716,7 @@ export default function Directory() {
               minWidth: 0
             }}
           >
-            <div className="card">
+            <div className="card" ref={controlsCardRef}>
               <div className="controls-main-grid">
                 <div className="controls-left-panel">
                   <div className="search-group">
@@ -955,13 +956,14 @@ export default function Directory() {
           {/* Print Options Panel - Slides in from right */}
           {showPrintOptions && (
             <div 
-              className="card pad"
+              className="card pad print-options-panel"
               style={{
                 width: '38%',
                 animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 display: 'flex',
                 flexDirection: 'column',
-                minHeight: '500px'
+                height: controlsCardRef.current ? `${controlsCardRef.current.offsetHeight}px` : 'auto',
+                overflow: 'auto'
               }}
             >
               <div style={{ 
@@ -2409,6 +2411,16 @@ function ProfessorRolesCard({ profile, isEditMode, onFieldChange }) {
             opacity: 1;
             transform: translateX(0);
           }
+        }
+        
+        /* Green checkboxes for print options */
+        .print-options-panel input[type="checkbox"] {
+          accent-color: #28a745;
+        }
+        
+        .print-options-panel input[type="checkbox"]:checked {
+          background-color: #28a745;
+          border-color: #28a745;
         }
       `}</style>
     </>
