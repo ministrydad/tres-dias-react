@@ -915,12 +915,7 @@ export default function Directory() {
                   </button>
                 </div>
 
-                <div style={{ marginBottom: '24px' }}>
-                  <h4 style={{ margin: '0 0 16px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
-                    Include in Report:
-                  </h4>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
                       <input
                         type="checkbox"
@@ -1001,7 +996,6 @@ export default function Directory() {
                       <span>Accepted (checkbox)</span>
                     </label>
                   </div>
-                </div>
 
                 <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '24px 0' }} />
 
@@ -2416,24 +2410,24 @@ function ProfessorRolesCard({ profile, isEditMode, onFieldChange }) {
           }
         }
         
-        /* Green checkboxes for print options - using multiple approaches for compatibility */
+        /* Green checkboxes for print options - force override inline styles */
         .print-options-panel input[type="checkbox"] {
-          width: 18px;
-          height: 18px;
-          cursor: pointer;
-          accent-color: var(--accentA);
-          -webkit-appearance: none;
-          -moz-appearance: none;
-          appearance: none;
-          border: 2px solid #ccc;
-          border-radius: 3px;
-          position: relative;
-          background-color: white;
+          width: 18px !important;
+          height: 18px !important;
+          cursor: pointer !important;
+          -webkit-appearance: none !important;
+          -moz-appearance: none !important;
+          appearance: none !important;
+          border: 2px solid #ccc !important;
+          border-radius: 3px !important;
+          position: relative !important;
+          background-color: white !important;
+          margin: 0 !important;
         }
         
         .print-options-panel input[type="checkbox"]:checked {
-          background-color: var(--accentA);
-          border-color: var(--accentA);
+          background-color: #2ea44f !important;
+          border-color: #2ea44f !important;
         }
         
         .print-options-panel input[type="checkbox"]:checked::after {
