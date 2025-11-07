@@ -345,18 +345,11 @@ export default function Directory() {
         break;
         
       case 'spiritual-director-qualified':
-        if (excludePriorHeads) {
-          data = data.filter(p => 
-            p['Spiritual Director'] !== 'E' &&
-            p['Head Spiritual Director'] !== 'E' &&
-            ROLE_CONFIG.team.some(role => p[role.key] === 'E')
-          );
-        } else {
-          data = data.filter(p => 
-            p['Spiritual Director'] === 'E' || 
-            p['Head Spiritual Director'] === 'E'
-          );
-        }
+        // Spiritual Director is special - only show those who ARE SDs (ignore toggle)
+        data = data.filter(p => 
+          p['Spiritual Director'] === 'E' || 
+          p['Head Spiritual Director'] === 'E'
+        );
         break;
         
       case 'role-rector-e':
