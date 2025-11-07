@@ -767,7 +767,7 @@ export default function Directory() {
                             </div>
                           </div>
                         </div>
-                        <div className="field" style={{ margin: 0, flex: '0 0 auto', width: '180px', marginTop: '4px' }}>
+                        <div className="field" style={{ margin: 0, flex: '0 0 auto', width: '180px', marginTop: '6px' }}>
                           <label className="label">Prior Head(s)</label>
                           <div className="toggle-inset-container">
                             <div 
