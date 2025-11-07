@@ -706,17 +706,18 @@ export default function Directory() {
     }}>
       
       {currentView === 'directory' && (
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', width: '100%' }}>
-          <div 
-            id="directoryView" 
-            className="directory-container"
-            style={{
-              width: showPrintOptions ? '60%' : '100%',
-              transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              minWidth: 0
-            }}
-          >
-            <div className="card" ref={controlsCardRef}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+          {/* Controls row with print options */}
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', width: '100%' }}>
+            <div 
+              className="card" 
+              ref={controlsCardRef}
+              style={{
+                width: showPrintOptions ? '60%' : '100%',
+                transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                minWidth: 0
+              }}
+            >
               <div className="controls-main-grid">
                 <div className="controls-left-panel">
                   <div className="search-group">
@@ -880,7 +881,160 @@ export default function Directory() {
                 </div>
               </div>
             </div>
-            <div className="card pad">
+
+            {/* Print Options Panel - Slides in from right */}
+            {showPrintOptions && (
+              <div 
+                className="card pad print-options-panel"
+                style={{
+                  width: '38%',
+                  animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: controlsCardRef.current ? `${controlsCardRef.current.offsetHeight}px` : 'auto',
+                  overflow: 'auto'
+                }}
+              >
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  marginBottom: '20px',
+                  paddingBottom: '16px',
+                  borderBottom: '2px solid var(--accentB)'
+                }}>
+                  <h3 style={{ margin: 0, color: 'var(--accentB)', fontSize: '1.1rem' }}>
+                    Print Options
+                  </h3>
+                  <button 
+                    className="btn btn-small"
+                    onClick={() => setShowPrintOptions(false)}
+                    style={{ padding: '4px 12px', fontSize: '0.9rem' }}
+                  >
+                    Close ✕
+                  </button>
+                </div>
+
+                <div style={{ marginBottom: '24px' }}>
+                  <h4 style={{ margin: '0 0 16px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
+                    Include in Report:
+                  </h4>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={printOptions.includePhone}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includePhone: e.target.checked }))}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                      <span>Phone Number</span>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={printOptions.includeEmail}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeEmail: e.target.checked }))}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                      <span>Email Address</span>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={printOptions.includeAddress}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAddress: e.target.checked }))}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                      <span>Mailing Address</span>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={printOptions.includeChurch}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeChurch: e.target.checked }))}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                      <span>Church</span>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={printOptions.includeLastWeekend}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastWeekend: e.target.checked }))}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                      <span>Last Weekend Served</span>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={printOptions.includeLastRole}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastRole: e.target.checked }))}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                      <span>Last Role Served</span>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={printOptions.includeContactedCheckbox}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: e.target.checked }))}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                      <span>Contacted (checkbox)</span>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={printOptions.includeAcceptedCheckbox}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: e.target.checked }))}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                      <span>Accepted (checkbox)</span>
+                    </label>
+                  </div>
+                </div>
+
+                <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '24px 0' }} />
+
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '12px', 
+                  marginTop: 'auto',
+                  paddingTop: '20px'
+                }}>
+                  <button 
+                    className="btn" 
+                    onClick={() => setShowPrintOptions(false)}
+                    style={{ flex: 1 }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={() => {
+                      // TODO: Generate PDF with selected options
+                      window.showMainStatus('PDF generation coming soon!', false);
+                    }}
+                    style={{ flex: 1 }}
+                  >
+                    Generate PDF
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Directory Grid - Full Width, Below Controls */}
+          <div className="card pad">
               <div className="directory-header">
                 <h2 className="directory-title" id="directoryTitle">
                   {activeTeamIdentifier ? `Directory - ${activeTeamIdentifier}` : 'Directory'}
@@ -952,157 +1106,6 @@ export default function Directory() {
               })()}
             </div>
           </div>
-
-          {/* Print Options Panel - Slides in from right */}
-          {showPrintOptions && (
-            <div 
-              className="card pad print-options-panel"
-              style={{
-                width: '38%',
-                animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                display: 'flex',
-                flexDirection: 'column',
-                height: controlsCardRef.current ? `${controlsCardRef.current.offsetHeight}px` : 'auto',
-                overflow: 'auto'
-              }}
-            >
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: '20px',
-                paddingBottom: '16px',
-                borderBottom: '2px solid var(--accentB)'
-              }}>
-                <h3 style={{ margin: 0, color: 'var(--accentB)', fontSize: '1.1rem' }}>
-                  Print Options
-                </h3>
-                <button 
-                  className="btn btn-small"
-                  onClick={() => setShowPrintOptions(false)}
-                  style={{ padding: '4px 12px', fontSize: '0.9rem' }}
-                >
-                  Close ✕
-                </button>
-              </div>
-
-              <div style={{ marginBottom: '24px' }}>
-                <h4 style={{ margin: '0 0 16px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
-                  Include in Report:
-                </h4>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={printOptions.includePhone}
-                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includePhone: e.target.checked }))}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <span>Phone Number</span>
-                  </label>
-
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={printOptions.includeEmail}
-                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeEmail: e.target.checked }))}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <span>Email Address</span>
-                  </label>
-
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={printOptions.includeAddress}
-                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAddress: e.target.checked }))}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <span>Mailing Address</span>
-                  </label>
-
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={printOptions.includeChurch}
-                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeChurch: e.target.checked }))}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <span>Church</span>
-                  </label>
-
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={printOptions.includeLastWeekend}
-                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastWeekend: e.target.checked }))}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <span>Last Weekend Served</span>
-                  </label>
-
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={printOptions.includeLastRole}
-                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastRole: e.target.checked }))}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <span>Last Role Served</span>
-                  </label>
-
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={printOptions.includeContactedCheckbox}
-                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: e.target.checked }))}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <span>Contacted (checkbox)</span>
-                  </label>
-
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={printOptions.includeAcceptedCheckbox}
-                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: e.target.checked }))}
-                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    <span>Accepted (checkbox)</span>
-                  </label>
-                </div>
-              </div>
-
-              <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '24px 0' }} />
-
-              <div style={{ 
-                display: 'flex', 
-                gap: '12px', 
-                marginTop: 'auto',
-                paddingTop: '20px'
-              }}>
-                <button 
-                  className="btn" 
-                  onClick={() => setShowPrintOptions(false)}
-                  style={{ flex: 1 }}
-                >
-                  Cancel
-                </button>
-                <button 
-                  className="btn btn-primary" 
-                  onClick={() => {
-                    // TODO: Generate PDF with selected options
-                    window.showMainStatus('PDF generation coming soon!', false);
-                  }}
-                  style={{ flex: 1 }}
-                >
-                  Generate PDF
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
         )}
 
         {currentView === 'profile' && currentProfile && (
@@ -2415,12 +2418,12 @@ function ProfessorRolesCard({ profile, isEditMode, onFieldChange }) {
         
         /* Green checkboxes for print options */
         .print-options-panel input[type="checkbox"] {
-          accent-color: #28a745;
+          accent-color: var(--accentA);
         }
         
         .print-options-panel input[type="checkbox"]:checked {
-          background-color: #28a745;
-          border-color: #28a745;
+          background-color: var(--accentA);
+          border-color: var(--accentA);
         }
       `}</style>
     </>
