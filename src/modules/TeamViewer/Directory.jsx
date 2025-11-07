@@ -82,6 +82,19 @@ export default function Directory() {
   const [secondarySort, setSecondarySort] = useState('alpha-asc');
   const [currentView, setCurrentView] = useState('directory');
   const [currentProfile, setCurrentProfile] = useState(null);
+  
+  // Print options state
+  const [showPrintOptions, setShowPrintOptions] = useState(false);
+  const [printOptions, setPrintOptions] = useState({
+    includePhone: true,
+    includeEmail: true,
+    includeAddress: false,
+    includeChurch: false,
+    includeLastWeekend: false,
+    includeLastRole: false,
+    includeContactedCheckbox: false,
+    includeAcceptedCheckbox: false
+  });
   const [currentProfileIndex, setCurrentProfileIndex] = useState(-1);
   
   // Team management state
@@ -692,7 +705,16 @@ export default function Directory() {
     }}>
       
       {currentView === 'directory' && (
-          <div id="directoryView" className="directory-container">
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', width: '100%' }}>
+          <div 
+            id="directoryView" 
+            className="directory-container"
+            style={{
+              width: showPrintOptions ? '60%' : '100%',
+              transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              minWidth: 0
+            }}
+          >
             <div className="card">
               <div className="controls-main-grid">
                 <div className="controls-left-panel">
@@ -839,7 +861,7 @@ export default function Directory() {
                   </div>
                   <div className="utility-buttons">
                     <button className="clear-button" onClick={handleClear}>Clear</button>
-                    <button className="print-button">Print Report</button>
+                    <button className="print-button" onClick={() => setShowPrintOptions(true)}>Show Print Options</button>
                     <button 
                       className="view-team-button" 
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
@@ -929,6 +951,156 @@ export default function Directory() {
               })()}
             </div>
           </div>
+
+          {/* Print Options Panel - Slides in from right */}
+          {showPrintOptions && (
+            <div 
+              className="card pad"
+              style={{
+                width: '38%',
+                animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '500px'
+              }}
+            >
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                marginBottom: '20px',
+                paddingBottom: '16px',
+                borderBottom: '2px solid var(--accentB)'
+              }}>
+                <h3 style={{ margin: 0, color: 'var(--accentB)', fontSize: '1.1rem' }}>
+                  Print Options
+                </h3>
+                <button 
+                  className="btn btn-small"
+                  onClick={() => setShowPrintOptions(false)}
+                  style={{ padding: '4px 12px', fontSize: '0.9rem' }}
+                >
+                  Close ✕
+                </button>
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <h4 style={{ margin: '0 0 16px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
+                  Include in Report:
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={printOptions.includePhone}
+                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includePhone: e.target.checked }))}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <span>Phone Number</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={printOptions.includeEmail}
+                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeEmail: e.target.checked }))}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <span>Email Address</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={printOptions.includeAddress}
+                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAddress: e.target.checked }))}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <span>Mailing Address</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={printOptions.includeChurch}
+                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeChurch: e.target.checked }))}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <span>Church</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={printOptions.includeLastWeekend}
+                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastWeekend: e.target.checked }))}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <span>Last Weekend Served</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={printOptions.includeLastRole}
+                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastRole: e.target.checked }))}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <span>Last Role Served</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={printOptions.includeContactedCheckbox}
+                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: e.target.checked }))}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <span>Contacted (checkbox)</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={printOptions.includeAcceptedCheckbox}
+                      onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: e.target.checked }))}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <span>Accepted (checkbox)</span>
+                  </label>
+                </div>
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '24px 0' }} />
+
+              <div style={{ 
+                display: 'flex', 
+                gap: '12px', 
+                marginTop: 'auto',
+                paddingTop: '20px'
+              }}>
+                <button 
+                  className="btn" 
+                  onClick={() => setShowPrintOptions(false)}
+                  style={{ flex: 1 }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    // TODO: Generate PDF with selected options
+                    window.showMainStatus('PDF generation coming soon!', false);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Generate PDF
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         )}
 
         {currentView === 'profile' && currentProfile && (
@@ -2191,39 +2363,54 @@ function ProfessorRolesCard({ profile, isEditMode, onFieldChange }) {
   };
 
   return (
-    <div className="card pad">
-      <div className="roles-section">
-        <div className="roles-header-container">
-          <div className="roles-title">Professor Roles</div>
-          <div className="legend">
-            <div className="legend-item">
-              <div className="legend-color status-N"></div>
-              <span>Never</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-color status-I"></div>
-              <span>Inexp.</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-color status-E"></div>
-              <span>Exp.</span>
+    <>
+      <div className="card pad">
+        <div className="roles-section">
+          <div className="roles-header-container">
+            <div className="roles-title">Professor Roles</div>
+            <div className="legend">
+              <div className="legend-item">
+                <div className="legend-color status-N"></div>
+                <span>Never</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-color status-I"></div>
+                <span>Inexp.</span>
+              </div>
+              <div className="legend-item">
+                <div className="legend-color status-E"></div>
+                <span>Exp.</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="role-header-legend professor-headers">
-          {Array(2).fill(0).map((_, i) => (
-            <div key={i} className="role-header-set">
-              <div className="role-header-name">Role</div>
-              <div className="role-header-status">Status</div>
-              <div className="role-header-last">Last</div>
-              <div className="role-header-qty">Qty</div>
-            </div>
-          ))}
-        </div>
-        <div className="role-grid professor-grid" style={{ gridAutoFlow: 'column' }}>
-          {ROLE_CONFIG.professor.map(role => createRoleItem(role))}
+          <div className="role-header-legend professor-headers">
+            {Array(2).fill(0).map((_, i) => (
+              <div key={i} className="role-header-set">
+                <div className="role-header-name">Role</div>
+                <div className="role-header-status">Status</div>
+                <div className="role-header-last">Last</div>
+                <div className="role-header-qty">Qty</div>
+              </div>
+            ))}
+          </div>
+          <div className="role-grid professor-grid" style={{ gridAutoFlow: 'column' }}>
+            {ROLE_CONFIG.professor.map(role => createRoleItem(role))}
+          </div>
         </div>
       </div>
-    </div>
+      
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
+    </>
   );
 }
