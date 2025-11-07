@@ -2111,7 +2111,7 @@ function TeamRolesCard({ profile, isEditMode, onFieldChange }) {
             </div>
           ))}
         </div>
-        <div className="role-grid team-grid" style={{ gridAutoFlow: 'column' }}>
+        <div className="role-grid team-grid" style={{ gridAutoFlow: 'column', gridTemplateRows: 'repeat(10, auto)' }}>
           {ROLE_CONFIG.team.map(role => createRoleItem(role))}
         </div>
       </div>
