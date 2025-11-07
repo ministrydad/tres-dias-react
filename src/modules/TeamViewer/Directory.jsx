@@ -1246,7 +1246,7 @@ function ProfileView({
           }}
         >
           <div id="profileContainer" className="profile-container">
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className={`card pad profile-main-info${isEditMode ? ' edit-mode' : ''}`} style={{ position: 'relative' }}>
                 <div className="profile-header">
                   {!isEditMode ? (
