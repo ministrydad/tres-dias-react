@@ -1854,40 +1854,133 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
   const speakingProfRoles = ROLE_CONFIG.professor.filter(r => r.key !== 'Prof_Silent').map(r => r.key);
   const allTeamRoles = ROLE_CONFIG.team.map(r => r.key);
   
-  const hasHeadRole = (profile['Head'] === 'E' || profile['Asst Head'] === 'E');
-  const hasKitchenHeadRole = (profile['Head Kitchen'] === 'E' || profile['Asst Head Kitchen'] === 'E');
+  // Head / Asst Head checks
+  const hasHead = profile['Head'] === 'E';
+  const hasAsstHead = profile['Asst Head'] === 'E';
+  const hasHeadRole = hasHead || hasAsstHead;
   
+  // Kitchen checks
+  const hasHeadKitchen = profile['Head Kitchen'] === 'E';
+  const hasAsstHeadKitchen = profile['Asst Head Kitchen'] === 'E';
+  const hasKitchenHeadRole = hasHeadKitchen || hasAsstHeadKitchen;
+  
+  // Professor roles checks
   const experiencedProfRoles = ROLE_CONFIG.professor.map(r => r.key).filter(role => profile[role] === 'E');
-  const hasTwoProfRoles = experiencedProfRoles.length >= 2;
+  const profRoleCount = experiencedProfRoles.length;
+  const hasOneProfRole = profRoleCount >= 1;
+  const hasTwoProfRoles = profRoleCount >= 2;
   const hasOneSpeakingRole = experiencedProfRoles.some(role => speakingProfRoles.includes(role));
-  const hasProfRequirement = hasTwoProfRoles && hasOneSpeakingRole;
   
+  // Professor status (red/yellow/green)
+  let profStatus = 'fail'; // red
+  if (hasTwoProfRoles && hasOneSpeakingRole) {
+    profStatus = 'pass'; // green
+  } else if (hasOneProfRole || (hasTwoProfRoles && !hasOneSpeakingRole)) {
+    profStatus = 'partial'; // yellow
+  }
+  
+  // Cha roles checks
   const experiencedChaRoles = allTeamRoles.filter(role => profile[role] === 'E');
-  const hasTwoChaRoles = experiencedChaRoles.length >= 2;
+  const chaRoleCount = experiencedChaRoles.length;
+  const hasOneChaRole = chaRoleCount >= 1;
+  const hasTwoChaRoles = chaRoleCount >= 2;
   const hasCoreChaRole = experiencedChaRoles.some(role => ['Palanca', 'Chapel', 'Gopher'].includes(role));
-  const hasChaRequirement = hasTwoChaRoles && hasCoreChaRole;
+  
+  // Cha status (red/yellow/green)
+  let chaStatus = 'fail'; // red
+  if (hasTwoChaRoles && hasCoreChaRole) {
+    chaStatus = 'pass'; // green
+  } else if (hasOneChaRole || (hasTwoChaRoles && !hasCoreChaRole)) {
+    chaStatus = 'partial'; // yellow
+  }
+
+  // Helper to render indicator circles
+  const Indicator = ({ met }) => (
+    <span style={{
+      display: 'inline-block',
+      width: '10px',
+      height: '10px',
+      borderRadius: '50%',
+      backgroundColor: met ? '#28a745' : '#dc3545',
+      marginRight: '8px'
+    }}></span>
+  );
+
+  // Helper to render a requirement block
+  const RequirementBlock = ({ title, items, barStatus }) => (
+    <div style={{ marginBottom: '16px' }}>
+      <div style={{ 
+        fontSize: '0.8rem', 
+        fontWeight: '600', 
+        marginBottom: '8px',
+        color: 'var(--ink)'
+      }}>
+        {title}
+      </div>
+      {items.map((item, idx) => (
+        <div key={idx} style={{ 
+          fontSize: '0.75rem', 
+          marginBottom: '4px',
+          display: 'flex',
+          alignItems: 'center',
+          color: 'var(--muted)'
+        }}>
+          <Indicator met={item.met} />
+          {item.label}
+        </div>
+      ))}
+      <div style={{ 
+        height: '8px', 
+        backgroundColor: barStatus === 'pass' ? '#28a745' : barStatus === 'partial' ? '#ffc107' : '#dc3545',
+        borderRadius: '4px',
+        marginTop: '8px'
+      }}></div>
+    </div>
+  );
 
   return (
     <div className="card pad" style={{ margin: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="roles-section">
-        <div className="roles-title" style={{ marginBottom: '12px' }}>Rector Qualification</div>
+        <div className="roles-title" style={{ marginBottom: '16px' }}>Rector Qualification</div>
       </div>
-      <div style={{ marginTop: 'auto' }}>
-        <div className="rector-qualification-grid">
-          <div className="qualification-labels">
-            <div className="qualification-label">Head / Asst Head</div>
-            <div className="qualification-label">Head / Asst Kitchen</div>
-            <div className="qualification-label">2 Prof Roles (1 Speaking)</div>
-            <div className="qualification-label">2 Cha Roles (1 Timed)</div>
-          </div>
-          <div className="segmented-bar-container">
-            <div className={`bar-segment ${hasHeadRole ? 'pass' : 'fail'}`}></div>
-            <div className={`bar-segment ${hasKitchenHeadRole ? 'pass' : 'fail'}`}></div>
-            <div className={`bar-segment ${hasProfRequirement ? 'pass' : 'fail'}`}></div>
-            <div className={`bar-segment ${hasChaRequirement ? 'pass' : 'fail'}`}></div>
-          </div>
-        </div>
-      </div>
+      
+      <RequirementBlock 
+        title="Head / Asst Head"
+        items={[
+          { label: 'Head', met: hasHead },
+          { label: 'Asst Head', met: hasAsstHead }
+        ]}
+        barStatus={hasHeadRole ? 'pass' : 'fail'}
+      />
+      
+      <RequirementBlock 
+        title="Head / Asst Kitchen"
+        items={[
+          { label: 'Head Kitchen', met: hasHeadKitchen },
+          { label: 'Asst Head Kitchen', met: hasAsstHeadKitchen }
+        ]}
+        barStatus={hasKitchenHeadRole ? 'pass' : 'fail'}
+      />
+      
+      <RequirementBlock 
+        title="Professor Roles"
+        items={[
+          { label: 'Prof Role 1', met: hasOneProfRole },
+          { label: 'Prof Role 2', met: hasTwoProfRoles },
+          { label: '1 Speaking Role', met: hasOneSpeakingRole }
+        ]}
+        barStatus={profStatus}
+      />
+      
+      <RequirementBlock 
+        title="Cha Roles"
+        items={[
+          { label: 'Cha Role 1', met: hasOneChaRole },
+          { label: 'Cha Role 2', met: hasTwoChaRoles },
+          { label: '1 Timed Role', met: hasCoreChaRole }
+        ]}
+        barStatus={chaStatus}
+      />
     </div>
   );
 }
