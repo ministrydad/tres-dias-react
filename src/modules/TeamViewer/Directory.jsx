@@ -1963,8 +1963,7 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
         <QualificationColumn 
           title="Head / Asst"
           indicators={[
-            { label: 'Head', met: hasHead },
-            { label: 'Asst Head', met: hasAsstHead }
+            { label: 'Head or Asst Head', met: hasHeadRole }
           ]}
           barStatus={hasHeadRole ? 'pass' : 'fail'}
         />
@@ -1972,8 +1971,7 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
         <QualificationColumn 
           title="Kitchen"
           indicators={[
-            { label: 'Head Kit', met: hasHeadKitchen },
-            { label: 'Asst Kit', met: hasAsstHeadKitchen }
+            { label: 'Head Kit or Asst Kit', met: hasKitchenHeadRole }
           ]}
           barStatus={hasKitchenHeadRole ? 'pass' : 'fail'}
         />
