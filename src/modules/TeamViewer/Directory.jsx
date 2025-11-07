@@ -78,6 +78,7 @@ export default function Directory() {
   const [nameFormat, setNameFormat] = useState('firstLast');
   const [searchTerm, setSearchTerm] = useState('');
   const [primaryFilter, setPrimaryFilter] = useState('');
+  const [excludePriorHeads, setExcludePriorHeads] = useState(false);
   const [secondarySort, setSecondarySort] = useState('alpha-asc');
   const [currentView, setCurrentView] = useState('directory');
   const [currentProfile, setCurrentProfile] = useState(null);
@@ -96,7 +97,7 @@ export default function Directory() {
 
   useEffect(() => {
     performSearch();
-  }, [allPescadores, currentGender, searchTerm, primaryFilter, secondarySort]);
+  }, [allPescadores, currentGender, searchTerm, primaryFilter, excludePriorHeads, secondarySort]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -197,57 +198,167 @@ export default function Directory() {
       case 'never-served':
         data = data.filter(p => !p["Last weekend worked"]);
         break;
+        
       case 'rector-qualified':
-        data = data.filter(p => 
-          getRectorQualificationStatus(p) === 4 && 
-          p['Rector'] !== 'E'
-        );
+        if (excludePriorHeads) {
+          data = data.filter(p => 
+            getRectorQualificationStatus(p) === 4 && 
+            p['Rector'] !== 'E'
+          );
+        } else {
+          data = data.filter(p => 
+            getRectorQualificationStatus(p) === 4
+          );
+        }
         break;
+        
       case 'rector-qualified-minus-1':
         data = data.filter(p => getRectorQualificationStatus(p) === 3);
         break;
+        
       case 'rector-qualified-minus-2':
         data = data.filter(p => getRectorQualificationStatus(p) === 2);
         break;
+        
       case 'head-asst-head-qualified':
-        data = data.filter(p => p['Head'] === 'E' || p['Asst Head'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => 
+            p['Head'] !== 'E' && 
+            p['Asst Head'] !== 'E' &&
+            ROLE_CONFIG.team.some(role => 
+              role.key !== 'Head' && 
+              role.key !== 'Asst Head' && 
+              p[role.key] === 'E'
+            )
+          );
+        } else {
+          data = data.filter(p => p['Head'] === 'E' || p['Asst Head'] === 'E');
+        }
         break;
+        
       case 'kitchen-qualified':
-        data = data.filter(p => p['Head Kitchen'] === 'E' || p['Asst Head Kitchen'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => 
+            p['Kitchen'] === 'E' && 
+            p['Head Kitchen'] !== 'E' && 
+            p['Asst Head Kitchen'] !== 'E'
+          );
+        } else {
+          data = data.filter(p => 
+            p['Head Kitchen'] === 'E' || 
+            p['Asst Head Kitchen'] === 'E' ||
+            p['Kitchen'] === 'E'
+          );
+        }
         break;
+        
       case 'bur-qualified':
-        data = data.filter(p => p['BUR'] === 'E' || p['Rector'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => 
+            p['BUR'] !== 'E' &&
+            (p['Rector'] === 'E' || 
+             (p['Head'] === 'E' || p['Asst Head'] === 'E'))
+          );
+        } else {
+          data = data.filter(p => p['BUR'] === 'E' || p['Rector'] === 'E');
+        }
         break;
+        
       case 'dorm-qualified':
-        data = data.filter(p => p['Head Dorm'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => p['Dorm'] === 'E' && p['Head Dorm'] !== 'E');
+        } else {
+          data = data.filter(p => p['Head Dorm'] === 'E' || p['Dorm'] === 'E');
+        }
         break;
+        
       case 'prayer-qualified':
-        data = data.filter(p => p['Head Prayer'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => p['Prayer'] === 'E' && p['Head Prayer'] !== 'E');
+        } else {
+          data = data.filter(p => p['Head Prayer'] === 'E' || p['Prayer'] === 'E');
+        }
         break;
+        
       case 'chapel-qualified':
-        data = data.filter(p => p['Head Chapel'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => p['Chapel'] === 'E' && p['Head Chapel'] !== 'E');
+        } else {
+          data = data.filter(p => p['Head Chapel'] === 'E' || p['Chapel'] === 'E');
+        }
         break;
+        
       case 'table-qualified':
-        data = data.filter(p => p['Head Table'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => p['Table'] === 'E' && p['Head Table'] !== 'E');
+        } else {
+          data = data.filter(p => p['Head Table'] === 'E' || p['Table'] === 'E');
+        }
         break;
+        
       case 'worship-qualified':
-        data = data.filter(p => p['Head Worship'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => p['Worship'] === 'E' && p['Head Worship'] !== 'E');
+        } else {
+          data = data.filter(p => p['Head Worship'] === 'E' || p['Worship'] === 'E');
+        }
         break;
+        
       case 'palanca-qualified':
-        data = data.filter(p => p['Head Palanca'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => p['Palanca'] === 'E' && p['Head Palanca'] !== 'E');
+        } else {
+          data = data.filter(p => p['Head Palanca'] === 'E' || p['Palanca'] === 'E');
+        }
         break;
+        
       case 'gopher-qualified':
-        data = data.filter(p => p['Head Gopher'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => p['Gopher'] === 'E' && p['Head Gopher'] !== 'E');
+        } else {
+          data = data.filter(p => p['Head Gopher'] === 'E' || p['Gopher'] === 'E');
+        }
         break;
+        
       case 'storeroom-qualified':
-        data = data.filter(p => p['Head Storeroom'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => p['Storeroom'] === 'E' && p['Head Storeroom'] !== 'E');
+        } else {
+          data = data.filter(p => p['Head Storeroom'] === 'E' || p['Storeroom'] === 'E');
+        }
         break;
+        
       case 'floater-supply-qualified':
-        data = data.filter(p => p['Head Floater Supply'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => p['Floater Supply'] === 'E' && p['Head Floater Supply'] !== 'E');
+        } else {
+          data = data.filter(p => p['Head Floater Supply'] === 'E' || p['Floater Supply'] === 'E');
+        }
         break;
+        
+      case 'media-qualified':
+        if (excludePriorHeads) {
+          data = data.filter(p => p['Media'] === 'E' && p['Head Media'] !== 'E');
+        } else {
+          data = data.filter(p => p['Head Media'] === 'E' || p['Media'] === 'E');
+        }
+        break;
+        
       case 'spiritual-director-qualified':
-        data = data.filter(p => p['Spiritual Director'] === 'E');
+        if (excludePriorHeads) {
+          data = data.filter(p => 
+            p['Spiritual Director'] !== 'E' &&
+            p['Head Spiritual Director'] !== 'E' &&
+            ROLE_CONFIG.team.some(role => p[role.key] === 'E')
+          );
+        } else {
+          data = data.filter(p => 
+            p['Spiritual Director'] === 'E' || 
+            p['Head Spiritual Director'] === 'E'
+          );
+        }
         break;
+        
       case 'role-rector-e':
         data = data.filter(p => p['Rector'] === 'E');
         break;
@@ -536,6 +647,7 @@ export default function Directory() {
       'gopher-qualified': 'Head Gopher Qualified',
       'storeroom-qualified': 'Head Storeroom Qualified',
       'floater-supply-qualified': 'Head Floater Supply Qualified',
+      'media-qualified': 'Head Media Qualified',
       'spiritual-director-qualified': 'Spiritual Director Qualified',
       'role-rector-e': 'Experienced Rector'
     };
@@ -646,10 +758,28 @@ export default function Directory() {
                             <a href="#" className={primaryFilter === 'gopher-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('gopher-qualified'); }}>Head Gopher Qualified</a>
                             <a href="#" className={primaryFilter === 'storeroom-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('storeroom-qualified'); }}>Head Storeroom Qualified</a>
                             <a href="#" className={primaryFilter === 'floater-supply-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('floater-supply-qualified'); }}>Head Floater Supply Qualified</a>
+                            <a href="#" className={primaryFilter === 'media-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('media-qualified'); }}>Head Media Qualified</a>
                             <div className="dropdown-divider"></div>
                             <a href="#" className={primaryFilter === 'spiritual-director-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('spiritual-director-qualified'); }}>Spiritual Director Qualified</a>
                             <div className="dropdown-divider"></div>
                             <a href="#" className={primaryFilter === 'role-rector-e' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('role-rector-e'); }}>Experienced Rector</a>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="field" style={{ margin: 0 }}>
+                        <label className="label">Filter Mode</label>
+                        <div className="toggle-inset-container">
+                          <div 
+                            className={`toggle-inset-option ${!excludePriorHeads ? 'active' : ''}`}
+                            onClick={() => setExcludePriorHeads(false)}
+                          >
+                            Include Prior Heads
+                          </div>
+                          <div 
+                            className={`toggle-inset-option ${excludePriorHeads ? 'active' : ''}`}
+                            onClick={() => setExcludePriorHeads(true)}
+                          >
+                            Never Served as Head
                           </div>
                         </div>
                       </div>
