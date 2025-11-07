@@ -721,66 +721,70 @@ export default function Directory() {
                   <div className="search-group">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <div className="field" style={{ margin: 0 }}>
-                        <label className="label">Primary Filter</label>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'stretch' }}>
-                          <div 
-                            ref={primaryDropdownRef}
-                            id="primaryFilterDropdown"
-                            className="dropdown-container"
-                            data-selected-value={primaryFilter}
-                            style={{ flex: '1', minWidth: '0' }}
-                          >
-                            <button 
-                              className="dropdown-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleDropdown(primaryDropdownRef);
-                              }}
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                          <div style={{ flex: '1', minWidth: '0' }}>
+                            <label className="label">Primary Filter</label>
+                            <div 
+                              ref={primaryDropdownRef}
+                              id="primaryFilterDropdown"
+                              className="dropdown-container"
+                              data-selected-value={primaryFilter}
                             >
-                              {getPrimaryFilterLabel()}
-                            </button>
-                            <div className="dropdown-content">
-                              <a href="#" className={primaryFilter === '' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter(''); }}>None (Default Sort)</a>
-                              <a href="#" className={primaryFilter === 'recent' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('recent'); }}>Most Recently Served</a>
-                              <a href="#" className={primaryFilter === 'never-served' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('never-served'); }}>Never Served</a>
-                              <div className="dropdown-divider"></div>
-                              <a href="#" className={primaryFilter === 'rector-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified'); }}>Rector Qualified</a>
-                              <a href="#" className={primaryFilter === 'rector-qualified-minus-1' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified-minus-1'); }}>Rector Qualified (Minus 1)</a>
-                              <a href="#" className={primaryFilter === 'rector-qualified-minus-2' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified-minus-2'); }}>Rector Qualified (Minus 2)</a>
-                              <div className="dropdown-divider"></div>
-                              <a href="#" className={primaryFilter === 'head-asst-head-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('head-asst-head-qualified'); }}>Head / Asst Head Qualified</a>
-                              <a href="#" className={primaryFilter === 'kitchen-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('kitchen-qualified'); }}>Head / Asst Kitchen Qualified</a>
-                              <a href="#" className={primaryFilter === 'bur-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('bur-qualified'); }}>BUR Qualified</a>
-                              <a href="#" className={primaryFilter === 'dorm-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('dorm-qualified'); }}>Head Dorm Qualified</a>
-                              <a href="#" className={primaryFilter === 'prayer-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('prayer-qualified'); }}>Head Prayer Qualified</a>
-                              <a href="#" className={primaryFilter === 'chapel-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('chapel-qualified'); }}>Head Chapel Qualified</a>
-                              <a href="#" className={primaryFilter === 'table-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('table-qualified'); }}>Head Table Qualified</a>
-                              <a href="#" className={primaryFilter === 'worship-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('worship-qualified'); }}>Head Worship Qualified</a>
-                              <a href="#" className={primaryFilter === 'palanca-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('palanca-qualified'); }}>Head Palanca Qualified</a>
-                              <a href="#" className={primaryFilter === 'gopher-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('gopher-qualified'); }}>Head Gopher Qualified</a>
-                              <a href="#" className={primaryFilter === 'storeroom-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('storeroom-qualified'); }}>Head Storeroom Qualified</a>
-                              <a href="#" className={primaryFilter === 'floater-supply-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('floater-supply-qualified'); }}>Head Floater Supply Qualified</a>
-                              <a href="#" className={primaryFilter === 'media-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('media-qualified'); }}>Head Media Qualified</a>
-                              <div className="dropdown-divider"></div>
-                              <a href="#" className={primaryFilter === 'spiritual-director-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('spiritual-director-qualified'); }}>Spiritual Director Qualified</a>
-                              <div className="dropdown-divider"></div>
-                              <a href="#" className={primaryFilter === 'role-rector-e' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('role-rector-e'); }}>Experienced Rector</a>
+                              <button 
+                                className="dropdown-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleDropdown(primaryDropdownRef);
+                                }}
+                              >
+                                {getPrimaryFilterLabel()}
+                              </button>
+                              <div className="dropdown-content">
+                                <a href="#" className={primaryFilter === '' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter(''); }}>None (Default Sort)</a>
+                                <a href="#" className={primaryFilter === 'recent' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('recent'); }}>Most Recently Served</a>
+                                <a href="#" className={primaryFilter === 'never-served' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('never-served'); }}>Never Served</a>
+                                <div className="dropdown-divider"></div>
+                                <a href="#" className={primaryFilter === 'rector-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified'); }}>Rector Qualified</a>
+                                <a href="#" className={primaryFilter === 'rector-qualified-minus-1' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified-minus-1'); }}>Rector Qualified (Minus 1)</a>
+                                <a href="#" className={primaryFilter === 'rector-qualified-minus-2' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('rector-qualified-minus-2'); }}>Rector Qualified (Minus 2)</a>
+                                <div className="dropdown-divider"></div>
+                                <a href="#" className={primaryFilter === 'head-asst-head-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('head-asst-head-qualified'); }}>Head / Asst Head Qualified</a>
+                                <a href="#" className={primaryFilter === 'kitchen-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('kitchen-qualified'); }}>Head / Asst Kitchen Qualified</a>
+                                <a href="#" className={primaryFilter === 'bur-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('bur-qualified'); }}>BUR Qualified</a>
+                                <a href="#" className={primaryFilter === 'dorm-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('dorm-qualified'); }}>Head Dorm Qualified</a>
+                                <a href="#" className={primaryFilter === 'prayer-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('prayer-qualified'); }}>Head Prayer Qualified</a>
+                                <a href="#" className={primaryFilter === 'chapel-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('chapel-qualified'); }}>Head Chapel Qualified</a>
+                                <a href="#" className={primaryFilter === 'table-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('table-qualified'); }}>Head Table Qualified</a>
+                                <a href="#" className={primaryFilter === 'worship-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('worship-qualified'); }}>Head Worship Qualified</a>
+                                <a href="#" className={primaryFilter === 'palanca-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('palanca-qualified'); }}>Head Palanca Qualified</a>
+                                <a href="#" className={primaryFilter === 'gopher-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('gopher-qualified'); }}>Head Gopher Qualified</a>
+                                <a href="#" className={primaryFilter === 'storeroom-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('storeroom-qualified'); }}>Head Storeroom Qualified</a>
+                                <a href="#" className={primaryFilter === 'floater-supply-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('floater-supply-qualified'); }}>Head Floater Supply Qualified</a>
+                                <a href="#" className={primaryFilter === 'media-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('media-qualified'); }}>Head Media Qualified</a>
+                                <div className="dropdown-divider"></div>
+                                <a href="#" className={primaryFilter === 'spiritual-director-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('spiritual-director-qualified'); }}>Spiritual Director Qualified</a>
+                                <div className="dropdown-divider"></div>
+                                <a href="#" className={primaryFilter === 'role-rector-e' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('role-rector-e'); }}>Experienced Rector</a>
+                              </div>
                             </div>
                           </div>
-                          <div className="toggle-inset-container" style={{ flex: '0 0 auto', width: '180px' }}>
-                            <div 
-                              className={`toggle-inset-option ${!excludePriorHeads ? 'active' : ''}`}
-                              onClick={() => setExcludePriorHeads(false)}
-                              style={{ fontSize: '0.75rem', padding: '8px 6px' }}
-                            >
-                              Include
-                            </div>
-                            <div 
-                              className={`toggle-inset-option ${excludePriorHeads ? 'active' : ''}`}
-                              onClick={() => setExcludePriorHeads(true)}
-                              style={{ fontSize: '0.75rem', padding: '8px 6px' }}
-                            >
-                              Exclude
+                          <div style={{ flex: '0 0 auto', width: '180px' }}>
+                            <label className="label">Prior Head(s)</label>
+                            <div className="toggle-inset-container">
+                              <div 
+                                className={`toggle-inset-option ${!excludePriorHeads ? 'active' : ''}`}
+                                onClick={() => setExcludePriorHeads(false)}
+                                style={{ fontSize: '0.75rem', padding: '8px 6px' }}
+                              >
+                                Include
+                              </div>
+                              <div 
+                                className={`toggle-inset-option ${excludePriorHeads ? 'active' : ''}`}
+                                onClick={() => setExcludePriorHeads(true)}
+                                style={{ fontSize: '0.75rem', padding: '8px 6px' }}
+                              >
+                                Exclude
+                              </div>
                             </div>
                           </div>
                         </div>
