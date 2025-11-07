@@ -1252,7 +1252,7 @@ function ProfileView({
                   {!isEditMode ? (
                     // VIEW MODE: Display name as before
                     <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                      <h2 className="profile-name">{fullName}</h2>
+                      <h2 className="profile-name" style={{ margin: 0 }}>{fullName}</h2>
                       {legalName && (
                         <span className="legal-name-badge">Legal: {legalName}</span>
                       )}
