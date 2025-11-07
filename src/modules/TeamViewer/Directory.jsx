@@ -710,7 +710,7 @@ export default function Directory() {
           {/* Controls row with print options */}
           <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', width: '100%' }}>
             <div 
-              className="card" 
+              className="card pad" 
               ref={controlsCardRef}
               style={{
                 width: showPrintOptions ? '60%' : '100%',
@@ -2416,14 +2416,35 @@ function ProfessorRolesCard({ profile, isEditMode, onFieldChange }) {
           }
         }
         
-        /* Green checkboxes for print options */
+        /* Green checkboxes for print options - using multiple approaches for compatibility */
         .print-options-panel input[type="checkbox"] {
+          width: 18px;
+          height: 18px;
+          cursor: pointer;
           accent-color: var(--accentA);
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          appearance: none;
+          border: 2px solid #ccc;
+          border-radius: 3px;
+          position: relative;
+          background-color: white;
         }
         
         .print-options-panel input[type="checkbox"]:checked {
           background-color: var(--accentA);
           border-color: var(--accentA);
+        }
+        
+        .print-options-panel input[type="checkbox"]:checked::after {
+          content: '✓';
+          position: absolute;
+          color: white;
+          font-size: 14px;
+          font-weight: bold;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
         }
       `}</style>
     </>
