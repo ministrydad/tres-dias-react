@@ -900,10 +900,10 @@ export default function Directory() {
                   justifyContent: 'space-between', 
                   alignItems: 'center',
                   marginBottom: '20px',
-                  paddingBottom: '16px',
-                  borderBottom: '2px solid var(--accentB)'
+                  paddingBottom: '15px',
+                  borderBottom: '2px solid #007bff'
                 }}>
-                  <h3 style={{ margin: 0, color: 'var(--accentB)', fontSize: '1.1rem' }}>
+                  <h3 style={{ margin: 0, color: 'var(--ink)', fontSize: '1.1rem', fontWeight: 700 }}>
                     Print Options
                   </h3>
                   <button 
@@ -921,7 +921,6 @@ export default function Directory() {
                         type="checkbox"
                         checked={printOptions.includePhone}
                         onChange={(e) => setPrintOptions(prev => ({ ...prev, includePhone: e.target.checked }))}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                       />
                       <span>Phone Number</span>
                     </label>
@@ -931,7 +930,6 @@ export default function Directory() {
                         type="checkbox"
                         checked={printOptions.includeEmail}
                         onChange={(e) => setPrintOptions(prev => ({ ...prev, includeEmail: e.target.checked }))}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                       />
                       <span>Email Address</span>
                     </label>
@@ -941,7 +939,6 @@ export default function Directory() {
                         type="checkbox"
                         checked={printOptions.includeAddress}
                         onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAddress: e.target.checked }))}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                       />
                       <span>Mailing Address</span>
                     </label>
@@ -951,7 +948,6 @@ export default function Directory() {
                         type="checkbox"
                         checked={printOptions.includeChurch}
                         onChange={(e) => setPrintOptions(prev => ({ ...prev, includeChurch: e.target.checked }))}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                       />
                       <span>Church</span>
                     </label>
@@ -961,7 +957,6 @@ export default function Directory() {
                         type="checkbox"
                         checked={printOptions.includeLastWeekend}
                         onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastWeekend: e.target.checked }))}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                       />
                       <span>Last Weekend Served</span>
                     </label>
@@ -971,7 +966,6 @@ export default function Directory() {
                         type="checkbox"
                         checked={printOptions.includeLastRole}
                         onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastRole: e.target.checked }))}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                       />
                       <span>Last Role Served</span>
                     </label>
@@ -981,7 +975,6 @@ export default function Directory() {
                         type="checkbox"
                         checked={printOptions.includeContactedCheckbox}
                         onChange={(e) => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: e.target.checked }))}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                       />
                       <span>Contacted (checkbox)</span>
                     </label>
@@ -991,7 +984,6 @@ export default function Directory() {
                         type="checkbox"
                         checked={printOptions.includeAcceptedCheckbox}
                         onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: e.target.checked }))}
-                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                       />
                       <span>Accepted (checkbox)</span>
                     </label>
