@@ -2111,7 +2111,7 @@ function TeamRolesCard({ profile, isEditMode, onFieldChange }) {
             </div>
           ))}
         </div>
-        <div className="role-grid team-grid">
+        <div className="role-grid team-grid" style={{ gridAutoFlow: 'column' }}>
           {ROLE_CONFIG.team.map(role => createRoleItem(role))}
         </div>
       </div>
@@ -2227,7 +2227,7 @@ function ProfessorRolesCard({ profile, isEditMode, onFieldChange }) {
             </div>
           ))}
         </div>
-        <div className="role-grid professor-grid">
+        <div className="role-grid professor-grid" style={{ gridAutoFlow: 'column' }}>
           {ROLE_CONFIG.professor.map(role => createRoleItem(role))}
         </div>
       </div>
