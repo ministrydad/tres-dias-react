@@ -1928,7 +1928,7 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
       <div style={{ marginBottom: '8px' }}>
         {indicators.map((ind, idx) => (
           <div key={idx} style={{ 
-            fontSize: '0.65rem', 
+            fontSize: '0.75rem', 
             marginBottom: '2px',
             display: 'flex',
             alignItems: 'center',
