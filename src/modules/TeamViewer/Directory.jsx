@@ -1894,46 +1894,57 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
     chaStatus = 'partial'; // yellow
   }
 
-  // Helper to render indicator circles
+  // Helper to render indicator circle
   const Indicator = ({ met }) => (
     <span style={{
       display: 'inline-block',
-      width: '10px',
-      height: '10px',
+      width: '8px',
+      height: '8px',
       borderRadius: '50%',
       backgroundColor: met ? '#28a745' : '#dc3545',
-      marginRight: '8px'
+      marginRight: '4px'
     }}></span>
   );
 
-  // Helper to render a requirement block
-  const RequirementBlock = ({ title, items, barStatus }) => (
-    <div style={{ marginBottom: '16px' }}>
+  // Helper to render a column
+  const QualificationColumn = ({ title, indicators, barStatus }) => (
+    <div style={{ 
+      flex: 1, 
+      display: 'flex', 
+      flexDirection: 'column',
+      minWidth: 0
+    }}>
       <div style={{ 
-        fontSize: '0.8rem', 
+        fontSize: '0.7rem', 
         fontWeight: '600', 
-        marginBottom: '8px',
-        color: 'var(--ink)'
+        marginBottom: '6px',
+        color: 'var(--ink)',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
       }}>
         {title}
       </div>
-      {items.map((item, idx) => (
-        <div key={idx} style={{ 
-          fontSize: '0.75rem', 
-          marginBottom: '4px',
-          display: 'flex',
-          alignItems: 'center',
-          color: 'var(--muted)'
-        }}>
-          <Indicator met={item.met} />
-          {item.label}
-        </div>
-      ))}
+      <div style={{ marginBottom: '8px' }}>
+        {indicators.map((ind, idx) => (
+          <div key={idx} style={{ 
+            fontSize: '0.65rem', 
+            marginBottom: '2px',
+            display: 'flex',
+            alignItems: 'center',
+            color: 'var(--muted)',
+            whiteSpace: 'nowrap'
+          }}>
+            <Indicator met={ind.met} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{ind.label}</span>
+          </div>
+        ))}
+      </div>
       <div style={{ 
-        height: '8px', 
+        height: '12px', 
         backgroundColor: barStatus === 'pass' ? '#28a745' : barStatus === 'partial' ? '#ffc107' : '#dc3545',
         borderRadius: '4px',
-        marginTop: '8px'
+        marginTop: 'auto'
       }}></div>
     </div>
   );
@@ -1941,46 +1952,50 @@ function RectorQualificationCard({ profile, getRectorQualificationStatus }) {
   return (
     <div className="card pad" style={{ margin: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="roles-section">
-        <div className="roles-title" style={{ marginBottom: '16px' }}>Rector Qualification</div>
+        <div className="roles-title" style={{ marginBottom: '12px' }}>Rector Qualification</div>
       </div>
       
-      <RequirementBlock 
-        title="Head / Asst Head"
-        items={[
-          { label: 'Head', met: hasHead },
-          { label: 'Asst Head', met: hasAsstHead }
-        ]}
-        barStatus={hasHeadRole ? 'pass' : 'fail'}
-      />
-      
-      <RequirementBlock 
-        title="Head / Asst Kitchen"
-        items={[
-          { label: 'Head Kitchen', met: hasHeadKitchen },
-          { label: 'Asst Head Kitchen', met: hasAsstHeadKitchen }
-        ]}
-        barStatus={hasKitchenHeadRole ? 'pass' : 'fail'}
-      />
-      
-      <RequirementBlock 
-        title="Professor Roles"
-        items={[
-          { label: 'Prof Role 1', met: hasOneProfRole },
-          { label: 'Prof Role 2', met: hasTwoProfRoles },
-          { label: '1 Speaking Role', met: hasOneSpeakingRole }
-        ]}
-        barStatus={profStatus}
-      />
-      
-      <RequirementBlock 
-        title="Cha Roles"
-        items={[
-          { label: 'Cha Role 1', met: hasOneChaRole },
-          { label: 'Cha Role 2', met: hasTwoChaRoles },
-          { label: '1 Timed Role', met: hasCoreChaRole }
-        ]}
-        barStatus={chaStatus}
-      />
+      <div style={{ 
+        display: 'flex', 
+        gap: '12px',
+        marginTop: 'auto'
+      }}>
+        <QualificationColumn 
+          title="Head / Asst"
+          indicators={[
+            { label: 'Head', met: hasHead },
+            { label: 'Asst Head', met: hasAsstHead }
+          ]}
+          barStatus={hasHeadRole ? 'pass' : 'fail'}
+        />
+        
+        <QualificationColumn 
+          title="Kitchen"
+          indicators={[
+            { label: 'Head Kit', met: hasHeadKitchen },
+            { label: 'Asst Kit', met: hasAsstHeadKitchen }
+          ]}
+          barStatus={hasKitchenHeadRole ? 'pass' : 'fail'}
+        />
+        
+        <QualificationColumn 
+          title="Prof Roles"
+          indicators={[
+            { label: 'Role 1', met: hasOneProfRole },
+            { label: 'Role 2 / Speaking', met: hasTwoProfRoles && hasOneSpeakingRole }
+          ]}
+          barStatus={profStatus}
+        />
+        
+        <QualificationColumn 
+          title="Cha Roles"
+          indicators={[
+            { label: 'Role 1', met: hasOneChaRole },
+            { label: 'Role 2 / Timed', met: hasTwoChaRoles && hasCoreChaRole }
+          ]}
+          barStatus={chaStatus}
+        />
+      </div>
     </div>
   );
 }
