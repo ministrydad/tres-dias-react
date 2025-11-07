@@ -720,7 +720,7 @@ export default function Directory() {
                   </div>
                   <div className="search-group">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <div className="field" style={{ margin: 0, flex: '1', minWidth: '0' }}>
                           <label className="label">Primary Filter</label>
                           <div 
