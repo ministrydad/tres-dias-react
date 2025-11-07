@@ -131,8 +131,8 @@ export default function Directory() {
  function performSearch() {
   let data = [...allPescadores[currentGender]];
   
-  // If viewing women, include men who are Spiritual Directors (Experienced only)
-  if (currentGender === 'women') {
+  // If viewing women AND spiritual director filter is selected, include men who are Spiritual Directors (Experienced only)
+  if (currentGender === 'women' && primaryFilter === 'spiritual-director-qualified') {
     console.log('🔍 Checking for male Spiritual Directors...');
     console.log('Total men in database:', allPescadores['men']?.length || 0);
     
