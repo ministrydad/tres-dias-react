@@ -720,15 +720,14 @@ export default function Directory() {
                   </div>
                   <div className="search-group">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div className="field" style={{ margin: 0 }}>
-                        <label className="label">Primary Filter</label>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                        <div className="field" style={{ margin: 0, flex: '1', minWidth: '0' }}>
+                          <label className="label">Primary Filter</label>
                           <div 
                             ref={primaryDropdownRef}
                             id="primaryFilterDropdown"
                             className="dropdown-container"
                             data-selected-value={primaryFilter}
-                            style={{ flex: '1', minWidth: '0' }}
                           >
                             <button 
                               className="dropdown-btn"
@@ -767,23 +766,21 @@ export default function Directory() {
                               <a href="#" className={primaryFilter === 'role-rector-e' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('role-rector-e'); }}>Experienced Rector</a>
                             </div>
                           </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '0 0 auto', width: '160px' }}>
-                            <span className="label" style={{ fontSize: '0.75rem', marginBottom: '0' }}>Prior Head(s)</span>
-                            <div className="toggle-inset-container">
-                              <div 
-                                className={`toggle-inset-option ${!excludePriorHeads ? 'active' : ''}`}
-                                onClick={() => setExcludePriorHeads(false)}
-                                style={{ fontSize: '0.7rem', padding: '6px 4px' }}
-                              >
-                                Include
-                              </div>
-                              <div 
-                                className={`toggle-inset-option ${excludePriorHeads ? 'active' : ''}`}
-                                onClick={() => setExcludePriorHeads(true)}
-                                style={{ fontSize: '0.7rem', padding: '6px 4px' }}
-                              >
-                                Exclude
-                              </div>
+                        </div>
+                        <div className="field" style={{ margin: 0, flex: '0 0 auto', width: '180px' }}>
+                          <label className="label">Prior Head(s)</label>
+                          <div className="toggle-inset-container">
+                            <div 
+                              className={`toggle-inset-option ${!excludePriorHeads ? 'active' : ''}`}
+                              onClick={() => setExcludePriorHeads(false)}
+                            >
+                              Include
+                            </div>
+                            <div 
+                              className={`toggle-inset-option ${excludePriorHeads ? 'active' : ''}`}
+                              onClick={() => setExcludePriorHeads(true)}
+                            >
+                              Exclude
                             </div>
                           </div>
                         </div>
