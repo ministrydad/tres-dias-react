@@ -94,17 +94,44 @@ const pdfStyles = StyleSheet.create({
     borderBottom: '2 solid #333',
     textAlign: 'left',
   },
+  sectionHeader: {
+    fontSize: 17,
+    fontWeight: 700,
+    marginBottom: 10,
+    paddingBottom: 5,
+    borderBottom: '2 solid #333',
+  },
+  roleHeader: {
+    fontSize: 11,
+    fontWeight: 700,
+    marginTop: 8,
+    marginBottom: 4,
+    color: '#2c5aa0',
+    backgroundColor: '#f5f5f5',
+    padding: '3 5',
+  },
+  threeColumnContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
   twoColumnContainer: {
     display: 'flex',
     flexDirection: 'row',
-    gap: 20,
+    gap: 12,
   },
   column: {
     flex: 1,
+    paddingLeft: 6,  // Indented for member names
+  },
+  columnNoIndent: {
+    flex: 1,
+    paddingLeft: 5,  // Match roleHeader left padding (from padding: '3 5')
   },
   personBlock: {
-    marginBottom: 12,
-    paddingBottom: 8,
+    marginBottom: 6,
+    paddingBottom: 4,
     borderBottom: '0.5 solid #ddd',
   },
   nameText: {
@@ -228,40 +255,20 @@ const DirectoryPDFDocument = ({ people, options, communityName, filterLabel }) =
 
 // Weekend Roster PDF Component (CombinedRoster-style layout)
 const WeekendRosterPDFDocument = ({ teamMembers, candidates, weekendNumber }) => {
-  // Role order matching CombinedRoster
-  const ROLE_ORDER = [
-    'Rector', 'BUR', 'Rover', 'Head', 'Asst Head',
-    'Head Spiritual Director', 'Spiritual Director',
-    'Head Prayer', 'Prayer',
-    'Head Kitchen', 'Asst Head Kitchen', 'Kitchen',
-    'Head Table', 'Table',
-    'Head Chapel', 'Chapel',
-    'Head Dorm', 'Dorm',
-    'Head Palanca', 'Palanca',
-    'Head Gopher', 'Gopher',
-    'Head Storeroom', 'Storeroom',
-    'Head Floater Supply', 'Floater Supply',
-    'Head Worship', 'Worship',
-    'Head Media', 'Media',
-    'Prof_Silent', 'Prof_Ideals', 'Prof_Church', 'Prof_Piety',
-    'Prof_Study', 'Prof_Action', 'Prof_Leaders', 'Prof_Environments',
-    'Prof_CCIA', 'Prof_Reunion'
-  ];
-
   return (
     <Document>
-      {/* Team Members Page */}
+      {/* Team Members Page 1 - Leadership Structure (EXACT CombinedRoster layout) */}
       <Page size="LETTER" style={pdfStyles.page}>
-        <Text style={pdfStyles.header}>Team Members - Weekend #{weekendNumber}</Text>
+        <Text style={pdfStyles.sectionHeader}>Team Members - Weekend #{weekendNumber}</Text>
         
-        {/* Rector - Full Width */}
+        {/* Rector - Full Width Header, Left-Aligned Info */}
         {(() => {
           const rectorMembers = teamMembers.filter(m => m.role === 'Rector');
           if (rectorMembers.length === 0) return null;
           
           return (
             <View wrap={false} style={{ marginBottom: 16 }}>
-              <Text style={{ fontSize: 11, fontWeight: 700, marginBottom: 4, color: '#2c5aa0', backgroundColor: '#f5f5f5', padding: '3 5' }}>Rector</Text>
+              <Text style={pdfStyles.roleHeader}>Rector</Text>
               <View style={pdfStyles.twoColumnContainer}>
                 <View style={pdfStyles.column}>
                   {rectorMembers.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
@@ -294,14 +301,72 @@ const WeekendRosterPDFDocument = ({ teamMembers, candidates, weekendNumber }) =>
           );
         })()}
         
-        {/* All other roles */}
-        {ROLE_ORDER.filter(role => role !== 'Rector' && !role.startsWith('Prof_')).map(role => {
+        {/* Row 2: BUR, Head, Asst Head */}
+        <View style={pdfStyles.threeColumnContainer} wrap={false}>
+          {['BUR', 'Head', 'Asst Head'].map((role) => {
+            const members = teamMembers.filter(m => m.role === role);
+            if (members.length === 0) return <View key={role} style={pdfStyles.columnNoIndent} />;
+            
+            return (
+              <View key={role} style={pdfStyles.columnNoIndent}>
+                <Text style={pdfStyles.roleHeader}>{role}</Text>
+                {members.map((member, idx) => (
+                  <View key={idx} style={pdfStyles.personBlock}>
+                    <Text style={pdfStyles.nameText}>{member.name}</Text>
+                    <Text style={pdfStyles.detailText}>
+                      {member.address && `${member.address}\n`}
+                      {member.email && `${member.email}\n`}
+                      {member.phone && `${member.phone}\n`}
+                      {member.church && `${member.church}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+        </View>
+        
+        {/* Row 3: Head Spiritual Director, Spiritual Director(s), Rover */}
+        <View style={pdfStyles.threeColumnContainer} wrap={false}>
+          {['Head Spiritual Director', 'Spiritual Director', 'Rover'].map((role) => {
+            const members = teamMembers.filter(m => m.role === role);
+            if (members.length === 0) return <View key={role} style={pdfStyles.columnNoIndent} />;
+            
+            return (
+              <View key={role} style={pdfStyles.columnNoIndent}>
+                <Text style={pdfStyles.roleHeader}>{role}</Text>
+                {members.map((member, idx) => (
+                  <View key={idx} style={pdfStyles.personBlock}>
+                    <Text style={pdfStyles.nameText}>{member.name}</Text>
+                    <Text style={pdfStyles.detailText}>
+                      {member.address && `${member.address}\n`}
+                      {member.email && `${member.email}\n`}
+                      {member.phone && `${member.phone}\n`}
+                      {member.church && `${member.church}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+        </View>
+      </Page>
+
+      {/* Team Members Page 2+ - Service Teams and Professors */}
+      <Page size="LETTER" style={pdfStyles.page}>
+        
+        {/* All non-professor, non-leadership roles */}
+        {['Head Prayer', 'Prayer', 'Head Kitchen', 'Asst Head Kitchen', 'Kitchen', 
+          'Head Table', 'Table', 'Head Chapel', 'Chapel', 'Head Dorm', 'Dorm',
+          'Head Palanca', 'Palanca', 'Head Gopher', 'Gopher', 'Head Storeroom', 'Storeroom',
+          'Head Floater Supply', 'Floater Supply', 'Head Worship', 'Worship', 
+          'Head Media', 'Media'].map(role => {
           const members = teamMembers.filter(m => m.role === role);
           if (members.length === 0) return null;
           
           return (
             <View key={role} wrap={false} style={{ marginBottom: 8 }}>
-              <Text style={{ fontSize: 11, fontWeight: 700, marginBottom: 4, color: '#2c5aa0', backgroundColor: '#f5f5f5', padding: '3 5' }}>{role}</Text>
+              <Text style={pdfStyles.roleHeader}>{role}</Text>
               <View style={pdfStyles.twoColumnContainer}>
                 <View style={pdfStyles.column}>
                   {members.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
@@ -316,6 +381,7 @@ const WeekendRosterPDFDocument = ({ teamMembers, candidates, weekendNumber }) =>
                     </View>
                   ))}
                 </View>
+                
                 <View style={pdfStyles.column}>
                   {members.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
                     <View key={idx} style={pdfStyles.personBlock}>
@@ -334,23 +400,23 @@ const WeekendRosterPDFDocument = ({ teamMembers, candidates, weekendNumber }) =>
           );
         })}
         
-        {/* All Professors grouped together */}
+        {/* All Professors grouped together in 2 columns */}
         {(() => {
-          const allProfessors = ROLE_ORDER
-            .filter(role => role.startsWith('Prof_'))
-            .flatMap(role => {
-              const members = teamMembers.filter(m => m.role === role);
-              return members.map(member => ({
-                ...member,
-                displayRole: role.replace(/^Prof_/, '')
-              }));
-            });
+          const professorRoles = ['Silent', 'Ideals', 'Church', 'Piety', 'Study', 'Action', 
+                                  'Leaders', 'Environments', 'CCIA', 'Reunion'];
+          const allProfessors = professorRoles.flatMap(profRole => {
+            const members = teamMembers.filter(m => m.role === profRole || m.role === `Prof_${profRole}`);
+            return members.map(member => ({
+              ...member,
+              displayRole: profRole
+            }));
+          });
           
           if (allProfessors.length === 0) return null;
           
           return (
             <View wrap={false} style={{ marginBottom: 8 }}>
-              <Text style={{ fontSize: 11, fontWeight: 700, marginBottom: 4, color: '#2c5aa0', backgroundColor: '#f5f5f5', padding: '3 5' }}>Professors</Text>
+              <Text style={pdfStyles.roleHeader}>Professors</Text>
               <View style={pdfStyles.twoColumnContainer}>
                 <View style={pdfStyles.column}>
                   {allProfessors.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
@@ -365,6 +431,7 @@ const WeekendRosterPDFDocument = ({ teamMembers, candidates, weekendNumber }) =>
                     </View>
                   ))}
                 </View>
+                
                 <View style={pdfStyles.column}>
                   {allProfessors.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
                     <View key={idx} style={pdfStyles.personBlock}>
@@ -387,7 +454,7 @@ const WeekendRosterPDFDocument = ({ teamMembers, candidates, weekendNumber }) =>
       {/* Pescadores (Candidates) Page */}
       {candidates.length > 0 && (
         <Page size="LETTER" style={pdfStyles.page}>
-          <Text style={pdfStyles.header}>Pescadores - Weekend #{weekendNumber}</Text>
+          <Text style={pdfStyles.sectionHeader}>Pescadores - Weekend #{weekendNumber}</Text>
           
           <View style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {candidates.map((candidate, idx) => (
