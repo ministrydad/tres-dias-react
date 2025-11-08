@@ -117,13 +117,13 @@ const pdfStyles = StyleSheet.create({
     gap: 8,
   },
   detailsLeftColumn: {
-    flex: 1,
+    flex: 0.54,  // 35% of the 70% area (0.54 ≈ 35/65 ratio)
     display: 'flex',
     flexDirection: 'column',
     gap: 2,
   },
   detailsRightColumn: {
-    flex: 1,
+    flex: 1,  // 65% of the 70% area
     display: 'flex',
     flexDirection: 'column',
     gap: 2,
@@ -150,21 +150,16 @@ const pdfStyles = StyleSheet.create({
 });
 
 // PDF Document Component
-const DirectoryPDFDocument = ({ people, options, title }) => {
-  // Helper function to render field with bold label
-  const renderField = (label, value) => {
-    if (!value) return null;
-    return (
-      <Text style={pdfStyles.detailText}>
-        <Text style={pdfStyles.labelBold}>{label}:</Text> {value}
-      </Text>
-    );
-  };
-
+const DirectoryPDFDocument = ({ people, options, communityName, filterLabel }) => {
   return (
     <Document>
       <Page size="LETTER" style={pdfStyles.page}>
-        <Text style={pdfStyles.header}>{title}</Text>
+        <Text style={pdfStyles.header}>{communityName || 'Directory'}</Text>
+        {filterLabel && (
+          <Text style={{ fontSize: 14, color: '#555', marginBottom: 15, marginTop: -10 }}>
+            {filterLabel}
+          </Text>
+        )}
         
         {people.map((person, index) => {
           // Collect all fields that should be displayed
@@ -269,6 +264,7 @@ export default function Directory() {
     includeAcceptedCheckbox: false
   });
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [communityName, setCommunityName] = useState('');
   const controlsCardRef = useRef(null);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(-1);
   
@@ -286,6 +282,28 @@ export default function Directory() {
   useEffect(() => {
     performSearch();
   }, [allPescadores, currentGender, searchTerm, primaryFilter, excludePriorHeads, secondarySort]);
+
+  // Load community name from app_settings
+  useEffect(() => {
+    const loadCommunityName = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('community_name')
+          .eq('id', 1)
+          .single();
+        
+        if (error) throw error;
+        setCommunityName(data?.community_name || '');
+      } catch (error) {
+        console.error('Error loading community name:', error);
+      }
+    };
+    
+    if (orgId) {
+      loadCommunityName();
+    }
+  }, [orgId]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -1360,7 +1378,8 @@ export default function Directory() {
                       lastRole: person['Last Role'] || ''
                     }))}
                     options={printOptions}
-                    title={activeTeamIdentifier ? `Directory - ${activeTeamIdentifier}` : 'Directory'}
+                    communityName={communityName}
+                    filterLabel={primaryFilter ? `${getPrimaryFilterLabel()} List` : null}
                   />
                 </PDFViewer>
               </div>
