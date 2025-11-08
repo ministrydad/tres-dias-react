@@ -264,39 +264,49 @@ const WeekendRosterPDFDocument = ({ teamMembers, candidates, weekendNumber }) =>
         {/* Rector - Full Width Header, Left-Aligned Info */}
         {(() => {
           const rectorMembers = teamMembers.filter(m => m.role === 'Rector');
-          if (rectorMembers.length === 0) return null;
           
           return (
             <View wrap={false} style={{ marginBottom: 16 }}>
               <Text style={pdfStyles.roleHeader}>Rector</Text>
-              <View style={pdfStyles.twoColumnContainer}>
-                <View style={pdfStyles.column}>
-                  {rectorMembers.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
-                    <View key={idx} style={pdfStyles.personBlock}>
-                      <Text style={pdfStyles.nameText}>{member.name}</Text>
-                      <Text style={pdfStyles.detailText}>
-                        {member.address && `${member.address}\n`}
-                        {member.email && `${member.email}\n`}
-                        {member.phone && `${member.phone}\n`}
-                        {member.church && `${member.church}`}
-                      </Text>
-                    </View>
-                  ))}
+              {rectorMembers.length === 0 ? (
+                <View style={pdfStyles.twoColumnContainer}>
+                  <View style={pdfStyles.column}>
+                    <Text style={{ fontSize: 9, color: '#999', fontStyle: 'italic', marginTop: 4 }}>
+                      Information Not Available
+                    </Text>
+                  </View>
+                  <View style={pdfStyles.column} />
                 </View>
-                <View style={pdfStyles.column}>
-                  {rectorMembers.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
-                    <View key={idx} style={pdfStyles.personBlock}>
-                      <Text style={pdfStyles.nameText}>{member.name}</Text>
-                      <Text style={pdfStyles.detailText}>
-                        {member.address && `${member.address}\n`}
-                        {member.email && `${member.email}\n`}
-                        {member.phone && `${member.phone}\n`}
-                        {member.church && `${member.church}`}
-                      </Text>
-                    </View>
-                  ))}
+              ) : (
+                <View style={pdfStyles.twoColumnContainer}>
+                  <View style={pdfStyles.column}>
+                    {rectorMembers.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
+                      <View key={idx} style={pdfStyles.personBlock}>
+                        <Text style={pdfStyles.nameText}>{member.name}</Text>
+                        <Text style={pdfStyles.detailText}>
+                          {member.address && `${member.address}\n`}
+                          {member.email && `${member.email}\n`}
+                          {member.phone && `${member.phone}\n`}
+                          {member.church && `${member.church}`}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                  <View style={pdfStyles.column}>
+                    {rectorMembers.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
+                      <View key={idx} style={pdfStyles.personBlock}>
+                        <Text style={pdfStyles.nameText}>{member.name}</Text>
+                        <Text style={pdfStyles.detailText}>
+                          {member.address && `${member.address}\n`}
+                          {member.email && `${member.email}\n`}
+                          {member.phone && `${member.phone}\n`}
+                          {member.church && `${member.church}`}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
-              </View>
+              )}
             </View>
           );
         })()}
@@ -305,22 +315,27 @@ const WeekendRosterPDFDocument = ({ teamMembers, candidates, weekendNumber }) =>
         <View style={pdfStyles.threeColumnContainer} wrap={false}>
           {['BUR', 'Head', 'Asst Head'].map((role) => {
             const members = teamMembers.filter(m => m.role === role);
-            if (members.length === 0) return <View key={role} style={pdfStyles.columnNoIndent} />;
             
             return (
               <View key={role} style={pdfStyles.columnNoIndent}>
                 <Text style={pdfStyles.roleHeader}>{role}</Text>
-                {members.map((member, idx) => (
-                  <View key={idx} style={pdfStyles.personBlock}>
-                    <Text style={pdfStyles.nameText}>{member.name}</Text>
-                    <Text style={pdfStyles.detailText}>
-                      {member.address && `${member.address}\n`}
-                      {member.email && `${member.email}\n`}
-                      {member.phone && `${member.phone}\n`}
-                      {member.church && `${member.church}`}
-                    </Text>
-                  </View>
-                ))}
+                {members.length === 0 ? (
+                  <Text style={{ fontSize: 9, color: '#999', fontStyle: 'italic', marginTop: 4 }}>
+                    Information Not Available
+                  </Text>
+                ) : (
+                  members.map((member, idx) => (
+                    <View key={idx} style={pdfStyles.personBlock}>
+                      <Text style={pdfStyles.nameText}>{member.name}</Text>
+                      <Text style={pdfStyles.detailText}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))
+                )}
               </View>
             );
           })}
@@ -330,22 +345,27 @@ const WeekendRosterPDFDocument = ({ teamMembers, candidates, weekendNumber }) =>
         <View style={pdfStyles.threeColumnContainer} wrap={false}>
           {['Head Spiritual Director', 'Spiritual Director', 'Rover'].map((role) => {
             const members = teamMembers.filter(m => m.role === role);
-            if (members.length === 0) return <View key={role} style={pdfStyles.columnNoIndent} />;
             
             return (
               <View key={role} style={pdfStyles.columnNoIndent}>
                 <Text style={pdfStyles.roleHeader}>{role}</Text>
-                {members.map((member, idx) => (
-                  <View key={idx} style={pdfStyles.personBlock}>
-                    <Text style={pdfStyles.nameText}>{member.name}</Text>
-                    <Text style={pdfStyles.detailText}>
-                      {member.address && `${member.address}\n`}
-                      {member.email && `${member.email}\n`}
-                      {member.phone && `${member.phone}\n`}
-                      {member.church && `${member.church}`}
-                    </Text>
-                  </View>
-                ))}
+                {members.length === 0 ? (
+                  <Text style={{ fontSize: 9, color: '#999', fontStyle: 'italic', marginTop: 4 }}>
+                    Information Not Available
+                  </Text>
+                ) : (
+                  members.map((member, idx) => (
+                    <View key={idx} style={pdfStyles.personBlock}>
+                      <Text style={pdfStyles.nameText}>{member.name}</Text>
+                      <Text style={pdfStyles.detailText}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))
+                )}
               </View>
             );
           })}
@@ -1547,13 +1567,7 @@ export default function Directory() {
                 const rowsNeeded = Math.ceil(filteredPescadores.length / 5);
                 
                 return (
-                  <div 
-  className="names-grid" 
-  style={{ 
-    gridTemplateColumns: 'repeat(5, 1fr)',  // ← 5 equal columns
-    gridAutoFlow: 'row'  // ← Fills ROWS first (left to right)
-  }}
->
+                  <div className="names-grid">
                     {filteredPescadores.length === 0 ? (
                       <div className="loading">No results found.</div>
                     ) : (
