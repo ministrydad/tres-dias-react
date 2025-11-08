@@ -1568,7 +1568,15 @@ export default function Directory() {
           </div>
 
           {/* Directory Grid - Full Width, Below Controls */}
-          <div className="card pad">
+          <div 
+            className="card pad"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: 'calc(100vh - 180px)',
+              overflow: 'hidden'
+            }}
+          >
               <div className="directory-header">
                 <h2 className="directory-title" id="directoryTitle">
                   {activeTeamIdentifier ? `Directory - ${activeTeamIdentifier}` : 'Directory'}
@@ -1591,7 +1599,9 @@ export default function Directory() {
                     className="names-grid"
                     style={{ 
                       gridAutoFlow: 'row',
-                      maxHeight: 'calc(100vh - 400px)'
+                      flex: 1,
+                      overflowY: 'auto',
+                      minHeight: 0
                     }}
                   >
                     {filteredPescadores.length === 0 ? (
