@@ -226,6 +226,195 @@ const DirectoryPDFDocument = ({ people, options, communityName, filterLabel }) =
   );
 };
 
+// Weekend Roster PDF Component (CombinedRoster-style layout)
+const WeekendRosterPDFDocument = ({ teamMembers, candidates, weekendNumber }) => {
+  // Role order matching CombinedRoster
+  const ROLE_ORDER = [
+    'Rector', 'BUR', 'Rover', 'Head', 'Asst Head',
+    'Head Spiritual Director', 'Spiritual Director',
+    'Head Prayer', 'Prayer',
+    'Head Kitchen', 'Asst Head Kitchen', 'Kitchen',
+    'Head Table', 'Table',
+    'Head Chapel', 'Chapel',
+    'Head Dorm', 'Dorm',
+    'Head Palanca', 'Palanca',
+    'Head Gopher', 'Gopher',
+    'Head Storeroom', 'Storeroom',
+    'Head Floater Supply', 'Floater Supply',
+    'Head Worship', 'Worship',
+    'Head Media', 'Media',
+    'Prof_Silent', 'Prof_Ideals', 'Prof_Church', 'Prof_Piety',
+    'Prof_Study', 'Prof_Action', 'Prof_Leaders', 'Prof_Environments',
+    'Prof_CCIA', 'Prof_Reunion'
+  ];
+
+  return (
+    <Document>
+      {/* Team Members Page */}
+      <Page size="LETTER" style={pdfStyles.page}>
+        <Text style={pdfStyles.header}>Team Members - Weekend #{weekendNumber}</Text>
+        
+        {/* Rector - Full Width */}
+        {(() => {
+          const rectorMembers = teamMembers.filter(m => m.role === 'Rector');
+          if (rectorMembers.length === 0) return null;
+          
+          return (
+            <View wrap={false} style={{ marginBottom: 16 }}>
+              <Text style={{ fontSize: 11, fontWeight: 700, marginBottom: 4, color: '#2c5aa0', backgroundColor: '#f5f5f5', padding: '3 5' }}>Rector</Text>
+              <View style={pdfStyles.twoColumnContainer}>
+                <View style={pdfStyles.column}>
+                  {rectorMembers.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.personBlock}>
+                      <Text style={pdfStyles.nameText}>{member.name}</Text>
+                      <Text style={pdfStyles.detailText}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={pdfStyles.column}>
+                  {rectorMembers.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.personBlock}>
+                      <Text style={pdfStyles.nameText}>{member.name}</Text>
+                      <Text style={pdfStyles.detailText}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          );
+        })()}
+        
+        {/* All other roles */}
+        {ROLE_ORDER.filter(role => role !== 'Rector' && !role.startsWith('Prof_')).map(role => {
+          const members = teamMembers.filter(m => m.role === role);
+          if (members.length === 0) return null;
+          
+          return (
+            <View key={role} wrap={false} style={{ marginBottom: 8 }}>
+              <Text style={{ fontSize: 11, fontWeight: 700, marginBottom: 4, color: '#2c5aa0', backgroundColor: '#f5f5f5', padding: '3 5' }}>{role}</Text>
+              <View style={pdfStyles.twoColumnContainer}>
+                <View style={pdfStyles.column}>
+                  {members.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.personBlock}>
+                      <Text style={pdfStyles.nameText}>{member.name}</Text>
+                      <Text style={pdfStyles.detailText}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={pdfStyles.column}>
+                  {members.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.personBlock}>
+                      <Text style={pdfStyles.nameText}>{member.name}</Text>
+                      <Text style={pdfStyles.detailText}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          );
+        })}
+        
+        {/* All Professors grouped together */}
+        {(() => {
+          const allProfessors = ROLE_ORDER
+            .filter(role => role.startsWith('Prof_'))
+            .flatMap(role => {
+              const members = teamMembers.filter(m => m.role === role);
+              return members.map(member => ({
+                ...member,
+                displayRole: role.replace(/^Prof_/, '')
+              }));
+            });
+          
+          if (allProfessors.length === 0) return null;
+          
+          return (
+            <View wrap={false} style={{ marginBottom: 8 }}>
+              <Text style={{ fontSize: 11, fontWeight: 700, marginBottom: 4, color: '#2c5aa0', backgroundColor: '#f5f5f5', padding: '3 5' }}>Professors</Text>
+              <View style={pdfStyles.twoColumnContainer}>
+                <View style={pdfStyles.column}>
+                  {allProfessors.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.personBlock}>
+                      <Text style={pdfStyles.nameText}>{member.name} - {member.displayRole}</Text>
+                      <Text style={pdfStyles.detailText}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={pdfStyles.column}>
+                  {allProfessors.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.personBlock}>
+                      <Text style={pdfStyles.nameText}>{member.name} - {member.displayRole}</Text>
+                      <Text style={pdfStyles.detailText}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          );
+        })()}
+      </Page>
+
+      {/* Pescadores (Candidates) Page */}
+      {candidates.length > 0 && (
+        <Page size="LETTER" style={pdfStyles.page}>
+          <Text style={pdfStyles.header}>Pescadores - Weekend #{weekendNumber}</Text>
+          
+          <View style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            {candidates.map((candidate, idx) => (
+              <View key={idx} style={{
+                width: '48%',
+                marginBottom: 6,
+                padding: 6,
+                backgroundColor: '#fafafa',
+                borderRadius: 3,
+                border: '0.5 solid #ddd',
+              }}>
+                <Text style={pdfStyles.nameText}>{candidate.name}</Text>
+                <Text style={pdfStyles.detailText}>
+                  {candidate.address && `${candidate.address}\n`}
+                  {candidate.phone && `${candidate.phone}\n`}
+                  {candidate.email && `${candidate.email}\n`}
+                  {candidate.church && `${candidate.church}`}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </Page>
+      )}
+    </Document>
+  );
+};
+
 export default function Directory() {
   const { orgId } = useAuth();
   
@@ -1264,7 +1453,7 @@ export default function Directory() {
                     }}
                     style={{ flex: 1, padding: '6px 8px', fontSize: '13px' }}
                   >
-                    Generate PDF
+                    {/^\d+$/.test(searchTerm.trim()) ? 'Generate Weekend Roster PDF' : 'Generate PDF'}
                   </button>
                 </div>
               </div>
@@ -1394,22 +1583,49 @@ export default function Directory() {
               {/* PDF Viewer */}
               <div style={{ flex: 1, overflow: 'hidden' }}>
                 <PDFViewer width="100%" height="100%">
-                  <DirectoryPDFDocument
-                    people={filteredPescadores.map(person => ({
-                      name: nameFormat === 'firstLast'
-                        ? `${person.Preferred || person.First || ''} ${person.Last || ''}`.trim()
-                        : `${person.Last || ''}, ${person.Preferred || person.First || ''}`.trim(),
-                      phone: person.Phone1 || person.Phone2 || '',
-                      email: person.Email || '',
-                      address: `${person.Address || ''}, ${person.City || ''}, ${person.State || ''} ${person.Zip || ''}`.trim(),
-                      church: person.Church || '',
-                      lastWeekend: person['Candidate Weekend'] || '',
-                      lastRole: getLastRoleServed(person)
-                    }))}
-                    options={printOptions}
-                    communityName={communityName}
-                    filterLabel={primaryFilter ? `${getPrimaryFilterLabel()} List` : null}
-                  />
+                  {/^\d+$/.test(searchTerm.trim()) ? (
+                    /* Weekend Roster PDF */
+                    <WeekendRosterPDFDocument
+                      teamMembers={filteredPescadores
+                        .filter(p => p.searchMatch?.type === 'team')
+                        .map(person => ({
+                          name: `${person.Preferred || person.First || ''} ${person.Last || ''}`.trim(),
+                          role: person.searchMatch?.role || '',
+                          phone: person.Phone1 || person.Phone2 || '',
+                          email: person.Email || '',
+                          address: `${person.Address || ''}, ${person.City || ''}, ${person.State || ''} ${person.Zip || ''}`.trim(),
+                          church: person.Church || ''
+                        }))}
+                      candidates={filteredPescadores
+                        .filter(p => p.searchMatch?.type === 'candidate')
+                        .map(person => ({
+                          name: `${person.Preferred || person.First || ''} ${person.Last || ''}`.trim(),
+                          phone: person.Phone1 || person.Phone2 || '',
+                          email: person.Email || '',
+                          address: `${person.Address || ''}, ${person.City || ''}, ${person.State || ''} ${person.Zip || ''}`.trim(),
+                          church: person.Church || ''
+                        }))}
+                      weekendNumber={searchTerm.trim()}
+                    />
+                  ) : (
+                    /* Regular Directory List PDF */
+                    <DirectoryPDFDocument
+                      people={filteredPescadores.map(person => ({
+                        name: nameFormat === 'firstLast'
+                          ? `${person.Preferred || person.First || ''} ${person.Last || ''}`.trim()
+                          : `${person.Last || ''}, ${person.Preferred || person.First || ''}`.trim(),
+                        phone: person.Phone1 || person.Phone2 || '',
+                        email: person.Email || '',
+                        address: `${person.Address || ''}, ${person.City || ''}, ${person.State || ''} ${person.Zip || ''}`.trim(),
+                        church: person.Church || '',
+                        lastWeekend: person['Candidate Weekend'] || '',
+                        lastRole: getLastRoleServed(person)
+                      }))}
+                      options={printOptions}
+                      communityName={communityName}
+                      filterLabel={primaryFilter ? `${getPrimaryFilterLabel()} List` : null}
+                    />
+                  )}
                 </PDFViewer>
               </div>
             </div>
