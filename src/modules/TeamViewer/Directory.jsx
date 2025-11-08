@@ -87,52 +87,36 @@ const pdfStyles = StyleSheet.create({
     fontFamily: 'Source Sans 3',
   },
   header: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 700,
     marginBottom: 20,
-    paddingBottom: 10,
+    paddingBottom: 5,
     borderBottom: '2 solid #333',
-    textAlign: 'center',
+    textAlign: 'left',
   },
-  personRow: {
+  twoColumnContainer: {
     display: 'flex',
     flexDirection: 'row',
-    paddingVertical: 8,
-    borderBottom: '0.5 solid #ddd',
-    minHeight: 30,
+    gap: 20,
   },
-  nameColumn: {
-    width: '30%',
-    paddingRight: 10,
+  column: {
+    flex: 1,
+  },
+  personBlock: {
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottom: '0.5 solid #ddd',
   },
   nameText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 700,
+    marginBottom: 2,
     color: '#000',
   },
-  detailsColumn: {
-    width: '70%',
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  detailsLeftColumn: {
-    flex: 0.54,  // 35% of the 70% area (0.54 ≈ 35/65 ratio)
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-  },
-  detailsRightColumn: {
-    flex: 1,  // 65% of the 70% area
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-  },
   detailText: {
-    fontSize: 9,
+    fontSize: 8.5,
     color: '#444',
-    lineHeight: 1.4,
+    lineHeight: 1.3,
   },
   labelBold: {
     fontWeight: 700,
@@ -142,10 +126,9 @@ const pdfStyles = StyleSheet.create({
     flexDirection: 'row',
     gap: 15,
     marginTop: 4,
-    width: '100%',
   },
   checkbox: {
-    fontSize: 9,
+    fontSize: 8.5,
     color: '#666',
   },
 });
@@ -155,69 +138,36 @@ const DirectoryPDFDocument = ({ people, options, communityName, filterLabel }) =
   return (
     <Document>
       <Page size="LETTER" style={pdfStyles.page}>
-        <Text style={pdfStyles.header}>{communityName || 'Directory'}</Text>
-        {filterLabel && (
-          <Text style={{ fontSize: 14, color: '#555', marginBottom: 15, marginTop: -10, textAlign: 'center' }}>
-            {filterLabel}
-          </Text>
-        )}
+        {/* Title - left justified, filter label only */}
+        <Text style={pdfStyles.header}>{filterLabel || communityName || 'Directory'}</Text>
         
-        {people.map((person, index) => {
-          // Collect all fields that should be displayed
-          const fields = [];
-          
-          if (options.includePhone && person.phone) {
-            fields.push({ label: 'Phone', value: person.phone });
-          }
-          if (options.includeEmail && person.email) {
-            fields.push({ label: 'Email', value: person.email });
-          }
-          if (options.includeAddress && person.address) {
-            fields.push({ label: 'Address', value: person.address });
-          }
-          if (options.includeChurch && person.church) {
-            fields.push({ label: 'Church', value: person.church });
-          }
-          if (options.includeLastWeekend && person.lastWeekend) {
-            fields.push({ label: 'Last Weekend', value: person.lastWeekend });
-          }
-          if (options.includeLastRole && person.lastRole) {
-            fields.push({ label: 'Last Role', value: person.lastRole });
-          }
-
-          // Split fields into left and right columns
-          const midpoint = Math.ceil(fields.length / 2);
-          const leftFields = fields.slice(0, midpoint);
-          const rightFields = fields.slice(midpoint);
-
-          return (
-            <View key={index} style={pdfStyles.personRow} wrap={false}>
-              {/* Name Column - 30% */}
-              <View style={pdfStyles.nameColumn}>
+        {/* Two column layout */}
+        <View style={pdfStyles.twoColumnContainer}>
+          {/* Left Column */}
+          <View style={pdfStyles.column}>
+            {people.filter((_, idx) => idx % 2 === 0).map((person, idx) => (
+              <View key={idx} style={pdfStyles.personBlock} wrap={false}>
                 <Text style={pdfStyles.nameText}>{person.name}</Text>
-              </View>
-              
-              {/* Details Column - 70% with 2 columns inside */}
-              <View style={pdfStyles.detailsColumn}>
-                {/* Left Column */}
-                <View style={pdfStyles.detailsLeftColumn}>
-                  {leftFields.map((field, idx) => (
-                    <Text key={idx} style={pdfStyles.detailText}>
-                      <Text style={pdfStyles.labelBold}>{field.label}:</Text> {field.value}
-                    </Text>
-                  ))}
-                </View>
-
-                {/* Right Column */}
-                <View style={pdfStyles.detailsRightColumn}>
-                  {rightFields.map((field, idx) => (
-                    <Text key={idx} style={pdfStyles.detailText}>
-                      <Text style={pdfStyles.labelBold}>{field.label}:</Text> {field.value}
-                    </Text>
-                  ))}
-                </View>
-
-                {/* Checkboxes - Full Width Below Columns */}
+                
+                {options.includePhone && person.phone && (
+                  <Text style={pdfStyles.detailText}>{person.phone}</Text>
+                )}
+                {options.includeEmail && person.email && (
+                  <Text style={pdfStyles.detailText}>{person.email}</Text>
+                )}
+                {options.includeAddress && person.address && (
+                  <Text style={pdfStyles.detailText}>{person.address}</Text>
+                )}
+                {options.includeChurch && person.church && (
+                  <Text style={pdfStyles.detailText}>{person.church}</Text>
+                )}
+                {options.includeLastWeekend && person.lastWeekend && (
+                  <Text style={pdfStyles.detailText}>{person.lastWeekend}</Text>
+                )}
+                {options.includeLastRole && person.lastRole && (
+                  <Text style={pdfStyles.detailText}>{person.lastRole}</Text>
+                )}
+                
                 {(options.includeContactedCheckbox || options.includeAcceptedCheckbox) && (
                   <View style={pdfStyles.checkboxRow}>
                     {options.includeContactedCheckbox && (
@@ -229,9 +179,48 @@ const DirectoryPDFDocument = ({ people, options, communityName, filterLabel }) =
                   </View>
                 )}
               </View>
-            </View>
-          );
-        })}
+            ))}
+          </View>
+
+          {/* Right Column */}
+          <View style={pdfStyles.column}>
+            {people.filter((_, idx) => idx % 2 === 1).map((person, idx) => (
+              <View key={idx} style={pdfStyles.personBlock} wrap={false}>
+                <Text style={pdfStyles.nameText}>{person.name}</Text>
+                
+                {options.includePhone && person.phone && (
+                  <Text style={pdfStyles.detailText}>{person.phone}</Text>
+                )}
+                {options.includeEmail && person.email && (
+                  <Text style={pdfStyles.detailText}>{person.email}</Text>
+                )}
+                {options.includeAddress && person.address && (
+                  <Text style={pdfStyles.detailText}>{person.address}</Text>
+                )}
+                {options.includeChurch && person.church && (
+                  <Text style={pdfStyles.detailText}>{person.church}</Text>
+                )}
+                {options.includeLastWeekend && person.lastWeekend && (
+                  <Text style={pdfStyles.detailText}>{person.lastWeekend}</Text>
+                )}
+                {options.includeLastRole && person.lastRole && (
+                  <Text style={pdfStyles.detailText}>{person.lastRole}</Text>
+                )}
+                
+                {(options.includeContactedCheckbox || options.includeAcceptedCheckbox) && (
+                  <View style={pdfStyles.checkboxRow}>
+                    {options.includeContactedCheckbox && (
+                      <Text style={pdfStyles.checkbox}>☐ Contacted</Text>
+                    )}
+                    {options.includeAcceptedCheckbox && (
+                      <Text style={pdfStyles.checkbox}>☐ Accepted</Text>
+                    )}
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        </View>
       </Page>
     </Document>
   );
