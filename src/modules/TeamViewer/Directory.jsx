@@ -816,6 +816,45 @@ export default function Directory() {
     }
   }
 
+  // Helper function to calculate last role served
+  function getLastRoleServed(person) {
+    if (!person) return '';
+    
+    let highestWeekendNum = -1;
+    let highestRole = '';
+    let highestWeekendIdentifier = '';
+    
+    // Get all keys that end with '_Service'
+    const serviceKeys = Object.keys(person).filter(key => key.endsWith('_Service'));
+    
+    serviceKeys.forEach(key => {
+      const value = person[key];
+      if (!value || typeof value !== 'string') return;
+      
+      // Extract number from strings like "STL 41", "MWKC4", "STL30"
+      // Match patterns: "STL 41", "STL41", "MWKC 4", "MWKC4"
+      const match = value.match(/(\d+)/);
+      if (match) {
+        const weekendNum = parseInt(match[1], 10);
+        
+        if (weekendNum > highestWeekendNum) {
+          highestWeekendNum = weekendNum;
+          highestWeekendIdentifier = value.trim();
+          
+          // Extract role name from key (remove '_Service' suffix)
+          const roleName = key.replace('_Service', '').replace(/_/g, ' ');
+          highestRole = roleName;
+        }
+      }
+    });
+    
+    if (highestRole && highestWeekendIdentifier) {
+      return `${highestRole} ${highestWeekendIdentifier}`;
+    }
+    
+    return '';
+  }
+
   function getPrimaryFilterLabel() {
     const labels = {
       '': 'None (Default Sort)',
@@ -1365,7 +1404,7 @@ export default function Directory() {
                       address: `${person.Address || ''}, ${person.City || ''}, ${person.State || ''} ${person.Zip || ''}`.trim(),
                       church: person.Church || '',
                       lastWeekend: person['Candidate Weekend'] || '',
-                      lastRole: person['Last Role'] || ''
+                      lastRole: getLastRoleServed(person)
                     }))}
                     options={printOptions}
                     communityName={communityName}
