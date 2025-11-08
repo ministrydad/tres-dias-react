@@ -92,6 +92,7 @@ const pdfStyles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 10,
     borderBottom: '2 solid #333',
+    textAlign: 'center',
   },
   personRow: {
     display: 'flex',
@@ -156,7 +157,7 @@ const DirectoryPDFDocument = ({ people, options, communityName, filterLabel }) =
       <Page size="LETTER" style={pdfStyles.page}>
         <Text style={pdfStyles.header}>{communityName || 'Directory'}</Text>
         {filterLabel && (
-          <Text style={{ fontSize: 14, color: '#555', marginBottom: 15, marginTop: -10 }}>
+          <Text style={{ fontSize: 14, color: '#555', marginBottom: 15, marginTop: -10, textAlign: 'center' }}>
             {filterLabel}
           </Text>
         )}
