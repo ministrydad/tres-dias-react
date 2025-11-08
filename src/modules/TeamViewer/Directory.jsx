@@ -1589,7 +1589,10 @@ export default function Directory() {
                 return (
                   <div 
                     className="names-grid"
-                    style={{ gridAutoFlow: 'row' }}
+                    style={{ 
+                      gridAutoFlow: 'row',
+                      maxHeight: 'calc(100vh - 400px)'
+                    }}
                   >
                     {filteredPescadores.length === 0 ? (
                       <div className="loading">No results found.</div>
