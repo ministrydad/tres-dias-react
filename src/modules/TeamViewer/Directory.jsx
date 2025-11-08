@@ -1567,7 +1567,10 @@ export default function Directory() {
                 const rowsNeeded = Math.ceil(filteredPescadores.length / 5);
                 
                 return (
-                  <div className="names-grid">
+                  <div 
+                    className="names-grid"
+                    style={{ gridAutoFlow: 'row' }}
+                  >
                     {filteredPescadores.length === 0 ? (
                       <div className="loading">No results found.</div>
                     ) : (
