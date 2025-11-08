@@ -1360,10 +1360,22 @@ export default function Directory() {
                   </div>
                   <div className="utility-buttons">
                     <button className="clear-button" onClick={handleClear}>Clear</button>
-                    <button className="print-button" onClick={() => setShowPrintOptions(true)}>Show Print Options</button>
+                    <button 
+                      className="print-button" 
+                      style={{ flex: '1 1 140px' }}
+                      onClick={() => setShowPrintOptions(true)}
+                    >
+                      {searchTerm.trim() || primaryFilter ? 'Generate PDF' : 'Show Print Options'}
+                    </button>
                     <button 
                       className="view-team-button" 
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '8px',
+                        flex: '0.75 1 100px'
+                      }}
                       onClick={handleManageLatestWeekend}
                       disabled={loadingTeam}
                     >
