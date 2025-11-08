@@ -1203,14 +1203,7 @@ export default function Directory() {
     }}>
       
       {currentView === 'directory' && (
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '16px', 
-          width: '100%',
-          height: '100%',
-          overflow: 'hidden'
-        }}>
+        <div className="directory-container">
           {/* Controls row with print options */}
           <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', width: '100%' }}>
             <div 
@@ -1575,16 +1568,7 @@ export default function Directory() {
           </div>
 
           {/* Directory Grid - Full Width, Below Controls */}
-          <div 
-            className="card pad"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              flex: 1,
-              minHeight: 0,
-              overflow: 'hidden'
-            }}
-          >
+          <div className="card pad">
               <div className="directory-header">
                 <h2 className="directory-title" id="directoryTitle">
                   {activeTeamIdentifier ? `Directory - ${activeTeamIdentifier}` : 'Directory'}
@@ -1605,12 +1589,7 @@ export default function Directory() {
                 return (
                   <div 
                     className="names-grid"
-                    style={{ 
-                      gridAutoFlow: 'row',
-                      flex: 1,
-                      overflowY: 'auto',
-                      minHeight: 0
-                    }}
+                    style={{ gridAutoFlow: 'row' }}
                   >
                     {filteredPescadores.length === 0 ? (
                       <div className="loading">No results found.</div>
