@@ -1587,7 +1587,7 @@ export default function Directory() {
                     /* Weekend Roster PDF */
                     <WeekendRosterPDFDocument
                       teamMembers={filteredPescadores
-                        .filter(p => p.searchMatch?.type === 'team')
+                        .filter(p => p.searchMatch?.type === 'service')
                         .map(person => ({
                           name: `${person.Preferred || person.First || ''} ${person.Last || ''}`.trim(),
                           role: person.searchMatch?.role || '',
