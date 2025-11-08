@@ -916,109 +916,157 @@ export default function Directory() {
                   </button>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {/* Phone Number Switch */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Phone Number</span>
-                    <label className="switch">
-                      <input 
-                        type="checkbox" 
-                        checked={printOptions.includePhone}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includePhone: e.target.checked }))}
-                      />
-                      <span className="slider"></span>
-                    </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  {/* Phone Number */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Phone Number</span>
+                    <div className="toggle-inset-container">
+                      <div 
+                        className={`toggle-inset-option ${!printOptions.includePhone ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includePhone: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`toggle-inset-option ${printOptions.includePhone ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includePhone: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Email Address Switch */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Email Address</span>
-                    <label className="switch">
-                      <input 
-                        type="checkbox" 
-                        checked={printOptions.includeEmail}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeEmail: e.target.checked }))}
-                      />
-                      <span className="slider"></span>
-                    </label>
+                  {/* Email Address */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Email Address</span>
+                    <div className="toggle-inset-container">
+                      <div 
+                        className={`toggle-inset-option ${!printOptions.includeEmail ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeEmail: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`toggle-inset-option ${printOptions.includeEmail ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeEmail: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Mailing Address Switch */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Mailing Address</span>
-                    <label className="switch">
-                      <input 
-                        type="checkbox" 
-                        checked={printOptions.includeAddress}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAddress: e.target.checked }))}
-                      />
-                      <span className="slider"></span>
-                    </label>
+                  {/* Mailing Address */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Mailing Address</span>
+                    <div className="toggle-inset-container">
+                      <div 
+                        className={`toggle-inset-option ${!printOptions.includeAddress ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAddress: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`toggle-inset-option ${printOptions.includeAddress ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAddress: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Church Switch */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Church</span>
-                    <label className="switch">
-                      <input 
-                        type="checkbox" 
-                        checked={printOptions.includeChurch}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeChurch: e.target.checked }))}
-                      />
-                      <span className="slider"></span>
-                    </label>
+                  {/* Church */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Church</span>
+                    <div className="toggle-inset-container">
+                      <div 
+                        className={`toggle-inset-option ${!printOptions.includeChurch ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeChurch: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`toggle-inset-option ${printOptions.includeChurch ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeChurch: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Last Weekend Served Switch */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Last Weekend Served</span>
-                    <label className="switch">
-                      <input 
-                        type="checkbox" 
-                        checked={printOptions.includeLastWeekend}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastWeekend: e.target.checked }))}
-                      />
-                      <span className="slider"></span>
-                    </label>
+                  {/* Last Weekend Served */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Last Weekend Served</span>
+                    <div className="toggle-inset-container">
+                      <div 
+                        className={`toggle-inset-option ${!printOptions.includeLastWeekend ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastWeekend: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`toggle-inset-option ${printOptions.includeLastWeekend ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastWeekend: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Last Role Served Switch */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Last Role Served</span>
-                    <label className="switch">
-                      <input 
-                        type="checkbox" 
-                        checked={printOptions.includeLastRole}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastRole: e.target.checked }))}
-                      />
-                      <span className="slider"></span>
-                    </label>
+                  {/* Last Role Served */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Last Role Served</span>
+                    <div className="toggle-inset-container">
+                      <div 
+                        className={`toggle-inset-option ${!printOptions.includeLastRole ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastRole: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`toggle-inset-option ${printOptions.includeLastRole ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastRole: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Contacted Checkbox Switch */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Contacted (checkbox)</span>
-                    <label className="switch">
-                      <input 
-                        type="checkbox" 
-                        checked={printOptions.includeContactedCheckbox}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: e.target.checked }))}
-                      />
-                      <span className="slider"></span>
-                    </label>
+                  {/* Contacted (checkbox) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Contacted (checkbox)</span>
+                    <div className="toggle-inset-container">
+                      <div 
+                        className={`toggle-inset-option ${!printOptions.includeContactedCheckbox ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`toggle-inset-option ${printOptions.includeContactedCheckbox ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Accepted Checkbox Switch */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Accepted (checkbox)</span>
-                    <label className="switch">
-                      <input 
-                        type="checkbox" 
-                        checked={printOptions.includeAcceptedCheckbox}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: e.target.checked }))}
-                      />
-                      <span className="slider"></span>
-                    </label>
+                  {/* Accepted (checkbox) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Accepted (checkbox)</span>
+                    <div className="toggle-inset-container">
+                      <div 
+                        className={`toggle-inset-option ${!printOptions.includeAcceptedCheckbox ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`toggle-inset-option ${printOptions.includeAcceptedCheckbox ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
                   </div>
                 </div>
 
