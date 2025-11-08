@@ -885,6 +885,7 @@ export default function Directory() {
             {/* Print Options Panel - Slides in from right */}
             {showPrintOptions && (
               <div 
+                id="printOptionsPanel"
                 className="card pad print-options-panel"
                 style={{
                   width: '38%',
@@ -998,14 +999,14 @@ export default function Directory() {
                   paddingTop: '20px'
                 }}>
                   <button 
-                    className="btn" 
+                    className="clear-button" 
                     onClick={() => setShowPrintOptions(false)}
                     style={{ flex: 1 }}
                   >
                     Cancel
                   </button>
                   <button 
-                    className="btn btn-primary" 
+                    className="print-button" 
                     onClick={() => {
                       // TODO: Generate PDF with selected options
                       window.showMainStatus('PDF generation coming soon!', false);
@@ -2402,8 +2403,10 @@ function ProfessorRolesCard({ profile, isEditMode, onFieldChange }) {
           }
         }
         
-        /* Green checkboxes for print options - force override inline styles */
-        .print-options-panel input[type="checkbox"] {
+        /* Green checkboxes - maximum specificity */
+        #printOptionsPanel input[type="checkbox"],
+        .print-options-panel input[type="checkbox"],
+        div.print-options-panel input[type="checkbox"] {
           width: 18px !important;
           height: 18px !important;
           cursor: pointer !important;
@@ -2413,24 +2416,31 @@ function ProfessorRolesCard({ profile, isEditMode, onFieldChange }) {
           border: 2px solid #ccc !important;
           border-radius: 3px !important;
           position: relative !important;
-          background-color: white !important;
+          background-color: #ffffff !important;
           margin: 0 !important;
+          padding: 0 !important;
+          flex-shrink: 0 !important;
         }
         
-        .print-options-panel input[type="checkbox"]:checked {
+        #printOptionsPanel input[type="checkbox"]:checked,
+        .print-options-panel input[type="checkbox"]:checked,
+        div.print-options-panel input[type="checkbox"]:checked {
           background-color: #2ea44f !important;
           border-color: #2ea44f !important;
         }
         
-        .print-options-panel input[type="checkbox"]:checked::after {
-          content: '✓';
-          position: absolute;
-          color: white;
-          font-size: 14px;
-          font-weight: bold;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
+        #printOptionsPanel input[type="checkbox"]:checked::after,
+        .print-options-panel input[type="checkbox"]:checked::after,
+        div.print-options-panel input[type="checkbox"]:checked::after {
+          content: '✓' !important;
+          position: absolute !important;
+          color: #ffffff !important;
+          font-size: 14px !important;
+          font-weight: bold !important;
+          top: 50% !important;
+          left: 50% !important;
+          transform: translate(-50%, -50%) !important;
+          line-height: 1 !important;
         }
       `}</style>
     </>
