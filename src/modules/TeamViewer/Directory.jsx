@@ -917,156 +917,108 @@ export default function Directory() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {/* Phone Number Toggle */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Phone Number</span>
-                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
-                      <div 
-                        className={`opt ${!printOptions.includePhone ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includePhone: false }))}
-                      >
-                        No
-                      </div>
-                      <div 
-                        className={`opt ${printOptions.includePhone ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includePhone: true }))}
-                      >
-                        Yes
-                      </div>
-                    </div>
+                  {/* Phone Number Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.9rem' }}>Phone Number</span>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={printOptions.includePhone}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includePhone: e.target.checked }))}
+                      />
+                      <span className="slider"></span>
+                    </label>
                   </div>
 
-                  {/* Email Address Toggle */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Email Address</span>
-                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
-                      <div 
-                        className={`opt ${!printOptions.includeEmail ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeEmail: false }))}
-                      >
-                        No
-                      </div>
-                      <div 
-                        className={`opt ${printOptions.includeEmail ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeEmail: true }))}
-                      >
-                        Yes
-                      </div>
-                    </div>
+                  {/* Email Address Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.9rem' }}>Email Address</span>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={printOptions.includeEmail}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeEmail: e.target.checked }))}
+                      />
+                      <span className="slider"></span>
+                    </label>
                   </div>
 
-                  {/* Mailing Address Toggle */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Mailing Address</span>
-                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
-                      <div 
-                        className={`opt ${!printOptions.includeAddress ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAddress: false }))}
-                      >
-                        No
-                      </div>
-                      <div 
-                        className={`opt ${printOptions.includeAddress ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAddress: true }))}
-                      >
-                        Yes
-                      </div>
-                    </div>
+                  {/* Mailing Address Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.9rem' }}>Mailing Address</span>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={printOptions.includeAddress}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAddress: e.target.checked }))}
+                      />
+                      <span className="slider"></span>
+                    </label>
                   </div>
 
-                  {/* Church Toggle */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Church</span>
-                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
-                      <div 
-                        className={`opt ${!printOptions.includeChurch ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeChurch: false }))}
-                      >
-                        No
-                      </div>
-                      <div 
-                        className={`opt ${printOptions.includeChurch ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeChurch: true }))}
-                      >
-                        Yes
-                      </div>
-                    </div>
+                  {/* Church Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.9rem' }}>Church</span>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={printOptions.includeChurch}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeChurch: e.target.checked }))}
+                      />
+                      <span className="slider"></span>
+                    </label>
                   </div>
 
-                  {/* Last Weekend Served Toggle */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Last Weekend Served</span>
-                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
-                      <div 
-                        className={`opt ${!printOptions.includeLastWeekend ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastWeekend: false }))}
-                      >
-                        No
-                      </div>
-                      <div 
-                        className={`opt ${printOptions.includeLastWeekend ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastWeekend: true }))}
-                      >
-                        Yes
-                      </div>
-                    </div>
+                  {/* Last Weekend Served Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.9rem' }}>Last Weekend Served</span>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={printOptions.includeLastWeekend}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastWeekend: e.target.checked }))}
+                      />
+                      <span className="slider"></span>
+                    </label>
                   </div>
 
-                  {/* Last Role Served Toggle */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Last Role Served</span>
-                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
-                      <div 
-                        className={`opt ${!printOptions.includeLastRole ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastRole: false }))}
-                      >
-                        No
-                      </div>
-                      <div 
-                        className={`opt ${printOptions.includeLastRole ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastRole: true }))}
-                      >
-                        Yes
-                      </div>
-                    </div>
+                  {/* Last Role Served Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.9rem' }}>Last Role Served</span>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={printOptions.includeLastRole}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastRole: e.target.checked }))}
+                      />
+                      <span className="slider"></span>
+                    </label>
                   </div>
 
-                  {/* Contacted Checkbox Toggle */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Contacted (checkbox)</span>
-                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
-                      <div 
-                        className={`opt ${!printOptions.includeContactedCheckbox ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: false }))}
-                      >
-                        No
-                      </div>
-                      <div 
-                        className={`opt ${printOptions.includeContactedCheckbox ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: true }))}
-                      >
-                        Yes
-                      </div>
-                    </div>
+                  {/* Contacted Checkbox Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.9rem' }}>Contacted (checkbox)</span>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={printOptions.includeContactedCheckbox}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: e.target.checked }))}
+                      />
+                      <span className="slider"></span>
+                    </label>
                   </div>
 
-                  {/* Accepted Checkbox Toggle */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Accepted (checkbox)</span>
-                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
-                      <div 
-                        className={`opt ${!printOptions.includeAcceptedCheckbox ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: false }))}
-                      >
-                        No
-                      </div>
-                      <div 
-                        className={`opt ${printOptions.includeAcceptedCheckbox ? 'active' : ''}`}
-                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: true }))}
-                      >
-                        Yes
-                      </div>
-                    </div>
+                  {/* Accepted Checkbox Switch */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.9rem' }}>Accepted (checkbox)</span>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={printOptions.includeAcceptedCheckbox}
+                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: e.target.checked }))}
+                      />
+                      <span className="slider"></span>
+                    </label>
                   </div>
                 </div>
 
