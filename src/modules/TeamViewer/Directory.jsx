@@ -904,7 +904,7 @@ export default function Directory() {
                   paddingBottom: '15px',
                   borderBottom: '2px solid #007bff'
                 }}>
-                  <h3 style={{ margin: 0, color: 'var(--ink)', fontSize: '1.1rem', fontWeight: 700 }}>
+                  <h3 style={{ margin: 0, color: 'var(--ink)', fontSize: '1rem', fontWeight: 900 }}>
                     Print Options
                   </h3>
                   <button 
@@ -916,7 +916,7 @@ export default function Directory() {
                   </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 20px' }}>
                   {/* Phone Number */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                     <span style={{ fontSize: '0.9rem' }}>Phone Number</span>
