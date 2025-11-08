@@ -1363,7 +1363,15 @@ export default function Directory() {
                     <button 
                       className="print-button" 
                       style={{ flex: '1 1 140px' }}
-                      onClick={() => setShowPrintOptions(true)}
+                      onClick={() => {
+                        // Weekend search (number) → Show preview immediately
+                        if (/^\d+$/.test(searchTerm.trim())) {
+                          setShowPdfPreview(true);
+                        } else {
+                          // Filter search or no search → Show print options
+                          setShowPrintOptions(true);
+                        }
+                      }}
                     >
                       {searchTerm.trim() || primaryFilter ? 'Generate PDF' : 'Show Print Options'}
                     </button>
