@@ -919,7 +919,7 @@ export default function Directory() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 20px' }}>
                   {/* Phone Number */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Phone Number</span>
+                    <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>Phone Number</span>
                     <label className="switch">
                       <input 
                         type="checkbox" 
@@ -932,7 +932,7 @@ export default function Directory() {
 
                   {/* Email Address */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Email Address</span>
+                    <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>Email Address</span>
                     <label className="switch">
                       <input 
                         type="checkbox" 
@@ -945,7 +945,7 @@ export default function Directory() {
 
                   {/* Mailing Address */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Mailing Address</span>
+                    <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>Mailing Address</span>
                     <label className="switch">
                       <input 
                         type="checkbox" 
@@ -958,7 +958,7 @@ export default function Directory() {
 
                   {/* Church */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Church</span>
+                    <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>Church</span>
                     <label className="switch">
                       <input 
                         type="checkbox" 
@@ -971,7 +971,7 @@ export default function Directory() {
 
                   {/* Last Weekend Served */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Last Weekend Served</span>
+                    <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>Last Weekend Served</span>
                     <label className="switch">
                       <input 
                         type="checkbox" 
@@ -984,7 +984,7 @@ export default function Directory() {
 
                   {/* Last Role Served */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Last Role Served</span>
+                    <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>Last Role Served</span>
                     <label className="switch">
                       <input 
                         type="checkbox" 
@@ -997,7 +997,7 @@ export default function Directory() {
 
                   {/* Contacted (checkbox) */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Contacted (checkbox)</span>
+                    <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>Contacted (checkbox)</span>
                     <label className="switch">
                       <input 
                         type="checkbox" 
@@ -1010,7 +1010,7 @@ export default function Directory() {
 
                   {/* Accepted (checkbox) */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                    <span style={{ fontSize: '0.9rem' }}>Accepted (checkbox)</span>
+                    <span style={{ fontSize: '.85rem', color: 'var(--muted)' }}>Accepted (checkbox)</span>
                     <label className="switch">
                       <input 
                         type="checkbox" 
@@ -1022,12 +1022,10 @@ export default function Directory() {
                   </div>
                 </div>
 
-                <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '24px 0' }} />
-
                 <div style={{ 
                   display: 'flex', 
                   gap: '12px', 
-                  marginTop: 'auto',
+                  marginTop: '20px',
                   paddingTop: '20px'
                 }}>
                   <button 
