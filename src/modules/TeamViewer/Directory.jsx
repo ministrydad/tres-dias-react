@@ -20,6 +20,17 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
+import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from '@react-pdf/renderer';
+
+// Register Source Sans 3 font for PDF
+Font.register({
+  family: 'Source Sans 3',
+  fonts: [
+    { src: '/fonts/SourceSans3-Regular.ttf', fontWeight: 400 },
+    { src: '/fonts/SourceSans3-SemiBold.ttf', fontWeight: 600 },
+    { src: '/fonts/SourceSans3-Bold.ttf', fontWeight: 700 },
+  ],
+});
 
 const ROLE_CONFIG = {
   team: [
@@ -68,6 +79,111 @@ const ROLE_CONFIG = {
   ]
 };
 
+// PDF Styles - Professional Directory Report
+const pdfStyles = StyleSheet.create({
+  page: {
+    padding: 30,
+    fontSize: 10,
+    fontFamily: 'Source Sans 3',
+  },
+  header: {
+    fontSize: 18,
+    fontWeight: 700,
+    marginBottom: 20,
+    paddingBottom: 10,
+    borderBottom: '2 solid #333',
+  },
+  personRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottom: '0.5 solid #ddd',
+    minHeight: 30,
+  },
+  nameColumn: {
+    width: '30%',
+    paddingRight: 10,
+  },
+  nameText: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: '#000',
+  },
+  detailsColumn: {
+    width: '70%',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+  },
+  detailText: {
+    fontSize: 9,
+    color: '#444',
+    lineHeight: 1.4,
+  },
+  checkboxRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 15,
+    marginTop: 4,
+  },
+  checkbox: {
+    fontSize: 9,
+    color: '#666',
+  },
+});
+
+// PDF Document Component
+const DirectoryPDFDocument = ({ people, options, title }) => {
+  return (
+    <Document>
+      <Page size="LETTER" style={pdfStyles.page}>
+        <Text style={pdfStyles.header}>{title}</Text>
+        
+        {people.map((person, index) => (
+          <View key={index} style={pdfStyles.personRow} wrap={false}>
+            {/* Name Column - 30% */}
+            <View style={pdfStyles.nameColumn}>
+              <Text style={pdfStyles.nameText}>{person.name}</Text>
+            </View>
+            
+            {/* Details Column - 70% */}
+            <View style={pdfStyles.detailsColumn}>
+              {options.includePhone && person.phone && (
+                <Text style={pdfStyles.detailText}>Phone: {person.phone}</Text>
+              )}
+              {options.includeEmail && person.email && (
+                <Text style={pdfStyles.detailText}>Email: {person.email}</Text>
+              )}
+              {options.includeAddress && person.address && (
+                <Text style={pdfStyles.detailText}>Address: {person.address}</Text>
+              )}
+              {options.includeChurch && person.church && (
+                <Text style={pdfStyles.detailText}>Church: {person.church}</Text>
+              )}
+              {options.includeLastWeekend && person.lastWeekend && (
+                <Text style={pdfStyles.detailText}>Last Weekend: {person.lastWeekend}</Text>
+              )}
+              {options.includeLastRole && person.lastRole && (
+                <Text style={pdfStyles.detailText}>Last Role: {person.lastRole}</Text>
+              )}
+              {(options.includeContactedCheckbox || options.includeAcceptedCheckbox) && (
+                <View style={pdfStyles.checkboxRow}>
+                  {options.includeContactedCheckbox && (
+                    <Text style={pdfStyles.checkbox}>☐ Contacted</Text>
+                  )}
+                  {options.includeAcceptedCheckbox && (
+                    <Text style={pdfStyles.checkbox}>☐ Accepted</Text>
+                  )}
+                </View>
+              )}
+            </View>
+          </View>
+        ))}
+      </Page>
+    </Document>
+  );
+};
+
 export default function Directory() {
   const { orgId } = useAuth();
   
@@ -95,6 +211,7 @@ export default function Directory() {
     includeContactedCheckbox: false,
     includeAcceptedCheckbox: false
   });
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
   const controlsCardRef = useRef(null);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(-1);
   
@@ -1038,8 +1155,8 @@ export default function Directory() {
                   <button 
                     className="print-button" 
                     onClick={() => {
-                      // TODO: Generate PDF with selected options
-                      window.showMainStatus('PDF generation coming soon!', false);
+                      setShowPdfPreview(true);
+                      setShowPrintOptions(false);
                     }}
                     style={{ flex: 1, padding: '6px 8px', fontSize: '13px' }}
                   >
@@ -1121,6 +1238,75 @@ export default function Directory() {
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        )}
+
+        {/* PDF Preview Modal */}
+        {showPdfPreview && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              width: '90%',
+              maxWidth: '1200px',
+              height: '90%',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            }}>
+              {/* Modal Header */}
+              <div style={{
+                padding: '16px 24px',
+                borderBottom: '2px solid #007bff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 900 }}>
+                  Directory Report Preview
+                </h2>
+                <button 
+                  className="btn"
+                  onClick={() => setShowPdfPreview(false)}
+                  style={{ padding: '6px 12px' }}
+                >
+                  Close ✕
+                </button>
+              </div>
+
+              {/* PDF Viewer */}
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <PDFViewer width="100%" height="100%">
+                  <DirectoryPDFDocument
+                    people={filteredPescadores.map(person => ({
+                      name: nameFormat === 'firstLast'
+                        ? `${person.Preferred || person.First || ''} ${person.Last || ''}`.trim()
+                        : `${person.Last || ''}, ${person.Preferred || person.First || ''}`.trim(),
+                      phone: person.Phone1 || person.Phone2 || '',
+                      email: person.Email || '',
+                      address: `${person.Address || ''}, ${person.City || ''}, ${person.State || ''} ${person.Zip || ''}`.trim(),
+                      church: person.Church || '',
+                      lastWeekend: person['Candidate Weekend'] || '',
+                      lastRole: person['Last Role'] || ''
+                    }))}
+                    options={printOptions}
+                    title={activeTeamIdentifier ? `Directory - ${activeTeamIdentifier}` : 'Directory'}
+                  />
+                </PDFViewer>
+              </div>
             </div>
           </div>
         )}
