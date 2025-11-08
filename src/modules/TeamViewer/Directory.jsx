@@ -916,79 +916,159 @@ export default function Directory() {
                   </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={printOptions.includePhone}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includePhone: e.target.checked }))}
-                      />
-                      <span>Phone Number</span>
-                    </label>
-
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={printOptions.includeEmail}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeEmail: e.target.checked }))}
-                      />
-                      <span>Email Address</span>
-                    </label>
-
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={printOptions.includeAddress}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAddress: e.target.checked }))}
-                      />
-                      <span>Mailing Address</span>
-                    </label>
-
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={printOptions.includeChurch}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeChurch: e.target.checked }))}
-                      />
-                      <span>Church</span>
-                    </label>
-
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={printOptions.includeLastWeekend}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastWeekend: e.target.checked }))}
-                      />
-                      <span>Last Weekend Served</span>
-                    </label>
-
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={printOptions.includeLastRole}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeLastRole: e.target.checked }))}
-                      />
-                      <span>Last Role Served</span>
-                    </label>
-
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={printOptions.includeContactedCheckbox}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: e.target.checked }))}
-                      />
-                      <span>Contacted (checkbox)</span>
-                    </label>
-
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={printOptions.includeAcceptedCheckbox}
-                        onChange={(e) => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: e.target.checked }))}
-                      />
-                      <span>Accepted (checkbox)</span>
-                    </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {/* Phone Number Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Phone Number</span>
+                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
+                      <div 
+                        className={`opt ${!printOptions.includePhone ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includePhone: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`opt ${printOptions.includePhone ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includePhone: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Email Address Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Email Address</span>
+                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
+                      <div 
+                        className={`opt ${!printOptions.includeEmail ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeEmail: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`opt ${printOptions.includeEmail ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeEmail: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mailing Address Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Mailing Address</span>
+                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
+                      <div 
+                        className={`opt ${!printOptions.includeAddress ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAddress: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`opt ${printOptions.includeAddress ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAddress: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Church Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Church</span>
+                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
+                      <div 
+                        className={`opt ${!printOptions.includeChurch ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeChurch: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`opt ${printOptions.includeChurch ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeChurch: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Last Weekend Served Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Last Weekend Served</span>
+                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
+                      <div 
+                        className={`opt ${!printOptions.includeLastWeekend ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastWeekend: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`opt ${printOptions.includeLastWeekend ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastWeekend: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Last Role Served Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Last Role Served</span>
+                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
+                      <div 
+                        className={`opt ${!printOptions.includeLastRole ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastRole: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`opt ${printOptions.includeLastRole ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeLastRole: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contacted Checkbox Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Contacted (checkbox)</span>
+                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
+                      <div 
+                        className={`opt ${!printOptions.includeContactedCheckbox ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`opt ${printOptions.includeContactedCheckbox ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeContactedCheckbox: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Accepted Checkbox Toggle */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ flex: '1', fontSize: '0.9rem' }}>Accepted (checkbox)</span>
+                    <div className="toggle" style={{ flex: '0 0 auto', width: '100px' }}>
+                      <div 
+                        className={`opt ${!printOptions.includeAcceptedCheckbox ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: false }))}
+                      >
+                        No
+                      </div>
+                      <div 
+                        className={`opt ${printOptions.includeAcceptedCheckbox ? 'active' : ''}`}
+                        onClick={() => setPrintOptions(prev => ({ ...prev, includeAcceptedCheckbox: true }))}
+                      >
+                        Yes
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '24px 0' }} />
 
@@ -1001,7 +1081,7 @@ export default function Directory() {
                   <button 
                     className="clear-button" 
                     onClick={() => setShowPrintOptions(false)}
-                    style={{ flex: 1 }}
+                    style={{ flex: 1, padding: '6px 8px', fontSize: '13px' }}
                   >
                     Cancel
                   </button>
@@ -1011,7 +1091,7 @@ export default function Directory() {
                       // TODO: Generate PDF with selected options
                       window.showMainStatus('PDF generation coming soon!', false);
                     }}
-                    style={{ flex: 1 }}
+                    style={{ flex: 1, padding: '6px 8px', fontSize: '13px' }}
                   >
                     Generate PDF
                   </button>
@@ -2401,46 +2481,6 @@ function ProfessorRolesCard({ profile, isEditMode, onFieldChange }) {
             opacity: 1;
             transform: translateX(0);
           }
-        }
-        
-        /* Green checkboxes - maximum specificity */
-        #printOptionsPanel input[type="checkbox"],
-        .print-options-panel input[type="checkbox"],
-        div.print-options-panel input[type="checkbox"] {
-          width: 18px !important;
-          height: 18px !important;
-          cursor: pointer !important;
-          -webkit-appearance: none !important;
-          -moz-appearance: none !important;
-          appearance: none !important;
-          border: 2px solid #ccc !important;
-          border-radius: 3px !important;
-          position: relative !important;
-          background-color: #ffffff !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          flex-shrink: 0 !important;
-        }
-        
-        #printOptionsPanel input[type="checkbox"]:checked,
-        .print-options-panel input[type="checkbox"]:checked,
-        div.print-options-panel input[type="checkbox"]:checked {
-          background-color: #2ea44f !important;
-          border-color: #2ea44f !important;
-        }
-        
-        #printOptionsPanel input[type="checkbox"]:checked::after,
-        .print-options-panel input[type="checkbox"]:checked::after,
-        div.print-options-panel input[type="checkbox"]:checked::after {
-          content: '✓' !important;
-          position: absolute !important;
-          color: #ffffff !important;
-          font-size: 14px !important;
-          font-weight: bold !important;
-          top: 50% !important;
-          left: 50% !important;
-          transform: translate(-50%, -50%) !important;
-          line-height: 1 !important;
         }
       `}</style>
     </>
