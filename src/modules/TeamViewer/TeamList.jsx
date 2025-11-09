@@ -1,11 +1,11 @@
 // src/modules/TeamViewer/TeamList.jsx
-// UPDATED: Changed "Print Report" button to use react-pdf with CombinedRoster styling
+// UPDATED: Added PDF preview before download
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { generatePrintableProfileHTML, PRINT_PROFILE_CSS } from './../../utils/profilePrintUtils';
-import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Font } from '@react-pdf/renderer';
 
 // Register Source Sans 3 font from local TTF files
 Font.register({
@@ -313,8 +313,9 @@ export default function TeamList() {
   const [showTour, setShowTour] = useState(false);
   const [tourStep, setTourStep] = useState(0);
   
-  // NEW: State for PDF generation
+  // NEW: State for PDF generation with preview
   const [showPdfModal, setShowPdfModal] = useState(false);
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
   
   const [newRole, setNewRole] = useState('');
   const [showBadgePanel, setShowBadgePanel] = useState(false);
@@ -826,7 +827,6 @@ export default function TeamList() {
     }
   };
 
-  // NEW: Handle Print Report with PDF modal
   const handlePrintRoster = () => {
     if (!teamRoster || teamRoster.length === 0) {
       window.showMainStatus('No team members to print', true);
@@ -834,6 +834,7 @@ export default function TeamList() {
     }
 
     setShowPdfModal(true);
+    setShowPdfPreview(false);
   };
 
   const handlePrintAllProfiles = () => {
@@ -2220,7 +2221,7 @@ export default function TeamList() {
         </div>
       )}
 
-      {/* NEW: PDF Download Modal */}
+      {/* NEW: PDF Modal with Preview Option */}
       {showPdfModal && (
         <div style={{
           position: 'fixed',
@@ -2232,22 +2233,27 @@ export default function TeamList() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 10000
+          zIndex: 10000,
+          padding: '20px'
         }}>
           <div style={{
             backgroundColor: 'var(--panel)',
             borderRadius: '16px',
             border: '1px solid var(--border)',
-            width: '90%',
-            maxWidth: '500px',
+            width: showPdfPreview ? '95%' : '90%',
+            maxWidth: showPdfPreview ? '1400px' : '600px',
+            maxHeight: '90vh',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             {/* Header */}
             <div style={{
               padding: '20px 24px',
               borderBottom: '1px solid var(--border)',
-              background: 'var(--panel-header)'
+              background: 'var(--panel-header)',
+              flexShrink: 0
             }}>
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--ink)' }}>
                 Team Roster PDF
@@ -2255,54 +2261,93 @@ export default function TeamList() {
             </div>
 
             {/* Body */}
-            <div style={{ padding: '24px', textAlign: 'center' }}>
-              <div style={{ 
-                fontSize: '3rem', 
-                marginBottom: '16px',
-                color: 'var(--accentB)'
-              }}>
-                📄
-              </div>
-              <p style={{ 
-                fontSize: '1rem', 
-                color: 'var(--ink)', 
-                marginBottom: '8px',
-                fontWeight: 600
-              }}>
-                Team Roster - {weekendIdentifier.replace(/^(Men's|Women's)\s*(\d+)$/i, "$1 Weekend #$2")}
-              </p>
-              <p style={{ 
-                fontSize: '0.85rem', 
-                color: 'var(--muted)', 
-                marginBottom: '24px'
-              }}>
-                {teamRoster.length} team member{teamRoster.length !== 1 ? 's' : ''}
-              </p>
-              <PDFDownloadLink
-                document={
-                  <TeamRosterPDFDocument
-                    weekendIdentifier={weekendIdentifier}
-                    teamMembers={teamRoster}
-                    roleOrder={ROLE_ORDER}
-                  />
-                }
-                fileName={`Team_Roster_${weekendIdentifier.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
-              >
-                {({ loading: pdfLoading }) => (
-                  <button 
-                    className="btn btn-primary" 
-                    disabled={pdfLoading}
-                    style={{ 
-                      width: '100%',
-                      padding: '12px',
-                      fontSize: '1rem',
-                      fontWeight: 600
-                    }}
-                  >
-                    {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
-                  </button>
-                )}
-              </PDFDownloadLink>
+            <div style={{ 
+              padding: showPdfPreview ? '0' : '24px', 
+              textAlign: showPdfPreview ? 'left' : 'center',
+              flex: 1,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              {!showPdfPreview ? (
+                <>
+                  <div style={{ 
+                    fontSize: '3rem', 
+                    marginBottom: '16px',
+                    color: 'var(--accentB)'
+                  }}>
+                    📄
+                  </div>
+                  <p style={{ 
+                    fontSize: '1rem', 
+                    color: 'var(--ink)', 
+                    marginBottom: '8px',
+                    fontWeight: 600
+                  }}>
+                    Team Roster - {weekendIdentifier.replace(/^(Men's|Women's)\s*(\d+)$/i, "$1 Weekend #$2")}
+                  </p>
+                  <p style={{ 
+                    fontSize: '0.85rem', 
+                    color: 'var(--muted)', 
+                    marginBottom: '24px'
+                  }}>
+                    {teamRoster.length} team member{teamRoster.length !== 1 ? 's' : ''}
+                  </p>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    <button 
+                      className="btn"
+                      onClick={() => setShowPdfPreview(true)}
+                      style={{ 
+                        padding: '12px 24px',
+                        fontSize: '1rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      Show Preview
+                    </button>
+                    <PDFDownloadLink
+                      document={
+                        <TeamRosterPDFDocument
+                          weekendIdentifier={weekendIdentifier}
+                          teamMembers={teamRoster}
+                          roleOrder={ROLE_ORDER}
+                        />
+                      }
+                      fileName={`Team_Roster_${weekendIdentifier.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
+                    >
+                      {({ loading: pdfLoading }) => (
+                        <button 
+                          className="btn btn-primary" 
+                          disabled={pdfLoading}
+                          style={{ 
+                            padding: '12px 24px',
+                            fontSize: '1rem',
+                            fontWeight: 600
+                          }}
+                        >
+                          {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
+                        </button>
+                      )}
+                    </PDFDownloadLink>
+                  </div>
+                </>
+              ) : (
+                <div style={{ 
+                  flex: 1,
+                  border: '1px solid var(--border)', 
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  margin: '16px'
+                }}>
+                  <PDFViewer width="100%" height="100%" style={{ border: 'none' }}>
+                    <TeamRosterPDFDocument
+                      weekendIdentifier={weekendIdentifier}
+                      teamMembers={teamRoster}
+                      roleOrder={ROLE_ORDER}
+                    />
+                  </PDFViewer>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
@@ -2310,16 +2355,53 @@ export default function TeamList() {
               padding: '16px 24px',
               borderTop: '1px solid var(--border)',
               display: 'flex',
-              justifyContent: 'flex-end',
-              background: 'var(--panel-header)'
+              justifyContent: showPdfPreview ? 'space-between' : 'flex-end',
+              background: 'var(--panel-header)',
+              flexShrink: 0
             }}>
-              <button 
-                className="btn"
-                onClick={() => setShowPdfModal(false)}
-                style={{ minWidth: '100px' }}
-              >
-                Close
-              </button>
+              {showPdfPreview && (
+                <button 
+                  className="btn"
+                  onClick={() => setShowPdfPreview(false)}
+                  style={{ minWidth: '100px' }}
+                >
+                  ← Back
+                </button>
+              )}
+              {showPdfPreview && (
+                <PDFDownloadLink
+                  document={
+                    <TeamRosterPDFDocument
+                      weekendIdentifier={weekendIdentifier}
+                      teamMembers={teamRoster}
+                      roleOrder={ROLE_ORDER}
+                    />
+                  }
+                  fileName={`Team_Roster_${weekendIdentifier.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
+                >
+                  {({ loading: pdfLoading }) => (
+                    <button 
+                      className="btn btn-primary" 
+                      disabled={pdfLoading}
+                      style={{ minWidth: '120px' }}
+                    >
+                      {pdfLoading ? 'Generating...' : 'Download PDF'}
+                    </button>
+                  )}
+                </PDFDownloadLink>
+              )}
+              {!showPdfPreview && (
+                <button 
+                  className="btn"
+                  onClick={() => {
+                    setShowPdfModal(false);
+                    setShowPdfPreview(false);
+                  }}
+                  style={{ minWidth: '100px' }}
+                >
+                  Close
+                </button>
+              )}
             </div>
           </div>
         </div>
