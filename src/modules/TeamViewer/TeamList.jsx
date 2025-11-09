@@ -1,10 +1,300 @@
 // src/modules/TeamViewer/TeamList.jsx
-// UPDATED: Added "Update Database" button to batch update team member service records
+// UPDATED: Changed "Print Report" button to use react-pdf with CombinedRoster styling
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { generatePrintableProfileHTML, PRINT_PROFILE_CSS } from './../../utils/profilePrintUtils';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Font } from '@react-pdf/renderer';
+
+// Register Source Sans 3 font from local TTF files
+Font.register({
+  family: 'Source Sans 3',
+  fonts: [
+    {
+      src: '/fonts/SourceSans3-Regular.ttf',
+      fontWeight: 400,
+    },
+    {
+      src: '/fonts/SourceSans3-Italic.ttf',
+      fontWeight: 400,
+      fontStyle: 'italic',
+    },
+    {
+      src: '/fonts/SourceSans3-SemiBold.ttf',
+      fontWeight: 600,
+    },
+    {
+      src: '/fonts/SourceSans3-Bold.ttf',
+      fontWeight: 700,
+    },
+  ],
+});
+
+// PDF Styles - Matching CombinedRoster.jsx exactly
+const pdfStyles = StyleSheet.create({
+  page: {
+    padding: 30,
+    fontSize: 10,
+    fontFamily: 'Source Sans 3',
+  },
+  sectionHeader: {
+    fontSize: 17,
+    fontWeight: 700,
+    marginBottom: 10,
+    paddingBottom: 5,
+    borderBottom: '2 solid #333',
+  },
+  roleHeader: {
+    fontSize: 11,
+    fontWeight: 700,
+    marginTop: 8,
+    marginBottom: 4,
+    color: '#2c5aa0',
+    backgroundColor: '#f5f5f5',
+    padding: '3 5',
+  },
+  twoColumnContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  threeColumnContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  column: {
+    flex: 1,
+    paddingLeft: 6,
+  },
+  columnNoIndent: {
+    flex: 1,
+    paddingLeft: 5,
+  },
+  memberRow: {
+    marginBottom: 6,
+    paddingBottom: 4,
+    borderBottom: '0.5 solid #ddd',
+  },
+  memberName: {
+    fontSize: 10,
+    fontWeight: 700,
+    marginBottom: 2,
+  },
+  memberDetails: {
+    fontSize: 8.5,
+    color: '#444',
+    lineHeight: 1.3,
+  },
+});
+
+// PDF Document Component for Team Roster
+const TeamRosterPDFDocument = ({ 
+  weekendIdentifier,
+  teamMembers,
+  roleOrder 
+}) => {
+  return (
+    <Document>
+      {/* Team Members Page 1 - Leadership Structure */}
+      <Page size="LETTER" style={pdfStyles.page}>
+        <Text style={pdfStyles.sectionHeader}>
+          Team Roster - {weekendIdentifier.replace(/^(Men's|Women's)\s*(\d+)$/i, "$1 Weekend #$2")}
+        </Text>
+        
+        {/* Rector - Full Width Header, Left-Aligned Info */}
+        {(() => {
+          const rectorMembers = teamMembers.filter(m => m.role === 'Rector');
+          if (rectorMembers.length === 0) return null;
+          
+          return (
+            <View wrap={false} style={{ marginBottom: 16 }}>
+              <Text style={pdfStyles.roleHeader}>Rector</Text>
+              <View style={pdfStyles.twoColumnContainer}>
+                <View style={pdfStyles.column}>
+                  {rectorMembers.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.memberRow}>
+                      <Text style={pdfStyles.memberName}>{member.name}</Text>
+                      <Text style={pdfStyles.memberDetails}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={pdfStyles.column}>
+                  {rectorMembers.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.memberRow}>
+                      <Text style={pdfStyles.memberName}>{member.name}</Text>
+                      <Text style={pdfStyles.memberDetails}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          );
+        })()}
+        
+        {/* Row 2: BUR, Head, Asst Head */}
+        <View style={pdfStyles.threeColumnContainer} wrap={false}>
+          {['BUR', 'Head', 'Asst Head'].map((role) => {
+            const members = teamMembers.filter(m => m.role === role);
+            if (members.length === 0) return <View key={role} style={pdfStyles.columnNoIndent} />;
+            
+            return (
+              <View key={role} style={pdfStyles.columnNoIndent}>
+                <Text style={pdfStyles.roleHeader}>{role}</Text>
+                {members.map((member, idx) => (
+                  <View key={idx} style={pdfStyles.memberRow}>
+                    <Text style={pdfStyles.memberName}>{member.name}</Text>
+                    <Text style={pdfStyles.memberDetails}>
+                      {member.address && `${member.address}\n`}
+                      {member.email && `${member.email}\n`}
+                      {member.phone && `${member.phone}\n`}
+                      {member.church && `${member.church}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+        </View>
+        
+        {/* Row 3: Head Spiritual Director, Spiritual Director(s), Rover */}
+        <View style={pdfStyles.threeColumnContainer} wrap={false}>
+          {['Head Spiritual Director', 'Spiritual Director', 'Rover'].map((role) => {
+            const members = teamMembers.filter(m => m.role === role);
+            if (members.length === 0) return <View key={role} style={pdfStyles.columnNoIndent} />;
+            
+            return (
+              <View key={role} style={pdfStyles.columnNoIndent}>
+                <Text style={pdfStyles.roleHeader}>{role}</Text>
+                {members.map((member, idx) => (
+                  <View key={idx} style={pdfStyles.memberRow}>
+                    <Text style={pdfStyles.memberName}>{member.name}</Text>
+                    <Text style={pdfStyles.memberDetails}>
+                      {member.address && `${member.address}\n`}
+                      {member.email && `${member.email}\n`}
+                      {member.phone && `${member.phone}\n`}
+                      {member.church && `${member.church}`}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+        </View>
+      </Page>
+
+      {/* Team Members Page 2+ - Service Teams and Professors */}
+      <Page size="LETTER" style={pdfStyles.page}>
+        
+        {/* All non-professor, non-leadership roles */}
+        {roleOrder.filter(role => 
+          !['Rector', 'BUR', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director', 'Rover'].includes(role) &&
+          !role.startsWith('Prof_')
+        ).map(role => {
+          const members = teamMembers.filter(m => m.role === role);
+          if (members.length === 0) return null;
+          
+          return (
+            <View key={role} wrap={false} style={{ marginBottom: 8 }}>
+              <Text style={pdfStyles.roleHeader}>{role}</Text>
+              <View style={pdfStyles.twoColumnContainer}>
+                <View style={pdfStyles.column}>
+                  {members.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.memberRow}>
+                      <Text style={pdfStyles.memberName}>{member.name}</Text>
+                      <Text style={pdfStyles.memberDetails}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                
+                <View style={pdfStyles.column}>
+                  {members.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.memberRow}>
+                      <Text style={pdfStyles.memberName}>{member.name}</Text>
+                      <Text style={pdfStyles.memberDetails}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          );
+        })}
+        
+        {/* All Professors grouped together in 2 columns */}
+        {(() => {
+          const allProfessors = roleOrder
+            .filter(role => role.startsWith('Prof_'))
+            .flatMap(role => {
+              const members = teamMembers.filter(m => m.role === role);
+              return members.map(member => ({
+                ...member,
+                displayRole: role.replace(/^Prof_/, '')
+              }));
+            });
+          
+          if (allProfessors.length === 0) return null;
+          
+          return (
+            <View wrap={false} style={{ marginBottom: 8 }}>
+              <Text style={pdfStyles.roleHeader}>Professors</Text>
+              <View style={pdfStyles.twoColumnContainer}>
+                <View style={pdfStyles.column}>
+                  {allProfessors.filter((_, idx) => idx % 2 === 0).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.memberRow}>
+                      <Text style={pdfStyles.memberName}>{member.name} - {member.displayRole}</Text>
+                      <Text style={pdfStyles.memberDetails}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                
+                <View style={pdfStyles.column}>
+                  {allProfessors.filter((_, idx) => idx % 2 === 1).map((member, idx) => (
+                    <View key={idx} style={pdfStyles.memberRow}>
+                      <Text style={pdfStyles.memberName}>{member.name} - {member.displayRole}</Text>
+                      <Text style={pdfStyles.memberDetails}>
+                        {member.address && `${member.address}\n`}
+                        {member.email && `${member.email}\n`}
+                        {member.phone && `${member.phone}\n`}
+                        {member.church && `${member.church}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          );
+        })()}
+      </Page>
+    </Document>
+  );
+};
 
 export default function TeamList() {
   const { user, orgId } = useAuth();
@@ -16,12 +306,24 @@ export default function TeamList() {
   const [removingId, setRemovingId] = useState(null);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [testMode, setTestMode] = useState(true); // Start in test mode by default
+  const [testMode, setTestMode] = useState(true);
   const [showChangeRoleModal, setShowChangeRoleModal] = useState(false);
-  const [changingMember, setChangingMember] = useState(null); // { id, name, currentRole }
-  const [expandedRows, setExpandedRows] = useState(new Set()); // Track expanded rows by ID
+  const [changingMember, setChangingMember] = useState(null);
+  const [expandedRows, setExpandedRows] = useState(new Set());
   const [showTour, setShowTour] = useState(false);
   const [tourStep, setTourStep] = useState(0);
+  
+  // NEW: State for PDF generation
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  
+  const [newRole, setNewRole] = useState('');
+  const [showBadgePanel, setShowBadgePanel] = useState(false);
+  const [badgeExportType, setBadgeExportType] = useState('team');
+  const [badgeCommunity, setBadgeCommunity] = useState('');
+  const [badgeScripture, setBadgeScripture] = useState('');
+  const [badgeTheme, setBadgeTheme] = useState('');
+  const [badgeProfPosition, setBadgeProfPosition] = useState('blank');
+  const [candidates, setCandidates] = useState([]);
 
   const tourSteps = [
     {
@@ -75,17 +377,6 @@ export default function TeamList() {
     localStorage.setItem('teamListTourCompleted', 'true');
   };
 
-  // Tour removed from auto-start - only launches via floating icon click
-  
-  const [newRole, setNewRole] = useState('');
-  const [showBadgePanel, setShowBadgePanel] = useState(false);
-  const [badgeExportType, setBadgeExportType] = useState('team');
-  const [badgeCommunity, setBadgeCommunity] = useState('');
-  const [badgeScripture, setBadgeScripture] = useState('');
-  const [badgeTheme, setBadgeTheme] = useState('');
-  const [badgeProfPosition, setBadgeProfPosition] = useState('blank');
-  const [candidates, setCandidates] = useState([]);
-
   const ROLE_CONFIG = {
     team: [
       { name: 'Rector', key: 'Rector' },
@@ -133,7 +424,6 @@ export default function TeamList() {
     ]
   };
 
-  // Leadership roles that typically have only 1 person
   const LEADERSHIP_ROLES = [
     'Rector', 'BUR', 'Rover',
     'Head', 'Asst Head',
@@ -157,6 +447,25 @@ export default function TeamList() {
     { title: 'Floater Supply Team', head: 'Head Floater Supply', team: 'Floater Supply' },
     { title: 'Worship Team', head: 'Head Worship', team: 'Worship' },
     { title: 'Media Team', head: 'Head Media', team: 'Media' }
+  ];
+
+  const ROLE_ORDER = [
+    'Rector', 'BUR', 'Rover', 'Head', 'Asst Head',
+    'Head Spiritual Director', 'Spiritual Director',
+    'Head Prayer', 'Prayer',
+    'Head Kitchen', 'Asst Head Kitchen', 'Kitchen',
+    'Head Table', 'Table',
+    'Head Chapel', 'Chapel',
+    'Head Dorm', 'Dorm',
+    'Head Palanca', 'Palanca',
+    'Head Gopher', 'Gopher',
+    'Head Storeroom', 'Storeroom',
+    'Head Floater Supply', 'Floater Supply',
+    'Head Worship', 'Worship',
+    'Head Media', 'Media',
+    'Prof_Silent', 'Prof_Ideals', 'Prof_Church', 'Prof_Piety',
+    'Prof_Study', 'Prof_Action', 'Prof_Leaders', 'Prof_Environments',
+    'Prof_CCIA', 'Prof_Reunion'
   ];
 
   useEffect(() => {
@@ -239,7 +548,9 @@ export default function TeamList() {
               name: `${profile.Preferred || profile.First || ''} ${profile.Last || ''}`.trim(),
               role: entry.role,
               email: profile.Email || '',
-              phone: profile.Phone1 || profile.Phone2 || ''
+              phone: profile.Phone1 || profile.Phone2 || '',
+              address: `${profile.Address || ''}, ${profile.City || ''}, ${profile.State || ''} ${profile.Zip || ''}`.trim(),
+              church: profile.Church || ''
             });
           }
         });
@@ -315,7 +626,11 @@ export default function TeamList() {
                   newRoster.push({
                     id: profile.PescadoreKey,
                     name: `${profile.Preferred || profile.First || ''} ${profile.Last || ''}`.trim(),
-                    role: entry.role
+                    role: entry.role,
+                    email: profile.Email || '',
+                    phone: profile.Phone1 || profile.Phone2 || '',
+                    address: `${profile.Address || ''}, ${profile.City || ''}, ${profile.State || ''} ${profile.Zip || ''}`.trim(),
+                    church: profile.Church || ''
                   });
                 }
               });
@@ -344,11 +659,9 @@ export default function TeamList() {
   const handleConfirmRoleChange = async () => {
     if (!newRole || !changingMember) return;
 
-    // Check if new role already has someone assigned
     const existingMembers = teamRoster.filter(m => m.role === newRole && m.id !== changingMember.id);
     
     if (existingMembers.length > 0 && LEADERSHIP_ROLES.includes(newRole)) {
-      // Show warning confirmation
       const names = existingMembers.map(m => m.name).join(', ');
       window.showConfirm({
         title: '⚠️ Role Conflict Warning',
@@ -382,7 +695,6 @@ export default function TeamList() {
         window.showMainStatus(`${changingMember.name} moved to ${newRole}`, false);
       }
 
-      // Reload the team roster
       await loadTeamRoster(weekendIdentifier);
       
       setShowChangeRoleModal(false);
@@ -396,7 +708,6 @@ export default function TeamList() {
     }
   };
 
-  // NEW: Update Database functionality
   const handleUpdateDatabaseClick = () => {
     if (!weekendIdentifier || teamRoster.length === 0) {
       window.showMainStatus?.('No team loaded to update', true);
@@ -412,10 +723,9 @@ export default function TeamList() {
     
     let successCount = 0;
     let errorCount = 0;
-    const previewChanges = []; // Store changes for test mode
+    const previewChanges = [];
     
     try {
-      // Process each team member
       for (const member of teamRoster) {
         const profile = rawTableData.find(p => p.PescadoreKey === member.id);
         if (!profile) {
@@ -427,19 +737,16 @@ export default function TeamList() {
         const role = member.role;
         const updateData = {};
         
-        // Determine field names based on role type
         let statusField = role;
         let lastField = `${role} Service`;
         let qtyField;
         
-        // Handle professor roles (different naming convention)
         if (role.startsWith('Prof_')) {
           qtyField = `${role}_Service_Qty`;
         } else {
           qtyField = `${role.replace(/ /g, '_')}_Service_Qty`;
         }
         
-        // Update STATUS (N → I, I → E, E stays E)
         const currentStatus = (profile[statusField] || 'N').toUpperCase();
         let newStatus = currentStatus;
         if (currentStatus === 'N') {
@@ -449,18 +756,14 @@ export default function TeamList() {
           newStatus = 'E';
           updateData[statusField] = 'E';
         }
-        // If already 'E', no change needed
         
-        // Update LAST SERVICE to current weekend identifier
         const currentLast = profile[lastField] || '(none)';
         updateData[lastField] = weekendIdentifier;
         
-        // Increment QUANTITY by 1
         const currentQty = parseInt(profile[qtyField] || 0, 10);
         const newQty = currentQty + 1;
         updateData[qtyField] = newQty;
         
-        // Store preview for test mode
         previewChanges.push({
           name: member.name,
           role,
@@ -473,9 +776,7 @@ export default function TeamList() {
           updateData
         });
         
-        // TEST MODE: Skip actual database update
         if (!testMode) {
-          // Update database
           const { error } = await supabase
             .from(tableName)
             .update(updateData)
@@ -489,12 +790,10 @@ export default function TeamList() {
             successCount++;
           }
         } else {
-          // In test mode, just count as success
           successCount++;
         }
       }
       
-      // Show results
       if (testMode) {
         console.log('🧪 TEST MODE - No actual database changes made');
         console.log('📋 Preview of changes that WOULD be made:');
@@ -517,7 +816,6 @@ export default function TeamList() {
         }
       }
       
-      // Close modal
       setShowUpdateModal(false);
       
     } catch (error) {
@@ -528,108 +826,14 @@ export default function TeamList() {
     }
   };
 
-
+  // NEW: Handle Print Report with PDF modal
   const handlePrintRoster = () => {
     if (!teamRoster || teamRoster.length === 0) {
       window.showMainStatus('No team members to print', true);
       return;
     }
 
-    const genderTitle = currentGender.charAt(0).toUpperCase() + currentGender.slice(1);
-    const now = new Date();
-    const dateGenerated = now.toLocaleDateString();
-    const timeGenerated = now.toLocaleTimeString();
-    
-    // Helper function to get display name for role
-    const getDisplayName = (role) => {
-      // Check if it's a professor role
-      const profRole = ROLE_CONFIG.professor.find(r => r.key === role);
-      if (profRole) return profRole.name;
-      
-      // Otherwise return the role as-is
-      return role;
-    };
-    
-    // Get full profile data for phone and email
-    const rawTableData = allPescadores[currentGender];
-    
-    let tableRows = '';
-    teamRoster.forEach((member) => {
-      const displayRole = getDisplayName(member.role);
-      const profile = rawTableData.find(p => p.PescadoreKey === member.id);
-      const phone = profile?.Phone1 || '';
-      const email = profile?.Email || '';
-      
-      tableRows += `
-        <tr style="page-break-inside: avoid;">
-          <td style="padding: 16px 10px; font-size: 12px; font-weight: 700; color: #212529;">${member.name}</td>
-          <td style="padding: 16px 10px; font-size: 12px; font-weight: 700; color: #495057;">${displayRole}</td>
-          <td style="padding: 16px 10px; font-size: 11px; font-weight: 700; color: #6c757d;">${phone}</td>
-          <td style="padding: 16px 10px; font-size: 11px; font-weight: 700; color: #6c757d;">${email}</td>
-          <td style="padding: 16px 10px; text-align: center;">
-            <div style="width: 20px; height: 20px; border: 2px solid #6c757d; border-radius: 4px; margin: 0 auto; background-color: white;"></div>
-          </td>
-        </tr>
-      `;
-    });
-
-    const printHTML = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Team Roster - ${weekendIdentifier || genderTitle}</title>
-        </head>
-        <body style="font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background: white;">
-          <div style="padding: 100px 60px; min-height: 100vh;">
-            
-            <!-- Header -->
-            <div style="text-align: center; margin-bottom: 50px; padding-bottom: 20px; border-bottom: 3px solid #333;">
-              <h1 style="font-size: 28px; font-weight: 700; color: #212529; margin: 0 0 8px 0;">Team Roster Print Out</h1>
-              <div style="font-size: 18px; font-weight: 600; color: #495057; margin-bottom: 12px;">${weekendIdentifier || `${genderTitle}'s Team`}</div>
-              <div style="font-size: 13px; color: #6c757d;">Generated on ${dateGenerated} at ${timeGenerated}</div>
-            </div>
-            
-            <!-- Table -->
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 80px;">
-              <thead>
-                <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Name</th>
-                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Position</th>
-                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Phone</th>
-                  <th style="padding: 14px 12px; text-align: left; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Email</th>
-                  <th style="padding: 14px 12px; text-align: center; font-weight: 700; font-size: 14px; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">Contacted</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tableRows}
-              </tbody>
-            </table>
-            
-            <!-- Footer -->
-            <div style="margin-top: 50px; padding-top: 20px; border-top: 2px solid #333;">
-              <div style="font-size: 15px; font-weight: 700; color: #212529;">
-                Total Team Members: <span style="color: #28a745; font-size: 18px;">${teamRoster.length}</span>
-              </div>
-            </div>
-            
-          </div>
-        </body>
-      </html>
-    `;
-
-    if (typeof printJS !== 'undefined') {
-      printJS({
-        printable: printHTML,
-        type: 'raw-html',
-        documentTitle: `Team Roster - ${weekendIdentifier || genderTitle}`
-      });
-    } else {
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(printHTML);
-      printWindow.document.close();
-      printWindow.print();
-    }
+    setShowPdfModal(true);
   };
 
   const handlePrintAllProfiles = () => {
@@ -646,7 +850,6 @@ export default function TeamList() {
       const fullProfile = rawTableData.find(p => p.PescadoreKey === member.id);
       if (fullProfile) {
         const singleProfileHTML = generatePrintableProfileHTML(fullProfile);
-        // Wrap each profile in a div that forces a page break after it and has consistent padding
         allProfilesHTML += `<div style="page-break-after: always; padding: 0.2in;">${singleProfileHTML}</div>`;
       }
     });
@@ -684,7 +887,6 @@ export default function TeamList() {
   const handleOpenBadgePanel = async () => {
     setShowBadgePanel(true);
     
-    // Load organization name and candidates
     try {
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
@@ -695,7 +897,6 @@ export default function TeamList() {
       if (orgError) throw orgError;
       setBadgeCommunity(orgData.name || '');
 
-      // Load candidates (exclude those who declined attendance)
       const { data: candidatesData, error: candidatesError} = await supabase
         .from('cra_applications')
         .select('m_first, m_pref, f_first, f_pref, c_lastname, attendance')
@@ -703,9 +904,8 @@ export default function TeamList() {
 
       if (candidatesError) throw candidatesError;
 
-      // Filter by gender, exclude those with attendance='no', and format
       const formattedCandidates = (candidatesData || [])
-        .filter(c => c.attendance !== 'no')  // Exclude declined/withdrawn
+        .filter(c => c.attendance !== 'no')
         .map(c => {
         if (currentGender === 'men') {
           return {
@@ -751,7 +951,6 @@ export default function TeamList() {
     const rawTableData = allPescadores[currentGender];
     const weekendInfo = weekendIdentifier;
 
-    // Add team members
     if (badgeExportType === 'team' || badgeExportType === 'both') {
       teamRoster.forEach(member => {
         const profile = rawTableData.find(p => p.PescadoreKey === member.id);
@@ -760,14 +959,12 @@ export default function TeamList() {
           const lastName = profile.Last || '';
           let position = member.role;
 
-          // Handle professor positions
           if (position.startsWith('Prof_')) {
             if (badgeProfPosition === 'blank') {
               position = '';
             } else if (badgeProfPosition === 'table-leader') {
               position = 'Table Leader';
             } else {
-              // Keep the role but remove Prof_ prefix
               position = position.replace('Prof_', '');
             }
           }
@@ -785,7 +982,6 @@ export default function TeamList() {
       });
     }
 
-    // Add candidates
     if (badgeExportType === 'candidates' || badgeExportType === 'both') {
       candidates.forEach(candidate => {
         csvRows.push([
@@ -795,17 +991,15 @@ export default function TeamList() {
           weekendInfo,
           badgeScripture,
           badgeTheme,
-          '' // No position for candidates
+          ''
         ]);
       });
     }
 
-    // Convert to CSV string
     const csvContent = csvRows.map(row => 
       row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
     ).join('\n');
 
-    // Download CSV
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -822,6 +1016,7 @@ export default function TeamList() {
 
     handleCloseBadgePanel();
   };
+
   const renderRectorSection = () => {
     const rector = teamRoster.find(m => m.role === 'Rector');
     const isExpanded = rector && expandedRows.has(rector.id);
@@ -901,7 +1096,7 @@ export default function TeamList() {
     );
   };
 
-    const renderLeadershipSection = () => {
+  const renderLeadershipSection = () => {
     const headSpirDirector = teamRoster.filter(m => m.role === 'Head Spiritual Director');
     const spirDirectors = teamRoster.filter(m => m.role === 'Spiritual Director');
     const heads = teamRoster.filter(m => m.role === 'Head');
@@ -1038,7 +1233,7 @@ export default function TeamList() {
     );
   };
 
-    const renderProfessorSection = () => {
+  const renderProfessorSection = () => {
     const professorRoles = ROLE_CONFIG.professor.map(r => r.key);
     const professors = professorRoles.map(role => ({
       role,
@@ -1131,7 +1326,6 @@ export default function TeamList() {
       );
     };
 
-    // Split professors into two columns
     const midpoint = Math.ceil(professors.length / 2);
     const leftColumn = professors.slice(0, midpoint);
     const rightColumn = professors.slice(midpoint);
@@ -1169,7 +1363,7 @@ export default function TeamList() {
     );
   };
 
-    const renderUnifiedTeamSection = (group) => {
+  const renderUnifiedTeamSection = (group) => {
     const headMembers = teamRoster.filter(m => m.role === group.head);
     const assistantHeadMembers = group.assistantHead ? teamRoster.filter(m => m.role === group.assistantHead) : [];
     const teamMembers = teamRoster.filter(m => m.role === group.team);
@@ -1255,7 +1449,6 @@ export default function TeamList() {
       );
     };
 
-    // Combine all members for two-column layout
     const allMembers = [
       ...headMembers.map(m => ({ ...m, roleLabel: 'HEAD' })),
       ...assistantHeadMembers.map(m => ({ ...m, roleLabel: 'ASST HEAD' })),
@@ -1356,13 +1549,13 @@ export default function TeamList() {
 
           {/* Action Buttons - Right Side */}
           <div id="tour-export-buttons" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-<button className="btn btn-warning" onClick={handlePrintRoster}>
+            <button className="btn btn-warning" onClick={handlePrintRoster}>
               Print Report
             </button>
-          <button className="btn btn-warning" onClick={handlePrintAllProfiles}>
+            <button className="btn btn-warning" onClick={handlePrintAllProfiles}>
               Print All Profiles
             </button>
-          <button 
+            <button 
               id="tour-update-database"
               className="btn btn-primary" 
               onClick={handleUpdateDatabaseClick}
@@ -1377,18 +1570,16 @@ export default function TeamList() {
             >
               {isUpdating ? 'Processing...' : 'Update Database'}
             </button>
-          <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
+            <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
               Export for Team Book
             </button>
-          <button className="btn btn-primary" id="export-badge-btn" onClick={handleOpenBadgePanel}>
+            <button className="btn btn-primary" id="export-badge-btn" onClick={handleOpenBadgePanel}>
               Export to Team Badges
             </button>
           </div>
         </div>
           
       </div>
-
-        
 
       <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
         <div 
@@ -1416,8 +1607,6 @@ export default function TeamList() {
             )}
           </div>
         </div>
-
-        
 
         {showBadgePanel && (
           <div 
@@ -1558,478 +1747,583 @@ export default function TeamList() {
         )}
 
       </div>
-        {/* Change Role Modal */}
-        {showChangeRoleModal && changingMember && (
+
+      {/* Change Role Modal */}
+      {showChangeRoleModal && changingMember && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }}>
           <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10000
+            backgroundColor: 'var(--panel)',
+            borderRadius: '16px',
+            border: '1px solid var(--border)',
+            width: '90%',
+            maxWidth: '800px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
+            overflow: 'hidden'
           }}>
+            {/* Header */}
             <div style={{
-              backgroundColor: 'var(--panel)',
-              borderRadius: '16px',
-              border: '1px solid var(--border)',
-              width: '90%',
-              maxWidth: '800px',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
-              overflow: 'hidden'
+              padding: '20px 24px',
+              borderBottom: '1px solid var(--border)',
+              background: 'var(--panel-header)'
             }}>
-              {/* Header */}
-              <div style={{
-                padding: '20px 24px',
-                borderBottom: '1px solid var(--border)',
-                background: 'var(--panel-header)'
-              }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--ink)' }}>
-                  Change Role
-                </h3>
-              </div>
-
-              {/* Body */}
-              <div style={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
-                <div style={{ marginBottom: '20px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '4px' }}>Member:</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)' }}>{changingMember.name}</div>
-                </div>
-
-                <div style={{ marginBottom: '24px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '6px' }}>Current Role:</div>
-                  <div style={{ 
-                    fontSize: '1.1rem', 
-                    fontWeight: 700, 
-                    color: 'var(--accentB)',
-                    padding: '8px 12px',
-                    backgroundColor: 'var(--panel-header)',
-                    borderRadius: '6px',
-                    border: '2px solid var(--accentB)'
-                  }}>
-                    {changingMember.currentRole}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="label" style={{ display: 'block', marginBottom: '12px' }}>Select New Role:</label>
-                  
-                  {/* All roles in one unified grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
-                    {/* Leadership */}
-                    {['Rector', 'BUR', 'Rover', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                    
-                    {/* Professor Team */}
-                    {[
-                      { value: 'Prof_Silent', label: 'Silent' },
-                      { value: 'Prof_Ideals', label: 'Ideals' },
-                      { value: 'Prof_Church', label: 'Church' },
-                      { value: 'Prof_Piety', label: 'Piety' },
-                      { value: 'Prof_Study', label: 'Study' },
-                      { value: 'Prof_Action', label: 'Action' },
-                      { value: 'Prof_Leaders', label: 'Leaders' },
-                      { value: 'Prof_Environments', label: 'Environments' },
-                      { value: 'Prof_CCIA', label: 'CCIA' },
-                      { value: 'Prof_Reunion', label: 'Reunion' }
-                    ].map(role => (
-                      <button
-                        key={role.value}
-                        onClick={() => setNewRole(role.value)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role.value ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role.value ? 'white' : 'var(--ink)',
-                          border: newRole === role.value ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role.label}
-                      </button>
-                    ))}
-                    
-                    {/* Kitchen Team */}
-                    {['Head Kitchen', 'Asst Head Kitchen', 'Kitchen'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                    
-                    {/* Prayer Team */}
-                    {['Head Prayer', 'Prayer'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                    
-                    {/* Table Team */}
-                    {['Head Table', 'Table'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                    
-                    {/* Chapel Team */}
-                    {['Head Chapel', 'Chapel'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                    
-                    {/* Dorm Team */}
-                    {['Head Dorm', 'Dorm'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                    
-                    {/* Palanca Team */}
-                    {['Head Palanca', 'Palanca'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                    
-                    {/* Gopher Team */}
-                    {['Head Gopher', 'Gopher'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                    
-                    {/* Storeroom Team */}
-                    {['Head Storeroom', 'Storeroom'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                    
-                    {/* Floater Supply Team */}
-                    {['Head Floater Supply', 'Floater Supply'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                    
-                    {/* Worship Team */}
-                    {['Head Worship', 'Worship'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                    
-                    {/* Media Team */}
-                    {['Head Media', 'Media'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => setNewRole(role)}
-                        className="btn btn-small"
-                        style={{
-                          padding: '10px 13px',
-                          fontSize: '0.8rem',
-                          backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                          color: newRole === role ? 'white' : 'var(--ink)',
-                          border: newRole === role ? 'none' : '1px solid var(--border)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        {role}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div style={{
-                padding: '16px 24px',
-                borderTop: '1px solid var(--border)',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '12px',
-                background: 'var(--panel-header)'
-              }}>
-                <button 
-                  className="btn"
-                  onClick={() => {
-                    setShowChangeRoleModal(false);
-                    setChangingMember(null);
-                    setNewRole('');
-                  }}
-                  style={{ minWidth: '100px' }}
-                >
-                  Cancel
-                </button>
-                <button 
-                  className="btn btn-primary"
-                  onClick={handleConfirmRoleChange}
-                  disabled={!newRole}
-                  style={{ minWidth: '100px' }}
-                >
-                  Change Role
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-
-        {/* Update Database Confirmation Modal */}
-        {showUpdateModal && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '30px',
-              maxWidth: '500px',
-              width: '90%',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-            }}>
-              <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>
-                Update Database for {weekendIdentifier}?
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--ink)' }}>
+                Change Role
               </h3>
-              {false && (
-                <div style={{
-                  backgroundColor: '#fff3cd',
-                  border: '1px solid #ffc107',
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '4px' }}>Member:</div>
+                <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)' }}>{changingMember.name}</div>
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '6px' }}>Current Role:</div>
+                <div style={{ 
+                  fontSize: '1.1rem', 
+                  fontWeight: 700, 
+                  color: 'var(--accentB)',
+                  padding: '8px 12px',
+                  backgroundColor: 'var(--panel-header)',
                   borderRadius: '6px',
-                  padding: '12px',
-                  marginBottom: '20px'
+                  border: '2px solid var(--accentB)'
                 }}>
-                  <strong style={{ color: '#856404' }}>🧪 Test Mode Active</strong>
-                  <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#856404' }}>
-                    No actual database changes will be made. Check browser console for preview.
-                  </p>
+                  {changingMember.currentRole}
                 </div>
-              )}
-              <p style={{ marginBottom: '20px', color: '#666', lineHeight: '1.6' }}>
-                This will {testMode ? 'preview updating' : 'update'} <strong>{teamRoster.length} team member{teamRoster.length > 1 ? 's' : ''}</strong> with their service information:
-              </p>
-              <ul style={{ marginBottom: '25px', paddingLeft: '20px', color: '#666' }}>
-                <li><strong>Last Service:</strong> Set to "{weekendIdentifier}"</li>
-                <li><strong>Quantity:</strong> Increment by 1</li>
-                <li><strong>Status:</strong> Upgrade N→I or I→E (if applicable)</li>
-              </ul>
-              <p style={{ marginBottom: '25px', fontSize: '14px', color: testMode ? '#856404' : '#dc3545', fontWeight: 500 }}>
-                {testMode 
-                  ? '💡 Test mode: Results will be shown in browser console. No database changes will be made.' 
-                  : '⚠️ This action cannot be undone. Only the specific roles assigned on this team will be updated.'}
-              </p>
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => setShowUpdateModal(false)}
-                  disabled={isUpdating}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: isUpdating ? 'not-allowed' : 'pointer',
-                    fontSize: '14px',
-                    opacity: isUpdating ? 0.6 : 1
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmUpdate}
-                  disabled={isUpdating}
-                  style={{
-                    padding: '8px 20px',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: isUpdating ? 'not-allowed' : 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    opacity: isUpdating ? 0.6 : 1
-                  }}
-                >
-                  {isUpdating ? 'Processing...' : testMode ? '🧪 Run Test' : '⚡ Confirm Update'}
-                </button>
+              </div>
+
+              <div>
+                <label className="label" style={{ display: 'block', marginBottom: '12px' }}>Select New Role:</label>
+                
+                {/* All roles in one unified grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+                  {/* Leadership */}
+                  {['Rector', 'BUR', 'Rover', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  
+                  {/* Professor Team */}
+                  {[
+                    { value: 'Prof_Silent', label: 'Silent' },
+                    { value: 'Prof_Ideals', label: 'Ideals' },
+                    { value: 'Prof_Church', label: 'Church' },
+                    { value: 'Prof_Piety', label: 'Piety' },
+                    { value: 'Prof_Study', label: 'Study' },
+                    { value: 'Prof_Action', label: 'Action' },
+                    { value: 'Prof_Leaders', label: 'Leaders' },
+                    { value: 'Prof_Environments', label: 'Environments' },
+                    { value: 'Prof_CCIA', label: 'CCIA' },
+                    { value: 'Prof_Reunion', label: 'Reunion' }
+                  ].map(role => (
+                    <button
+                      key={role.value}
+                      onClick={() => setNewRole(role.value)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role.value ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role.value ? 'white' : 'var(--ink)',
+                        border: newRole === role.value ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role.label}
+                    </button>
+                  ))}
+                  
+                  {/* Kitchen Team */}
+                  {['Head Kitchen', 'Asst Head Kitchen', 'Kitchen'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  
+                  {/* Prayer Team */}
+                  {['Head Prayer', 'Prayer'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  
+                  {/* Table Team */}
+                  {['Head Table', 'Table'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  
+                  {/* Chapel Team */}
+                  {['Head Chapel', 'Chapel'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  
+                  {/* Dorm Team */}
+                  {['Head Dorm', 'Dorm'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  
+                  {/* Palanca Team */}
+                  {['Head Palanca', 'Palanca'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  
+                  {/* Gopher Team */}
+                  {['Head Gopher', 'Gopher'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  
+                  {/* Storeroom Team */}
+                  {['Head Storeroom', 'Storeroom'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  
+                  {/* Floater Supply Team */}
+                  {['Head Floater Supply', 'Floater Supply'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  
+                  {/* Worship Team */}
+                  {['Head Worship', 'Worship'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  
+                  {/* Media Team */}
+                  {['Head Media', 'Media'].map(role => (
+                    <button
+                      key={role}
+                      onClick={() => setNewRole(role)}
+                      className="btn btn-small"
+                      style={{
+                        padding: '10px 13px',
+                        fontSize: '0.8rem',
+                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
+                        color: newRole === role ? 'white' : 'var(--ink)',
+                        border: newRole === role ? 'none' : '1px solid var(--border)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
+
+            {/* Footer */}
+            <div style={{
+              padding: '16px 24px',
+              borderTop: '1px solid var(--border)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px',
+              background: 'var(--panel-header)'
+            }}>
+              <button 
+                className="btn"
+                onClick={() => {
+                  setShowChangeRoleModal(false);
+                  setChangingMember(null);
+                  setNewRole('');
+                }}
+                style={{ minWidth: '100px' }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={handleConfirmRoleChange}
+                disabled={!newRole}
+                style={{ minWidth: '100px' }}
+              >
+                Change Role
+              </button>
+            </div>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Update Database Confirmation Modal */}
+      {showUpdateModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            padding: '30px',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>
+              Update Database for {weekendIdentifier}?
+            </h3>
+            {false && (
+              <div style={{
+                backgroundColor: '#fff3cd',
+                border: '1px solid #ffc107',
+                borderRadius: '6px',
+                padding: '12px',
+                marginBottom: '20px'
+              }}>
+                <strong style={{ color: '#856404' }}>🧪 Test Mode Active</strong>
+                <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#856404' }}>
+                  No actual database changes will be made. Check browser console for preview.
+                </p>
+              </div>
+            )}
+            <p style={{ marginBottom: '20px', color: '#666', lineHeight: '1.6' }}>
+              This will {testMode ? 'preview updating' : 'update'} <strong>{teamRoster.length} team member{teamRoster.length > 1 ? 's' : ''}</strong> with their service information:
+            </p>
+            <ul style={{ marginBottom: '25px', paddingLeft: '20px', color: '#666' }}>
+              <li><strong>Last Service:</strong> Set to "{weekendIdentifier}"</li>
+              <li><strong>Quantity:</strong> Increment by 1</li>
+              <li><strong>Status:</strong> Upgrade N→I or I→E (if applicable)</li>
+            </ul>
+            <p style={{ marginBottom: '25px', fontSize: '14px', color: testMode ? '#856404' : '#dc3545', fontWeight: 500 }}>
+              {testMode 
+                ? '💡 Test mode: Results will be shown in browser console. No database changes will be made.' 
+                : '⚠️ This action cannot be undone. Only the specific roles assigned on this team will be updated.'}
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowUpdateModal(false)}
+                disabled={isUpdating}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isUpdating ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  opacity: isUpdating ? 0.6 : 1
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmUpdate}
+                disabled={isUpdating}
+                style={{
+                  padding: '8px 20px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isUpdating ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  opacity: isUpdating ? 0.6 : 1
+                }}
+              >
+                {isUpdating ? 'Processing...' : testMode ? '🧪 Run Test' : '⚡ Confirm Update'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NEW: PDF Download Modal */}
+      {showPdfModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }}>
+          <div style={{
+            backgroundColor: 'var(--panel)',
+            borderRadius: '16px',
+            border: '1px solid var(--border)',
+            width: '90%',
+            maxWidth: '500px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
+            overflow: 'hidden'
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid var(--border)',
+              background: 'var(--panel-header)'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--ink)' }}>
+                Team Roster PDF
+              </h3>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '24px', textAlign: 'center' }}>
+              <div style={{ 
+                fontSize: '3rem', 
+                marginBottom: '16px',
+                color: 'var(--accentB)'
+              }}>
+                📄
+              </div>
+              <p style={{ 
+                fontSize: '1rem', 
+                color: 'var(--ink)', 
+                marginBottom: '8px',
+                fontWeight: 600
+              }}>
+                Team Roster - {weekendIdentifier.replace(/^(Men's|Women's)\s*(\d+)$/i, "$1 Weekend #$2")}
+              </p>
+              <p style={{ 
+                fontSize: '0.85rem', 
+                color: 'var(--muted)', 
+                marginBottom: '24px'
+              }}>
+                {teamRoster.length} team member{teamRoster.length !== 1 ? 's' : ''}
+              </p>
+              <PDFDownloadLink
+                document={
+                  <TeamRosterPDFDocument
+                    weekendIdentifier={weekendIdentifier}
+                    teamMembers={teamRoster}
+                    roleOrder={ROLE_ORDER}
+                  />
+                }
+                fileName={`Team_Roster_${weekendIdentifier.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
+              >
+                {({ loading: pdfLoading }) => (
+                  <button 
+                    className="btn btn-primary" 
+                    disabled={pdfLoading}
+                    style={{ 
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: '1rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
+                  </button>
+                )}
+              </PDFDownloadLink>
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              padding: '16px 24px',
+              borderTop: '1px solid var(--border)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              background: 'var(--panel-header)'
+            }}>
+              <button 
+                className="btn"
+                onClick={() => setShowPdfModal(false)}
+                style={{ minWidth: '100px' }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes slideInRight {
@@ -2279,6 +2573,5 @@ export default function TeamList() {
         );
       })()}
     </section>
-
   );
 }
