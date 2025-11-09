@@ -1439,12 +1439,25 @@ export default function TeamList() {
             borderTop: '2px solid var(--border)'
           }}>
             <div style={{ 
-              fontSize: '1.1rem', 
-              fontWeight: 600, 
-              marginBottom: '16px',
-              color: 'var(--ink)'
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px'
             }}>
-              Team Roster PDF Preview
+              <div style={{ 
+                fontSize: '1.1rem', 
+                fontWeight: 600, 
+                color: 'var(--ink)'
+              }}>
+                Team Roster PDF Preview
+              </div>
+              <button 
+                className="btn btn-small"
+                onClick={() => setShowPdfPreview(false)}
+                style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+              >
+                Close Preview ✕
+              </button>
             </div>
             <div style={{ 
               width: '100%', 
