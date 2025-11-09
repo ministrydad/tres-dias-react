@@ -1,101 +1,39 @@
 // src/modules/TeamViewer/TeamList.jsx
-// UPDATED: Added PDF preview before download
+// UPDATED: Card-based PDF preview (no modal), removed guided tour
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { generatePrintableProfileHTML, PRINT_PROFILE_CSS } from './../../utils/profilePrintUtils';
-import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from '@react-pdf/renderer';
 
 // Register Source Sans 3 font from local TTF files
 Font.register({
   family: 'Source Sans 3',
   fonts: [
-    {
-      src: '/fonts/SourceSans3-Regular.ttf',
-      fontWeight: 400,
-    },
-    {
-      src: '/fonts/SourceSans3-Italic.ttf',
-      fontWeight: 400,
-      fontStyle: 'italic',
-    },
-    {
-      src: '/fonts/SourceSans3-SemiBold.ttf',
-      fontWeight: 600,
-    },
-    {
-      src: '/fonts/SourceSans3-Bold.ttf',
-      fontWeight: 700,
-    },
+    { src: '/fonts/SourceSans3-Regular.ttf', fontWeight: 400 },
+    { src: '/fonts/SourceSans3-Italic.ttf', fontWeight: 400, fontStyle: 'italic' },
+    { src: '/fonts/SourceSans3-SemiBold.ttf', fontWeight: 600 },
+    { src: '/fonts/SourceSans3-Bold.ttf', fontWeight: 700 },
   ],
 });
 
 // PDF Styles - Matching CombinedRoster.jsx exactly
 const pdfStyles = StyleSheet.create({
-  page: {
-    padding: 30,
-    fontSize: 10,
-    fontFamily: 'Source Sans 3',
-  },
-  sectionHeader: {
-    fontSize: 17,
-    fontWeight: 700,
-    marginBottom: 10,
-    paddingBottom: 5,
-    borderBottom: '2 solid #333',
-  },
-  roleHeader: {
-    fontSize: 11,
-    fontWeight: 700,
-    marginTop: 8,
-    marginBottom: 4,
-    color: '#2c5aa0',
-    backgroundColor: '#f5f5f5',
-    padding: '3 5',
-  },
-  twoColumnContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 12,
-  },
-  threeColumnContainer: {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  column: {
-    flex: 1,
-    paddingLeft: 6,
-  },
-  columnNoIndent: {
-    flex: 1,
-    paddingLeft: 5,
-  },
-  memberRow: {
-    marginBottom: 6,
-    paddingBottom: 4,
-    borderBottom: '0.5 solid #ddd',
-  },
-  memberName: {
-    fontSize: 10,
-    fontWeight: 700,
-    marginBottom: 2,
-  },
-  memberDetails: {
-    fontSize: 8.5,
-    color: '#444',
-    lineHeight: 1.3,
-  },
+  page: { padding: 30, fontSize: 10, fontFamily: 'Source Sans 3' },
+  sectionHeader: { fontSize: 17, fontWeight: 700, marginBottom: 10, paddingBottom: 5, borderBottom: '2 solid #333' },
+  roleHeader: { fontSize: 11, fontWeight: 700, marginTop: 8, marginBottom: 4, color: '#2c5aa0', backgroundColor: '#f5f5f5', padding: '3 5' },
+  twoColumnContainer: { display: 'flex', flexDirection: 'row', gap: 12 },
+  threeColumnContainer: { display: 'flex', flexDirection: 'row', gap: 12, marginBottom: 12 },
+  column: { flex: 1, paddingLeft: 6 },
+  columnNoIndent: { flex: 1, paddingLeft: 5 },
+  memberRow: { marginBottom: 6, paddingBottom: 4, borderBottom: '0.5 solid #ddd' },
+  memberName: { fontSize: 10, fontWeight: 700, marginBottom: 2 },
+  memberDetails: { fontSize: 8.5, color: '#444', lineHeight: 1.3 },
 });
 
 // PDF Document Component for Team Roster
-const TeamRosterPDFDocument = ({ 
-  weekendIdentifier,
-  teamMembers,
-  roleOrder 
-}) => {
+const TeamRosterPDFDocument = ({ weekendIdentifier, teamMembers, roleOrder }) => {
   return (
     <Document>
       {/* Team Members Page 1 - Leadership Structure */}
@@ -104,7 +42,7 @@ const TeamRosterPDFDocument = ({
           Team Roster - {weekendIdentifier.replace(/^(Men's|Women's)\s*(\d+)$/i, "$1 Weekend #$2")}
         </Text>
         
-        {/* Rector - Full Width Header, Left-Aligned Info */}
+        {/* Rector */}
         {(() => {
           const rectorMembers = teamMembers.filter(m => m.role === 'Rector');
           if (rectorMembers.length === 0) return null;
@@ -310,11 +248,8 @@ export default function TeamList() {
   const [showChangeRoleModal, setShowChangeRoleModal] = useState(false);
   const [changingMember, setChangingMember] = useState(null);
   const [expandedRows, setExpandedRows] = useState(new Set());
-  const [showTour, setShowTour] = useState(false);
-  const [tourStep, setTourStep] = useState(0);
   
-  // NEW: State for PDF generation with preview
-  const [showPdfModal, setShowPdfModal] = useState(false);
+  // PDF Preview state
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   
   const [newRole, setNewRole] = useState('');
@@ -325,58 +260,6 @@ export default function TeamList() {
   const [badgeTheme, setBadgeTheme] = useState('');
   const [badgeProfPosition, setBadgeProfPosition] = useState('blank');
   const [candidates, setCandidates] = useState([]);
-
-  const tourSteps = [
-    {
-      target: 'gender-toggle',
-      title: 'Toggle Gender',
-      content: 'Switch between Men\'s and Women\'s team rosters to view different teams.',
-      position: 'bottom'
-    },
-    {
-      target: 'tour-team-column',
-      title: 'Team Roles & Members',
-      content: 'Each column shows team roles with assigned members. You can see the head, team members, and options to remove or change positions.',
-      position: 'right'
-    },
-    {
-      target: 'tour-action-buttons',
-      title: 'Change or Remove',
-      content: 'Click "Change" to reassign someone to a different role, or "Remove" to take them off the team.',
-      position: 'left'
-    },
-    {
-      target: 'tour-export-buttons',
-      title: 'Export & Print Options',
-      content: 'Use these buttons to export your team data and print profiles for team records.',
-      position: 'bottom'
-    },
-    {
-      target: 'tour-update-database',
-      title: 'Update Database',
-      content: 'Click this to save the current team roster to the database, updating service records for all team members.',
-      position: 'bottom'
-    }
-  ];
-
-  const startTour = () => {
-    setShowTour(true);
-    setTourStep(0);
-  };
-
-  const nextTourStep = () => {
-    if (tourStep < tourSteps.length - 1) {
-      setTourStep(tourStep + 1);
-    } else {
-      closeTour();
-    }
-  };
-
-  const closeTour = () => {
-    setShowTour(false);
-    setTourStep(0);
-    localStorage.setItem('teamListTourCompleted', 'true');
-  };
 
   const ROLE_CONFIG = {
     team: [
@@ -471,16 +354,12 @@ export default function TeamList() {
 
   useEffect(() => {
     if (!pescadoresLoading && orgId && allPescadores[currentGender]?.length > 0) {
-      console.log('TeamList: Loading latest team for', currentGender);
       loadLatestTeam();
     }
   }, [currentGender, pescadoresLoading, orgId, allPescadores]);
 
   const loadLatestTeam = async () => {
     const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
-    
-    console.log('TeamList: loadLatestTeam for', currentGender, 'from table', rosterTable);
-    
     setLoadingTeam(true);
     
     try {
@@ -490,8 +369,6 @@ export default function TeamList() {
         .eq('org_id', orgId);
       
       if (error) throw error;
-
-      console.log('TeamList: Found', teams?.length || 0, 'teams');
 
       const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
       let latest = { number: 0, identifier: null };
@@ -506,19 +383,16 @@ export default function TeamList() {
         }
       });
 
-      console.log('TeamList: Latest team identifier:', latest.identifier);
-
       if (latest.identifier) {
         setWeekendIdentifier(latest.identifier);
         await loadTeamRoster(latest.identifier);
       } else {
-        console.log('TeamList: No team found for', currentGender);
         setWeekendIdentifier('');
         setTeamRoster([]);
         setLoadingTeam(false);
       }
     } catch (error) {
-      console.error('TeamList: Error loading latest team:', error);
+      console.error('Error loading latest team:', error);
       setTeamRoster([]);
       setLoadingTeam(false);
     }
@@ -527,8 +401,8 @@ export default function TeamList() {
   const loadTeamRoster = async (identifier) => {
     const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
     const rawTableData = currentGender === 'men' 
-  ? allPescadores['men']
-  : [...allPescadores['women'], ...allPescadores['men']];
+      ? allPescadores['men']
+      : [...allPescadores['women'], ...allPescadores['men']];
 
     try {
       const { data, error } = await supabase
@@ -591,7 +465,6 @@ export default function TeamList() {
       isDangerous: true,
       onConfirm: async () => {
         setRemovingId(personId);
-        
         await new Promise(resolve => setTimeout(resolve, 500));
         
         const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
@@ -638,7 +511,6 @@ export default function TeamList() {
             }
             setTeamRoster(newRoster);
           } else {
-            console.error('No weekendIdentifier available for reload');
             window.showMainStatus?.('Error: Could not reload roster', true);
           }
         } catch (error) {
@@ -692,10 +564,7 @@ export default function TeamList() {
 
       if (error) throw error;
 
-      if (window.showMainStatus) {
-        window.showMainStatus(`${changingMember.name} moved to ${newRole}`, false);
-      }
-
+      window.showMainStatus?.(`${changingMember.name} moved to ${newRole}`, false);
       await loadTeamRoster(weekendIdentifier);
       
       setShowChangeRoleModal(false);
@@ -703,9 +572,7 @@ export default function TeamList() {
       setNewRole('');
     } catch (error) {
       console.error('Error changing role:', error);
-      if (window.showMainStatus) {
-        window.showMainStatus('Failed to change role: ' + error.message, true);
-      }
+      window.showMainStatus?.('Failed to change role: ' + error.message, true);
     }
   };
 
@@ -797,7 +664,6 @@ export default function TeamList() {
       
       if (testMode) {
         console.log('🧪 TEST MODE - No actual database changes made');
-        console.log('📋 Preview of changes that WOULD be made:');
         console.table(previewChanges);
         window.showMainStatus?.(
           `TEST MODE: Would update ${successCount} team member${successCount > 1 ? 's' : ''} (check console for details)`,
@@ -832,13 +698,10 @@ export default function TeamList() {
       window.showMainStatus('No team members to print', true);
       return;
     }
-
-    setShowPdfModal(true);
-    setShowPdfPreview(false);
+    setShowPdfPreview(!showPdfPreview);
   };
 
   const handlePrintAllProfiles = () => {
-    console.log('handlePrintAllProfiles called!', { teamRoster, length: teamRoster?.length });
     if (!teamRoster || teamRoster.length === 0) {
       window.showMainStatus('No team members to print', true);
       return;
@@ -861,13 +724,9 @@ export default function TeamList() {
         <head>
           <meta charset="UTF-8">
           <title>Team Profile Reports</title>
-          <style>
-            ${PRINT_PROFILE_CSS}
-          </style>
+          <style>${PRINT_PROFILE_CSS}</style>
         </head>
-        <body>
-          ${allProfilesHTML}
-        </body>
+        <body>${allProfilesHTML}</body>
       </html>
     `;
 
@@ -908,25 +767,23 @@ export default function TeamList() {
       const formattedCandidates = (candidatesData || [])
         .filter(c => c.attendance !== 'no')
         .map(c => {
-        if (currentGender === 'men') {
-          return {
-            firstName: c.m_pref || c.m_first || '',
-            lastName: c.c_lastname || ''
-          };
-        } else {
-          return {
-            firstName: c.f_pref || c.f_first || '',
-            lastName: c.c_lastname || ''
-          };
-        }
-      }).filter(c => c.firstName && c.lastName);
+          if (currentGender === 'men') {
+            return {
+              firstName: c.m_pref || c.m_first || '',
+              lastName: c.c_lastname || ''
+            };
+          } else {
+            return {
+              firstName: c.f_pref || c.f_first || '',
+              lastName: c.c_lastname || ''
+            };
+          }
+        }).filter(c => c.firstName && c.lastName);
 
       setCandidates(formattedCandidates);
     } catch (error) {
       console.error('Error loading badge data:', error);
-      if (window.showMainStatus) {
-        window.showMainStatus('Failed to load badge data: ' + error.message, true);
-      }
+      window.showMainStatus?.('Failed to load badge data: ' + error.message, true);
     }
   };
 
@@ -940,9 +797,7 @@ export default function TeamList() {
 
   const handleGenerateBadgeCSV = () => {
     if (!badgeScripture.trim() || !badgeTheme.trim()) {
-      if (window.showMainStatus) {
-        window.showMainStatus('Please enter Scripture and Theme', true);
-      }
+      window.showMainStatus?.('Please enter Scripture and Theme', true);
       return;
     }
 
@@ -1011,10 +866,7 @@ export default function TeamList() {
     link.click();
     document.body.removeChild(link);
 
-    if (window.showMainStatus) {
-      window.showMainStatus(`Badge CSV exported with ${csvRows.length - 1} entries`, false);
-    }
-
+    window.showMainStatus?.(`Badge CSV exported with ${csvRows.length - 1} entries`, false);
     handleCloseBadgePanel();
   };
 
@@ -1030,7 +882,7 @@ export default function TeamList() {
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px', marginTop: '-8px' }}>
-          <div className="team-total-card" id="team-total-card">
+          <div className="team-total-card">
             <div className="team-total-title">Team Total</div>
             <div className="team-total-count">{teamRoster.length}</div>
           </div>
@@ -1144,7 +996,7 @@ export default function TeamList() {
                     }}>HEAD</span>
                   )}
                 </span>
-                <div id="tour-action-buttons" style={{ display: 'flex', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '6px' }}>
                   <button 
                     className="btn btn-small"
                     onClick={() => handleChangeRoleClick(person.id, person.name, person.role)}
@@ -1199,12 +1051,12 @@ export default function TeamList() {
     };
 
     return (
-      <div className="card pad" id="tour-team-section" style={{ marginBottom: '20px' }}>
+      <div className="card pad" style={{ marginBottom: '20px' }}>
         <div className="small-card-header">
           Leadership Team {totalCount > 0 && <span style={{ marginLeft: '8px' }}>({totalCount})</span>}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
-          <table className="table" id="tour-team-column">
+          <table className="table">
             <thead>
               <tr>
                 <th style={{ width: '30%' }}>Role</th>
@@ -1515,7 +1367,7 @@ export default function TeamList() {
   return (
     <section id="team-list-app" className="app-panel" style={{ display: 'block', padding: 0 }}>
       <div className="card pad" style={{ marginBottom: '12px' }}>
-        <div className="section-title" id="weekend-selector">
+        <div className="section-title">
           <span>{genderLabel}'s Team List</span>
           {displayId && (
             <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 400, marginLeft: '15px' }}>
@@ -1532,32 +1384,31 @@ export default function TeamList() {
           gap: '16px',
           flexWrap: 'wrap'
         }}>
-          {/* Gender Toggle - Left Side */}
-          <div className="toggle" id="gender-toggle" style={{ maxWidth: '250px' }}>
-              <div 
-                className={`opt ${currentGender === 'men' ? 'active' : ''}`}
-                onClick={() => handleGenderToggle('men')}
-              >
-                Men
-              </div>
-              <div 
-                className={`opt ${currentGender === 'women' ? 'active' : ''}`}
-                onClick={() => handleGenderToggle('women')}
-              >
-                Women
-              </div>
+          {/* Gender Toggle */}
+          <div className="toggle" style={{ maxWidth: '250px' }}>
+            <div 
+              className={`opt ${currentGender === 'men' ? 'active' : ''}`}
+              onClick={() => handleGenderToggle('men')}
+            >
+              Men
             </div>
+            <div 
+              className={`opt ${currentGender === 'women' ? 'active' : ''}`}
+              onClick={() => handleGenderToggle('women')}
+            >
+              Women
+            </div>
+          </div>
 
-          {/* Action Buttons - Right Side */}
-          <div id="tour-export-buttons" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button className="btn btn-warning" onClick={handlePrintRoster}>
-              Print Report
+              {showPdfPreview ? 'Hide PDF Preview' : 'Print Report'}
             </button>
             <button className="btn btn-warning" onClick={handlePrintAllProfiles}>
               Print All Profiles
             </button>
             <button 
-              id="tour-update-database"
               className="btn btn-primary" 
               onClick={handleUpdateDatabaseClick}
               disabled={!weekendIdentifier || teamRoster.length === 0 || isUpdating}
@@ -1574,12 +1425,44 @@ export default function TeamList() {
             <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
               Export for Team Book
             </button>
-            <button className="btn btn-primary" id="export-badge-btn" onClick={handleOpenBadgePanel}>
+            <button className="btn btn-primary" onClick={handleOpenBadgePanel}>
               Export to Team Badges
             </button>
           </div>
         </div>
-          
+
+        {/* PDF Preview Section */}
+        {showPdfPreview && teamRoster.length > 0 && (
+          <div style={{ 
+            marginTop: '20px',
+            paddingTop: '20px',
+            borderTop: '2px solid var(--border)'
+          }}>
+            <div style={{ 
+              fontSize: '1.1rem', 
+              fontWeight: 600, 
+              marginBottom: '16px',
+              color: 'var(--ink)'
+            }}>
+              Team Roster PDF Preview
+            </div>
+            <div style={{ 
+              width: '100%', 
+              height: '800px', 
+              border: '1px solid var(--border)', 
+              borderRadius: '4px',
+              overflow: 'hidden'
+            }}>
+              <PDFViewer width="100%" height="100%" style={{ border: 'none' }}>
+                <TeamRosterPDFDocument
+                  weekendIdentifier={weekendIdentifier}
+                  teamMembers={teamRoster}
+                  roleOrder={ROLE_ORDER}
+                />
+              </PDFViewer>
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
@@ -1590,7 +1473,7 @@ export default function TeamList() {
             minWidth: 0
           }}
         >
-          <div id="teamListGrid" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {pescadoresLoading ? (
               <div className="progress-bar-container">
                 <div className="progress-bar-label">Loading Data...</div>
@@ -1609,9 +1492,9 @@ export default function TeamList() {
           </div>
         </div>
 
+        {/* Badge Export Panel */}
         {showBadgePanel && (
           <div 
-            id="badge-export-panel"
             className="card pad"
             style={{
               width: '30%',
@@ -1746,7 +1629,6 @@ export default function TeamList() {
             </div>
           </div>
         )}
-
       </div>
 
       {/* Change Role Modal */}
@@ -1772,7 +1654,6 @@ export default function TeamList() {
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
             overflow: 'hidden'
           }}>
-            {/* Header */}
             <div style={{
               padding: '20px 24px',
               borderBottom: '1px solid var(--border)',
@@ -1783,7 +1664,6 @@ export default function TeamList() {
               </h3>
             </div>
 
-            {/* Body */}
             <div style={{ padding: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
               <div style={{ marginBottom: '20px' }}>
                 <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '4px' }}>Member:</div>
@@ -1808,10 +1688,8 @@ export default function TeamList() {
               <div>
                 <label className="label" style={{ display: 'block', marginBottom: '12px' }}>Select New Role:</label>
                 
-                {/* All roles in one unified grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
-                  {/* Leadership */}
-                  {['Rector', 'BUR', 'Rover', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director'].map(role => (
+                  {['Rector', 'BUR', 'Rover', 'Head', 'Asst Head', 'Head Spiritual Director', 'Spiritual Director', 'Head Prayer', 'Prayer', 'Head Kitchen', 'Asst Head Kitchen', 'Kitchen', 'Head Table', 'Table', 'Head Chapel', 'Chapel', 'Head Dorm', 'Dorm', 'Head Palanca', 'Palanca', 'Head Gopher', 'Gopher', 'Head Storeroom', 'Storeroom', 'Head Floater Supply', 'Floater Supply', 'Head Worship', 'Worship', 'Head Media', 'Media'].map(role => (
                     <button
                       key={role}
                       onClick={() => setNewRole(role)}
@@ -1831,7 +1709,6 @@ export default function TeamList() {
                     </button>
                   ))}
                   
-                  {/* Professor Team */}
                   {[
                     { value: 'Prof_Silent', label: 'Silent' },
                     { value: 'Prof_Ideals', label: 'Ideals' },
@@ -1862,242 +1739,10 @@ export default function TeamList() {
                       {role.label}
                     </button>
                   ))}
-                  
-                  {/* Kitchen Team */}
-                  {['Head Kitchen', 'Asst Head Kitchen', 'Kitchen'].map(role => (
-                    <button
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className="btn btn-small"
-                      style={{
-                        padding: '10px 13px',
-                        fontSize: '0.8rem',
-                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                        color: newRole === role ? 'white' : 'var(--ink)',
-                        border: newRole === role ? 'none' : '1px solid var(--border)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                  
-                  {/* Prayer Team */}
-                  {['Head Prayer', 'Prayer'].map(role => (
-                    <button
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className="btn btn-small"
-                      style={{
-                        padding: '10px 13px',
-                        fontSize: '0.8rem',
-                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                        color: newRole === role ? 'white' : 'var(--ink)',
-                        border: newRole === role ? 'none' : '1px solid var(--border)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                  
-                  {/* Table Team */}
-                  {['Head Table', 'Table'].map(role => (
-                    <button
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className="btn btn-small"
-                      style={{
-                        padding: '10px 13px',
-                        fontSize: '0.8rem',
-                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                        color: newRole === role ? 'white' : 'var(--ink)',
-                        border: newRole === role ? 'none' : '1px solid var(--border)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                  
-                  {/* Chapel Team */}
-                  {['Head Chapel', 'Chapel'].map(role => (
-                    <button
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className="btn btn-small"
-                      style={{
-                        padding: '10px 13px',
-                        fontSize: '0.8rem',
-                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                        color: newRole === role ? 'white' : 'var(--ink)',
-                        border: newRole === role ? 'none' : '1px solid var(--border)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                  
-                  {/* Dorm Team */}
-                  {['Head Dorm', 'Dorm'].map(role => (
-                    <button
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className="btn btn-small"
-                      style={{
-                        padding: '10px 13px',
-                        fontSize: '0.8rem',
-                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                        color: newRole === role ? 'white' : 'var(--ink)',
-                        border: newRole === role ? 'none' : '1px solid var(--border)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                  
-                  {/* Palanca Team */}
-                  {['Head Palanca', 'Palanca'].map(role => (
-                    <button
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className="btn btn-small"
-                      style={{
-                        padding: '10px 13px',
-                        fontSize: '0.8rem',
-                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                        color: newRole === role ? 'white' : 'var(--ink)',
-                        border: newRole === role ? 'none' : '1px solid var(--border)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                  
-                  {/* Gopher Team */}
-                  {['Head Gopher', 'Gopher'].map(role => (
-                    <button
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className="btn btn-small"
-                      style={{
-                        padding: '10px 13px',
-                        fontSize: '0.8rem',
-                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                        color: newRole === role ? 'white' : 'var(--ink)',
-                        border: newRole === role ? 'none' : '1px solid var(--border)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                  
-                  {/* Storeroom Team */}
-                  {['Head Storeroom', 'Storeroom'].map(role => (
-                    <button
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className="btn btn-small"
-                      style={{
-                        padding: '10px 13px',
-                        fontSize: '0.8rem',
-                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                        color: newRole === role ? 'white' : 'var(--ink)',
-                        border: newRole === role ? 'none' : '1px solid var(--border)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                  
-                  {/* Floater Supply Team */}
-                  {['Head Floater Supply', 'Floater Supply'].map(role => (
-                    <button
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className="btn btn-small"
-                      style={{
-                        padding: '10px 13px',
-                        fontSize: '0.8rem',
-                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                        color: newRole === role ? 'white' : 'var(--ink)',
-                        border: newRole === role ? 'none' : '1px solid var(--border)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                  
-                  {/* Worship Team */}
-                  {['Head Worship', 'Worship'].map(role => (
-                    <button
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className="btn btn-small"
-                      style={{
-                        padding: '10px 13px',
-                        fontSize: '0.8rem',
-                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                        color: newRole === role ? 'white' : 'var(--ink)',
-                        border: newRole === role ? 'none' : '1px solid var(--border)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                  
-                  {/* Media Team */}
-                  {['Head Media', 'Media'].map(role => (
-                    <button
-                      key={role}
-                      onClick={() => setNewRole(role)}
-                      className="btn btn-small"
-                      style={{
-                        padding: '10px 13px',
-                        fontSize: '0.8rem',
-                        backgroundColor: newRole === role ? 'var(--accentB)' : 'transparent',
-                        color: newRole === role ? 'white' : 'var(--ink)',
-                        border: newRole === role ? 'none' : '1px solid var(--border)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {role}
-                    </button>
-                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Footer */}
             <div style={{
               padding: '16px 24px',
               borderTop: '1px solid var(--border)',
@@ -2130,7 +1775,7 @@ export default function TeamList() {
         </div>
       )}
 
-      {/* Update Database Confirmation Modal */}
+      {/* Update Database Modal */}
       {showUpdateModal && (
         <div style={{
           position: 'fixed',
@@ -2155,20 +1800,6 @@ export default function TeamList() {
             <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>
               Update Database for {weekendIdentifier}?
             </h3>
-            {false && (
-              <div style={{
-                backgroundColor: '#fff3cd',
-                border: '1px solid #ffc107',
-                borderRadius: '6px',
-                padding: '12px',
-                marginBottom: '20px'
-              }}>
-                <strong style={{ color: '#856404' }}>🧪 Test Mode Active</strong>
-                <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#856404' }}>
-                  No actual database changes will be made. Check browser console for preview.
-                </p>
-              </div>
-            )}
             <p style={{ marginBottom: '20px', color: '#666', lineHeight: '1.6' }}>
               This will {testMode ? 'preview updating' : 'update'} <strong>{teamRoster.length} team member{teamRoster.length > 1 ? 's' : ''}</strong> with their service information:
             </p>
@@ -2221,192 +1852,6 @@ export default function TeamList() {
         </div>
       )}
 
-      {/* NEW: PDF Modal with Preview Option */}
-      {showPdfModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--panel)',
-            borderRadius: '16px',
-            border: '1px solid var(--border)',
-            width: showPdfPreview ? '95%' : '90%',
-            maxWidth: showPdfPreview ? '1400px' : '600px',
-            maxHeight: '90vh',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            {/* Header */}
-            <div style={{
-              padding: '20px 24px',
-              borderBottom: '1px solid var(--border)',
-              background: 'var(--panel-header)',
-              flexShrink: 0
-            }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--ink)' }}>
-                Team Roster PDF
-              </h3>
-            </div>
-
-            {/* Body */}
-            <div style={{ 
-              padding: showPdfPreview ? '0' : '24px', 
-              textAlign: showPdfPreview ? 'left' : 'center',
-              flex: 1,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
-              {!showPdfPreview ? (
-                <>
-                  <div style={{ 
-                    fontSize: '3rem', 
-                    marginBottom: '16px',
-                    color: 'var(--accentB)'
-                  }}>
-                    📄
-                  </div>
-                  <p style={{ 
-                    fontSize: '1rem', 
-                    color: 'var(--ink)', 
-                    marginBottom: '8px',
-                    fontWeight: 600
-                  }}>
-                    Team Roster - {weekendIdentifier.replace(/^(Men's|Women's)\s*(\d+)$/i, "$1 Weekend #$2")}
-                  </p>
-                  <p style={{ 
-                    fontSize: '0.85rem', 
-                    color: 'var(--muted)', 
-                    marginBottom: '24px'
-                  }}>
-                    {teamRoster.length} team member{teamRoster.length !== 1 ? 's' : ''}
-                  </p>
-                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                    <button 
-                      className="btn"
-                      onClick={() => setShowPdfPreview(true)}
-                      style={{ 
-                        padding: '12px 24px',
-                        fontSize: '1rem',
-                        fontWeight: 600
-                      }}
-                    >
-                      Show Preview
-                    </button>
-                    <PDFDownloadLink
-                      document={
-                        <TeamRosterPDFDocument
-                          weekendIdentifier={weekendIdentifier}
-                          teamMembers={teamRoster}
-                          roleOrder={ROLE_ORDER}
-                        />
-                      }
-                      fileName={`Team_Roster_${weekendIdentifier.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
-                    >
-                      {({ loading: pdfLoading }) => (
-                        <button 
-                          className="btn btn-primary" 
-                          disabled={pdfLoading}
-                          style={{ 
-                            padding: '12px 24px',
-                            fontSize: '1rem',
-                            fontWeight: 600
-                          }}
-                        >
-                          {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
-                        </button>
-                      )}
-                    </PDFDownloadLink>
-                  </div>
-                </>
-              ) : (
-                <div style={{ 
-                  flex: 1,
-                  border: '1px solid var(--border)', 
-                  borderRadius: '4px',
-                  overflow: 'hidden',
-                  margin: '16px'
-                }}>
-                  <PDFViewer width="100%" height="100%" style={{ border: 'none' }}>
-                    <TeamRosterPDFDocument
-                      weekendIdentifier={weekendIdentifier}
-                      teamMembers={teamRoster}
-                      roleOrder={ROLE_ORDER}
-                    />
-                  </PDFViewer>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div style={{
-              padding: '16px 24px',
-              borderTop: '1px solid var(--border)',
-              display: 'flex',
-              justifyContent: showPdfPreview ? 'space-between' : 'flex-end',
-              background: 'var(--panel-header)',
-              flexShrink: 0
-            }}>
-              {showPdfPreview && (
-                <button 
-                  className="btn"
-                  onClick={() => setShowPdfPreview(false)}
-                  style={{ minWidth: '100px' }}
-                >
-                  ← Back
-                </button>
-              )}
-              {showPdfPreview && (
-                <PDFDownloadLink
-                  document={
-                    <TeamRosterPDFDocument
-                      weekendIdentifier={weekendIdentifier}
-                      teamMembers={teamRoster}
-                      roleOrder={ROLE_ORDER}
-                    />
-                  }
-                  fileName={`Team_Roster_${weekendIdentifier.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}
-                >
-                  {({ loading: pdfLoading }) => (
-                    <button 
-                      className="btn btn-primary" 
-                      disabled={pdfLoading}
-                      style={{ minWidth: '120px' }}
-                    >
-                      {pdfLoading ? 'Generating...' : 'Download PDF'}
-                    </button>
-                  )}
-                </PDFDownloadLink>
-              )}
-              {!showPdfPreview && (
-                <button 
-                  className="btn"
-                  onClick={() => {
-                    setShowPdfModal(false);
-                    setShowPdfPreview(false);
-                  }}
-                  style={{ minWidth: '100px' }}
-                >
-                  Close
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       <style>{`
         @keyframes slideInRight {
           from {
@@ -2419,7 +1864,6 @@ export default function TeamList() {
           }
         }
         
-        /* Two-column table layout */
         #team-list-app .table {
           margin-bottom: 0;
           vertical-align: top;
@@ -2457,7 +1901,6 @@ export default function TeamList() {
           font-size: 0.85rem;
         }
         
-        /* Expandable row animations */
         #team-list-app tr.expanded-row {
           animation: expandRow 0.2s ease-out;
         }
@@ -2473,7 +1916,6 @@ export default function TeamList() {
           }
         }
         
-        /* Remove animation for table rows */
         #team-list-app tr.removing {
           animation: fadeOut 0.3s ease-in-out forwards;
         }
@@ -2484,176 +1926,7 @@ export default function TeamList() {
             transform: translateX(20px);
           }
         }
-        
-        /* Badge Export Panel - Compact styling to match team list */
-        #badge-export-panel .field {
-          margin-bottom: 14px;
-        }
-        
-        #badge-export-panel .label {
-          font-size: 0.8rem;
-          margin-bottom: 4px;
-        }
-        
-        #badge-export-panel .field > div {
-          font-size: 0.85rem;
-        }
-        
-        #badge-export-panel input.input {
-          font-size: 0.85rem;
-          padding: 8px 10px;
-        }
-        
-        #badge-export-panel label span {
-          font-size: 13px;
-          font-weight: 400;
-          color: #333;
-        }
-        
-        #badge-export-panel h3 {
-          font-size: 1rem !important;
-        }
-
-        /* Tour Styles */
-        .tour-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.4);
-          z-index: 9998;
-        }
-
-        .tour-spotlight {
-          position: fixed;
-          border: 3px solid var(--accentB);
-          border-radius: 8px;
-          box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
-          z-index: 9999;
-          pointer-events: none;
-          transition: all 0.3s ease;
-        }
-
-        .tour-tooltip {
-          position: fixed;
-          background: white;
-          border-radius: 12px;
-          padding: 20px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-          max-width: 320px;
-          z-index: 10000;
-          animation: tourFadeIn 0.3s ease;
-        }
-
-        @keyframes tourFadeIn {
-          from { opacity: 0; transform: scale(0.9); }
-          to { opacity: 1; transform: scale(1); }
-        }
-
-        .tour-tooltip h3 {
-          margin: 0 0 8px 0;
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: var(--accentB);
-        }
-
-        .tour-tooltip p {
-          margin: 0 0 16px 0;
-          font-size: 0.9rem;
-          line-height: 1.5;
-          color: var(--ink);
-        }
-
-        .tour-tooltip-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .tour-progress {
-          font-size: 0.8rem;
-          color: var(--muted);
-        }
-
-        .help-button {
-          position: fixed;
-          bottom: 24px;
-          right: 24px;
-          width: 56px;
-          height: 56px;
-          border-radius: 50%;
-          background: var(--accentB);
-          color: white;
-          border: none;
-          font-size: 24px;
-          font-weight: bold;
-          cursor: pointer;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-          z-index: 1000;
-          transition: all 0.2s ease;
-        }
-
-        .help-button:hover {
-          transform: scale(1.1);
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
-        }
       `}</style>
-
-      {/* Help Button */}
-      <button className="help-button" onClick={startTour} title="Start Tour">
-        ?
-      </button>
-
-      {/* Tour Overlay */}
-      {showTour && (() => {
-        const currentStep = tourSteps[tourStep];
-        const targetElement = document.getElementById(currentStep.target);
-        
-        if (!targetElement) return null;
-        
-        const rect = targetElement.getBoundingClientRect();
-        const spotlightStyle = {
-          top: `${rect.top - 4}px`,
-          left: `${rect.left - 4}px`,
-          width: `${rect.width + 8}px`,
-          height: `${rect.height + 8}px`
-        };
-
-        // Position tooltip
-        let tooltipStyle = {
-          top: currentStep.position === 'bottom' ? `${rect.bottom + 16}px` : 
-               currentStep.position === 'top' ? `${rect.top - 200}px` :
-               `${rect.top}px`,
-          left: currentStep.position === 'left' ? `${rect.left - 340}px` :
-                currentStep.position === 'right' ? `${rect.right + 16}px` :
-                `${rect.left}px`
-        };
-
-        return (
-          <>
-            <div className="tour-overlay" onClick={closeTour} />
-            <div className="tour-spotlight" style={spotlightStyle} />
-            <div className="tour-tooltip" style={tooltipStyle}>
-              <h3>{currentStep.title}</h3>
-              <p>{currentStep.content}</p>
-              <div className="tour-tooltip-footer">
-                <span className="tour-progress">
-                  {tourStep + 1} of {tourSteps.length}
-                </span>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="btn btn-small" onClick={closeTour}>
-                    Skip
-                  </button>
-                  <button className="btn btn-small btn-primary" onClick={nextTourStep}>
-                    {tourStep < tourSteps.length - 1 ? 'Next' : 'Done'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </>
-        );
-      })()}
     </section>
   );
 }
