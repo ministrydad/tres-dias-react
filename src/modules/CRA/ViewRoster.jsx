@@ -412,14 +412,14 @@ export default function ViewRoster({ onNavigate }) {
         m_diettext: editData.m_diettext,
         f_diettext: editData.f_diettext,
         
-        // Payments
+        // Payments - handle numeric fields properly
         payment_wk_cash: editData.payment_wk_cash,
         payment_wk_check: editData.payment_wk_check,
         payment_wk_online: editData.payment_wk_online,
         payment_wk_scholarship: editData.payment_wk_scholarship,
         payment_wk_scholarshiptype: editData.payment_wk_scholarshiptype,
-        payment_wk_partialamount: editData.payment_wk_partialamount,
-        payment_wk_candidate_paid: editData.payment_wk_candidate_paid,
+        payment_wk_partialamount: editData.payment_wk_partialamount === '' ? null : editData.payment_wk_partialamount,
+        payment_wk_candidate_paid: editData.payment_wk_candidate_paid === '' ? 0 : parseFloat(editData.payment_wk_candidate_paid) || 0,
         payment_sp_cash: editData.payment_sp_cash,
         payment_sp_check: editData.payment_sp_check,
         
