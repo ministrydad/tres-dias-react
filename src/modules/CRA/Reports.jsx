@@ -97,7 +97,11 @@ export default function Reports() {
       weekendOnlineCollected: 0,
       sponsorCashCollected: 0,
       sponsorCheckCollected: 0,
-      overdueItems: 0
+      overdueItems: 0,
+      fullScholarshipCount: 0,
+      fullScholarshipAmount: 0,
+      partialScholarshipCount: 0,
+      partialScholarshipAmount: 0
     };
 
     filteredApps.forEach(app => {
@@ -117,12 +121,22 @@ export default function Reports() {
       let weekendCollected = 0;
       if (isPartialScholarship) {
         // Partial scholarship: they paid the partial amount
-        weekendCollected = parseFloat(app.payment_wk_partialamount) || 0;
+        const candidatePaid = parseFloat(app.payment_wk_partialamount) || 0;
+        weekendCollected = candidatePaid;
+        
+        // Track scholarship amount needed
+        const scholarshipNeeded = weekendFee - candidatePaid;
+        totals.partialScholarshipCount++;
+        totals.partialScholarshipAmount += scholarshipNeeded;
+      } else if (isFullScholarship) {
+        // Full scholarship: $0 collected from candidate
+        weekendCollected = 0;
+        totals.fullScholarshipCount++;
+        totals.fullScholarshipAmount += weekendFee;
       } else if (app.payment_wk_cash || app.payment_wk_check || app.payment_wk_online) {
         // Full payment received (cash, check, or online)
         weekendCollected = weekendFee;
       }
-      // Note: Full scholarships contribute $0 to collected (no actual money received)
       
       // Sponsor Fee Collected: Only if cash or check was received
       const sponsorCollected = (app.payment_sp_cash || app.payment_sp_check) ? sponsorFee : 0;
@@ -231,7 +245,7 @@ export default function Reports() {
         {/* Detailed Financial Breakdown */}
         <div className="card pad">
           <div className="section-title">Financial Breakdown</div>
-          <div className="grid grid-2">
+          <div className="grid grid-3">
             <div className="card pad">
               <div className="small-card-header">Weekend Fees</div>
               <div className="financial-line">
@@ -271,6 +285,34 @@ export default function Reports() {
                 <span>Online:</span>
                 <span id="cra_weekendOnlineCollected" style={{ color: '#9333ea' }}>
                   {formatCurrency(totals.weekendOnlineCollected)}
+                </span>
+              </div>
+            </div>
+
+            <div className="card pad">
+              <div className="small-card-header">Scholarships Needed</div>
+              <div className="financial-line">
+                <span>Full Scholarships:</span>
+                <span id="cra_fullScholarshipAmount" style={{ color: 'var(--accentC)' }}>
+                  {formatCurrency(totals.fullScholarshipAmount)}
+                </span>
+              </div>
+              <div className="financial-line" style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '8px' }}>
+                <span>{totals.fullScholarshipCount} candidate{totals.fullScholarshipCount !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="financial-line">
+                <span>Partial Scholarships:</span>
+                <span id="cra_partialScholarshipAmount" style={{ color: 'var(--accentC)' }}>
+                  {formatCurrency(totals.partialScholarshipAmount)}
+                </span>
+              </div>
+              <div className="financial-line" style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: '8px' }}>
+                <span>{totals.partialScholarshipCount} candidate{totals.partialScholarshipCount !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="financial-line" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--border)', fontWeight: 700 }}>
+                <span>Total Needed:</span>
+                <span id="cra_totalScholarshipAmount" style={{ color: 'var(--accentC)', fontSize: '1.1rem' }}>
+                  {formatCurrency(totals.fullScholarshipAmount + totals.partialScholarshipAmount)}
                 </span>
               </div>
             </div>
