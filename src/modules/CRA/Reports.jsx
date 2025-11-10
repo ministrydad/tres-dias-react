@@ -481,8 +481,10 @@ export default function Reports() {
 
   // Filter applications by gender AND attendance status
   const filteredApps = applications.filter(app => {
-    const hasGender = (currentFilter === 'men' && app.m_first) || (currentFilter === 'women' && app.f_first);
-    const isAttending = app.attendance === 'yes';
+    const hasMan = app.m_first && app.m_first.trim() !== '';
+    const hasWoman = app.f_first && app.f_first.trim() !== '';
+    const hasGender = (currentFilter === 'men' && hasMan) || (currentFilter === 'women' && hasWoman);
+    const isAttending = app.attendance && app.attendance.toLowerCase() === 'yes';
     return hasGender && isAttending;
   });
 
@@ -525,14 +527,18 @@ export default function Reports() {
       
       // Determine weekend fee amount collected
       let weekendFeeCollected = 0;
-      if (app.payment_wk_scholarship && app.payment_wk_scholarshiptype === 'partial') {
-        // Partial scholarship: payment_wk_partialamount is what candidate paid
-        weekendFeeCollected = parseFloat(app.payment_wk_partialamount) || 0;
-      } else if (app.payment_wk_scholarship && app.payment_wk_scholarshiptype === 'full') {
-        // Full scholarship: candidate paid $0
-        weekendFeeCollected = 0;
+      
+      // ONLY trust scholarship fields when payment_wk_scholarship is explicitly TRUE
+      if (app.payment_wk_scholarship === true) {
+        if (app.payment_wk_scholarshiptype === 'partial') {
+          // Partial scholarship: payment_wk_partialamount is what candidate paid
+          weekendFeeCollected = parseFloat(app.payment_wk_partialamount) || 0;
+        } else if (app.payment_wk_scholarshiptype === 'full') {
+          // Full scholarship: candidate paid $0
+          weekendFeeCollected = 0;
+        }
       } else {
-        // Regular payment: full weekend fee
+        // No scholarship OR scholarship is false: candidate paid full weekend fee from app_settings
         weekendFeeCollected = weekendFee;
       }
       
