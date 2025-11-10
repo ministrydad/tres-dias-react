@@ -256,6 +256,10 @@ const TreasurerReportPDF = ({
               
               <Text style={pdfStyles.subsectionTitle}>Weekend Fees</Text>
               <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Expected</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.weekendExpected)}</Text>
+              </View>
+              <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Cash</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.weekendCash)}</Text>
               </View>
@@ -267,8 +271,16 @@ const TreasurerReportPDF = ({
                 <Text style={pdfStyles.simpleLabel}>Online</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.weekendOnline)}</Text>
               </View>
+              <View style={{...pdfStyles.simpleRow, marginTop: 4, paddingTop: 4, borderTop: '0.5 solid #ccc'}}>
+                <Text style={{...pdfStyles.simpleLabel, fontWeight: 600}}>Total Weekend</Text>
+                <Text style={{...pdfStyles.simpleValue, fontWeight: 700}}>{formatCurrency(menTotals.weekendCash + menTotals.weekendCheck + menTotals.weekendOnline)}</Text>
+              </View>
               
               <Text style={pdfStyles.subsectionTitle}>Sponsor Fees</Text>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Expected</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.sponsorExpected)}</Text>
+              </View>
               <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Cash</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.sponsorCash)}</Text>
@@ -276,6 +288,10 @@ const TreasurerReportPDF = ({
               <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Check</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.sponsorCheck)}</Text>
+              </View>
+              <View style={{...pdfStyles.simpleRow, marginTop: 4, paddingTop: 4, borderTop: '0.5 solid #ccc'}}>
+                <Text style={{...pdfStyles.simpleLabel, fontWeight: 600}}>Total Sponsor</Text>
+                <Text style={{...pdfStyles.simpleValue, fontWeight: 700}}>{formatCurrency(menTotals.sponsorCash + menTotals.sponsorCheck)}</Text>
               </View>
               
               <View style={pdfStyles.columnTotal}>
@@ -296,6 +312,10 @@ const TreasurerReportPDF = ({
               
               <Text style={pdfStyles.subsectionTitle}>Weekend Fees</Text>
               <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Expected</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.weekendExpected)}</Text>
+              </View>
+              <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Cash</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.weekendCash)}</Text>
               </View>
@@ -307,8 +327,16 @@ const TreasurerReportPDF = ({
                 <Text style={pdfStyles.simpleLabel}>Online</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.weekendOnline)}</Text>
               </View>
+              <View style={{...pdfStyles.simpleRow, marginTop: 4, paddingTop: 4, borderTop: '0.5 solid #ccc'}}>
+                <Text style={{...pdfStyles.simpleLabel, fontWeight: 600}}>Total Weekend</Text>
+                <Text style={{...pdfStyles.simpleValue, fontWeight: 700}}>{formatCurrency(womenTotals.weekendCash + womenTotals.weekendCheck + womenTotals.weekendOnline)}</Text>
+              </View>
               
               <Text style={pdfStyles.subsectionTitle}>Sponsor Fees</Text>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Expected</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.sponsorExpected)}</Text>
+              </View>
               <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Cash</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.sponsorCash)}</Text>
@@ -316,6 +344,10 @@ const TreasurerReportPDF = ({
               <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Check</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.sponsorCheck)}</Text>
+              </View>
+              <View style={{...pdfStyles.simpleRow, marginTop: 4, paddingTop: 4, borderTop: '0.5 solid #ccc'}}>
+                <Text style={{...pdfStyles.simpleLabel, fontWeight: 600}}>Total Sponsor</Text>
+                <Text style={{...pdfStyles.simpleValue, fontWeight: 700}}>{formatCurrency(womenTotals.sponsorCash + womenTotals.sponsorCheck)}</Text>
               </View>
               
               <View style={pdfStyles.columnTotal}>
@@ -543,6 +575,8 @@ export default function Reports() {
       weekendOnline: 0,
       sponsorCash: 0,
       sponsorCheck: 0,
+      weekendExpected: 0,
+      sponsorExpected: 0,
     };
     
     const womenTotals = {
@@ -552,6 +586,8 @@ export default function Reports() {
       weekendOnline: 0,
       sponsorCash: 0,
       sponsorCheck: 0,
+      weekendExpected: 0,
+      sponsorExpected: 0,
     };
 
     applications.forEach(app => {
@@ -581,6 +617,8 @@ export default function Reports() {
       // Men
       if (hasMan) {
         menTotals.candidateCount++;
+        menTotals.weekendExpected += weekendFee;
+        menTotals.sponsorExpected += sponsorFee;
         
         // Weekend fee by payment method
         if (app.payment_wk_cash) menTotals.weekendCash += weekendFeeCollected;
@@ -595,6 +633,8 @@ export default function Reports() {
       // Women
       if (hasWoman) {
         womenTotals.candidateCount++;
+        womenTotals.weekendExpected += weekendFee;
+        womenTotals.sponsorExpected += sponsorFee;
         
         // Weekend fee by payment method
         if (app.payment_wk_cash) womenTotals.weekendCash += weekendFeeCollected;
