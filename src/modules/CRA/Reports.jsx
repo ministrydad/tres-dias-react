@@ -253,12 +253,12 @@ const TreasurerReportPDF = ({
                 <Text style={pdfStyles.simpleLabel}>Candidates:</Text>
                 <Text style={pdfStyles.simpleValue}>{menTotals.candidateCount}</Text>
               </View>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Expected Revenue:</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.weekendExpected + menTotals.sponsorExpected)}</Text>
+              </View>
               
               <Text style={pdfStyles.subsectionTitle}>Weekend Fees</Text>
-              <View style={pdfStyles.simpleRow}>
-                <Text style={pdfStyles.simpleLabel}>Expected</Text>
-                <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.weekendExpected)}</Text>
-              </View>
               <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Cash</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.weekendCash)}</Text>
@@ -277,10 +277,6 @@ const TreasurerReportPDF = ({
               </View>
               
               <Text style={pdfStyles.subsectionTitle}>Sponsor Fees</Text>
-              <View style={pdfStyles.simpleRow}>
-                <Text style={pdfStyles.simpleLabel}>Expected</Text>
-                <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.sponsorExpected)}</Text>
-              </View>
               <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Cash</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.sponsorCash)}</Text>
@@ -309,12 +305,12 @@ const TreasurerReportPDF = ({
                 <Text style={pdfStyles.simpleLabel}>Candidates:</Text>
                 <Text style={pdfStyles.simpleValue}>{womenTotals.candidateCount}</Text>
               </View>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Expected Revenue:</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.weekendExpected + womenTotals.sponsorExpected)}</Text>
+              </View>
               
               <Text style={pdfStyles.subsectionTitle}>Weekend Fees</Text>
-              <View style={pdfStyles.simpleRow}>
-                <Text style={pdfStyles.simpleLabel}>Expected</Text>
-                <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.weekendExpected)}</Text>
-              </View>
               <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Cash</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.weekendCash)}</Text>
@@ -333,10 +329,6 @@ const TreasurerReportPDF = ({
               </View>
               
               <Text style={pdfStyles.subsectionTitle}>Sponsor Fees</Text>
-              <View style={pdfStyles.simpleRow}>
-                <Text style={pdfStyles.simpleLabel}>Expected</Text>
-                <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.sponsorExpected)}</Text>
-              </View>
               <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Cash</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.sponsorCash)}</Text>
