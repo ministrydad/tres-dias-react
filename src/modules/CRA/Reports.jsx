@@ -78,9 +78,11 @@ export default function Reports() {
     setCurrentTab(tab);
   };
 
-  // Filter applications by gender
+  // Filter applications by gender AND attendance status
   const filteredApps = applications.filter(app => {
-    return (currentFilter === 'men' && app.m_first) || (currentFilter === 'women' && app.f_first);
+    const hasGender = (currentFilter === 'men' && app.m_first) || (currentFilter === 'women' && app.f_first);
+    const isAttending = app.attendance === 'yes';
+    return hasGender && isAttending;
   });
 
   // Calculate financial totals
