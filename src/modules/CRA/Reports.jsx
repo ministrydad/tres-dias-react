@@ -2,6 +2,240 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Font } from '@react-pdf/renderer';
+
+// Register Source Sans 3 font
+Font.register({
+  family: 'Source Sans 3',
+  fonts: [
+    {
+      src: '/fonts/SourceSans3-Regular.ttf',
+      fontWeight: 400,
+    },
+    {
+      src: '/fonts/SourceSans3-SemiBold.ttf',
+      fontWeight: 600,
+    },
+    {
+      src: '/fonts/SourceSans3-Bold.ttf',
+      fontWeight: 700,
+    },
+  ],
+});
+
+// PDF Styles for Treasurer's Report
+const pdfStyles = StyleSheet.create({
+  page: {
+    padding: 40,
+    fontSize: 10,
+    fontFamily: 'Source Sans 3',
+  },
+  header: {
+    textAlign: 'center',
+    marginBottom: 30,
+    borderBottom: '2 solid #333',
+    paddingBottom: 15,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 700,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: 700,
+    marginBottom: 10,
+    backgroundColor: '#f5f5f5',
+    padding: '6 10',
+    borderLeft: '4 solid #2c5aa0',
+  },
+  row: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    paddingBottom: 4,
+    borderBottom: '0.5 solid #eee',
+  },
+  rowLabel: {
+    fontSize: 10,
+    color: '#444',
+  },
+  rowValue: {
+    fontSize: 10,
+    fontWeight: 600,
+  },
+  totalRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTop: '2 solid #333',
+    marginBottom: 6,
+  },
+  totalLabel: {
+    fontSize: 11,
+    fontWeight: 700,
+  },
+  totalValue: {
+    fontSize: 11,
+    fontWeight: 700,
+  },
+  onlinePaymentRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+    paddingLeft: 10,
+  },
+  onlinePaymentName: {
+    fontSize: 9,
+    color: '#555',
+  },
+  grandTotalRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingTop: 12,
+    paddingBottom: 12,
+    borderTop: '3 solid #000',
+    borderBottom: '3 solid #000',
+    backgroundColor: '#f9f9f9',
+    padding: '12 10',
+  },
+  grandTotalLabel: {
+    fontSize: 14,
+    fontWeight: 700,
+  },
+  grandTotalValue: {
+    fontSize: 14,
+    fontWeight: 700,
+  },
+});
+
+// Treasurer's Funds Report PDF Component
+const TreasurerReportPDF = ({ 
+  communityName, 
+  weekendNumber, 
+  generatedBy, 
+  generatedDate,
+  totalCandidates,
+  weekendFeeCash,
+  weekendFeeCheck,
+  weekendFeeOnline,
+  sponsorFeeCash,
+  sponsorFeeCheck,
+  totalScholarshipNeeded,
+  onlinePaymentCandidates
+}) => {
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
+  };
+
+  const totalCash = weekendFeeCash + sponsorFeeCash;
+  const totalChecks = weekendFeeCheck + sponsorFeeCheck;
+  const totalDeposit = totalCash + totalChecks;
+
+  return (
+    <Document>
+      <Page size="LETTER" style={pdfStyles.page}>
+        {/* Header */}
+        <View style={pdfStyles.header}>
+          <Text style={pdfStyles.title}>Treasurer's Funds Report</Text>
+          <Text style={pdfStyles.subtitle}>{communityName} Weekend #{weekendNumber}</Text>
+          <Text style={pdfStyles.subtitle}>Generated: {generatedDate} by {generatedBy}</Text>
+        </View>
+
+        {/* Candidate Count */}
+        <View style={pdfStyles.section}>
+          <Text style={pdfStyles.sectionTitle}>Weekend Summary</Text>
+          <View style={pdfStyles.row}>
+            <Text style={pdfStyles.rowLabel}>Total Candidates Attending</Text>
+            <Text style={pdfStyles.rowValue}>{totalCandidates}</Text>
+          </View>
+        </View>
+
+        {/* Money Being Deposited */}
+        <View style={pdfStyles.section}>
+          <Text style={pdfStyles.sectionTitle}>Funds Being Deposited</Text>
+          
+          <View style={pdfStyles.row}>
+            <Text style={pdfStyles.rowLabel}>Weekend Fee - Cash</Text>
+            <Text style={pdfStyles.rowValue}>{formatCurrency(weekendFeeCash)}</Text>
+          </View>
+          
+          <View style={pdfStyles.row}>
+            <Text style={pdfStyles.rowLabel}>Weekend Fee - Check</Text>
+            <Text style={pdfStyles.rowValue}>{formatCurrency(weekendFeeCheck)}</Text>
+          </View>
+          
+          <View style={pdfStyles.row}>
+            <Text style={pdfStyles.rowLabel}>Sponsor Fee - Cash</Text>
+            <Text style={pdfStyles.rowValue}>{formatCurrency(sponsorFeeCash)}</Text>
+          </View>
+          
+          <View style={pdfStyles.row}>
+            <Text style={pdfStyles.rowLabel}>Sponsor Fee - Check</Text>
+            <Text style={pdfStyles.rowValue}>{formatCurrency(sponsorFeeCheck)}</Text>
+          </View>
+
+          <View style={pdfStyles.totalRow}>
+            <Text style={pdfStyles.totalLabel}>Total Cash Being Deposited</Text>
+            <Text style={pdfStyles.totalValue}>{formatCurrency(totalCash)}</Text>
+          </View>
+
+          <View style={pdfStyles.totalRow}>
+            <Text style={pdfStyles.totalLabel}>Total Checks Being Deposited</Text>
+            <Text style={pdfStyles.totalValue}>{formatCurrency(totalChecks)}</Text>
+          </View>
+
+          <View style={pdfStyles.grandTotalRow}>
+            <Text style={pdfStyles.grandTotalLabel}>GRAND TOTAL BEING DEPOSITED</Text>
+            <Text style={pdfStyles.grandTotalValue}>{formatCurrency(totalDeposit)}</Text>
+          </View>
+        </View>
+
+        {/* Online Payments */}
+        {onlinePaymentCandidates.length > 0 && (
+          <View style={pdfStyles.section}>
+            <Text style={pdfStyles.sectionTitle}>Online Payments (Weekend Fee)</Text>
+            <View style={pdfStyles.row}>
+              <Text style={pdfStyles.rowLabel}>Total Online Payments</Text>
+              <Text style={pdfStyles.rowValue}>{formatCurrency(weekendFeeOnline)}</Text>
+            </View>
+            <Text style={{ fontSize: 9, marginTop: 8, marginBottom: 6, fontWeight: 600, color: '#666' }}>
+              Candidates who paid online:
+            </Text>
+            {onlinePaymentCandidates.map((name, idx) => (
+              <View key={idx} style={pdfStyles.onlinePaymentRow}>
+                <Text style={pdfStyles.onlinePaymentName}>• {name}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Scholarship Funding Needed */}
+        <View style={pdfStyles.section}>
+          <Text style={pdfStyles.sectionTitle}>Scholarship Funding Required</Text>
+          <View style={pdfStyles.row}>
+            <Text style={pdfStyles.rowLabel}>Total Scholarship Amount Needed from Organization</Text>
+            <Text style={pdfStyles.rowValue}>{formatCurrency(totalScholarshipNeeded)}</Text>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+};
 
 export default function Reports() {
   const { orgId } = useAuth();
@@ -11,6 +245,9 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
   const [weekendFee, setWeekendFee] = useState(150); // Default fallback
   const [sponsorFee, setSponsorFee] = useState(50);   // Default fallback
+  const [communityName, setCommunityName] = useState('');
+  const [activeWeekendNumber, setActiveWeekendNumber] = useState('');
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
     if (orgId) {
@@ -32,7 +269,7 @@ export default function Reports() {
     try {
       const { data, error } = await supabase
         .from('app_settings')
-        .select('weekend_fee, sponsor_fee')
+        .select('weekend_fee, sponsor_fee, community_name, active_weekend')
         .eq('org_id', orgId)
         .single();
 
@@ -41,6 +278,24 @@ export default function Reports() {
       if (data) {
         setWeekendFee(parseFloat(data.weekend_fee) || 150);
         setSponsorFee(parseFloat(data.sponsor_fee) || 50);
+        setCommunityName(data.community_name || '');
+        setActiveWeekendNumber(data.active_weekend || '');
+      }
+
+      // Load user name
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', user.id)
+          .single();
+        
+        if (!userError && userData) {
+          setUserName(userData.name || user.email || 'Unknown User');
+        } else {
+          setUserName(user.email || 'Unknown User');
+        }
       }
     } catch (error) {
       console.error('Error loading app settings:', error);
@@ -180,6 +435,13 @@ export default function Reports() {
     window.print();
   };
 
+  // Get list of candidates who paid online
+  const getOnlinePaymentCandidates = () => {
+    return filteredApps
+      .filter(app => app.payment_wk_online)
+      .map(app => getCandidateName(app));
+  };
+
   return (
     <div id="cra-reports" className="cra-view" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Controls */}
@@ -202,6 +464,42 @@ export default function Reports() {
                 Women
               </div>
             </div>
+          </div>
+          
+          {/* Treasurer's Report PDF Button */}
+          <div>
+            <div className="label">Treasurer's Report</div>
+            <PDFDownloadLink
+              document={
+                <TreasurerReportPDF
+                  communityName={communityName}
+                  weekendNumber={activeWeekendNumber}
+                  generatedBy={userName}
+                  generatedDate={new Date().toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    day: 'numeric', 
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  })}
+                  totalCandidates={filteredApps.length}
+                  weekendFeeCash={totals.weekendCashCollected}
+                  weekendFeeCheck={totals.weekendCheckCollected}
+                  weekendFeeOnline={totals.weekendOnlineCollected}
+                  sponsorFeeCash={totals.sponsorCashCollected}
+                  sponsorFeeCheck={totals.sponsorCheckCollected}
+                  totalScholarshipNeeded={totals.fullScholarshipAmount + totals.partialScholarshipAmount}
+                  onlinePaymentCandidates={getOnlinePaymentCandidates()}
+                />
+              }
+              fileName={`Treasurer_Report_Weekend_${activeWeekendNumber}_${currentFilter}.pdf`}
+            >
+              {({ loading: pdfLoading }) => (
+                <button className="btn btn-primary" disabled={pdfLoading || loading}>
+                  {pdfLoading ? 'Generating...' : 'Generate Funds Report'}
+                </button>
+              )}
+            </PDFDownloadLink>
           </div>
         </div>
       </div>
