@@ -742,6 +742,59 @@ export default function Reports() {
   
   // Compute gender-split totals once for treasurer report
   const genderTotals = computeTotalsByGender();
+  
+  // Compute COMBINED scholarship totals (all genders) for treasurer report
+  const computeCombinedScholarshipTotals = () => {
+    let fullScholarshipAmount = 0;
+    let partialScholarshipAmount = 0;
+    
+    applications.forEach(app => {
+      // Only include attending candidates
+      if (!app.attendance || app.attendance.toLowerCase() !== 'yes') return;
+      
+      const hasMan = app.m_first && app.m_first.trim() !== '';
+      const hasWoman = app.f_first && app.f_first.trim() !== '';
+      
+      // Skip if no candidate
+      if (!hasMan && !hasWoman) return;
+      
+      const isScholarship = app.payment_wk_scholarship === true;
+      const isFullScholarship = isScholarship && app.payment_wk_scholarshiptype === 'full';
+      const isPartialScholarship = isScholarship && app.payment_wk_scholarshiptype === 'partial';
+      
+      if (isPartialScholarship) {
+        const candidatePaid = parseFloat(app.payment_wk_partialamount) || 0;
+        const scholarshipNeeded = weekendFee - candidatePaid;
+        partialScholarshipAmount += scholarshipNeeded;
+      } else if (isFullScholarship) {
+        fullScholarshipAmount += weekendFee;
+      }
+    });
+    
+    return { fullScholarshipAmount, partialScholarshipAmount };
+  };
+  
+  const combinedScholarships = computeCombinedScholarshipTotals();
+  
+  // Get ALL online payment candidates (both genders) for treasurer report
+  const getAllOnlinePaymentCandidates = () => {
+    return applications
+      .filter(app => {
+        if (!app.attendance || app.attendance.toLowerCase() !== 'yes') return false;
+        if (!app.payment_wk_online) return false;
+        const hasMan = app.m_first && app.m_first.trim() !== '';
+        const hasWoman = app.f_first && app.f_first.trim() !== '';
+        return hasMan || hasWoman;
+      })
+      .map(app => {
+        const hasMan = app.m_first && app.m_first.trim() !== '';
+        if (hasMan) {
+          return `${app.m_pref || app.m_first} ${app.c_lastname}`.trim();
+        } else {
+          return `${app.f_pref || app.f_first} ${app.c_lastname}`.trim();
+        }
+      });
+  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
@@ -821,8 +874,8 @@ export default function Reports() {
                     totalCandidates={getTotalCandidatesAllGenders()}
                     menTotals={genderTotals.menTotals}
                     womenTotals={genderTotals.womenTotals}
-                    totalScholarshipNeeded={totals.fullScholarshipAmount + totals.partialScholarshipAmount}
-                    onlinePaymentCandidates={getOnlinePaymentCandidates()}
+                    totalScholarshipNeeded={combinedScholarships.fullScholarshipAmount + combinedScholarships.partialScholarshipAmount}
+                    onlinePaymentCandidates={getAllOnlinePaymentCandidates()}
                   />
                 }
                 fileName={`Treasurer_Report_Weekend_${activeWeekendNumber}.pdf`}
@@ -856,8 +909,8 @@ export default function Reports() {
                   totalCandidates={getTotalCandidatesAllGenders()}
                   menTotals={genderTotals.menTotals}
                   womenTotals={genderTotals.womenTotals}
-                  totalScholarshipNeeded={totals.fullScholarshipAmount + totals.partialScholarshipAmount}
-                  onlinePaymentCandidates={getOnlinePaymentCandidates()}
+                  totalScholarshipNeeded={combinedScholarships.fullScholarshipAmount + combinedScholarships.partialScholarshipAmount}
+                  onlinePaymentCandidates={getAllOnlinePaymentCandidates()}
                 />
               </PDFViewer>
             </div>
