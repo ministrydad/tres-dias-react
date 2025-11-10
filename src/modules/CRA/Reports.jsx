@@ -26,175 +26,175 @@ Font.register({
 // PDF Styles for Treasurer's Report
 const pdfStyles = StyleSheet.create({
   page: {
-    padding: 40,
-    fontSize: 9,
+    padding: 24,  // Reduced from 40
+    fontSize: 8,   // Reduced from 9
     fontFamily: 'Source Sans 3',
   },
   header: {
     textAlign: 'center',
-    marginBottom: 20,
-    borderBottom: '1.5 solid #333',
-    paddingBottom: 12,
+    marginBottom: 12,  // Reduced from 20
+    borderBottom: '1 solid #333',  // Thinner border
+    paddingBottom: 8,  // Reduced from 12
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,  // Reduced from 16
     fontWeight: 700,
-    marginBottom: 6,
+    marginBottom: 4,  // Reduced from 6
   },
   subtitle: {
-    fontSize: 9,
+    fontSize: 8,  // Reduced from 9
     color: '#666',
-    marginBottom: 3,
+    marginBottom: 2,  // Reduced from 3
   },
   section: {
-    marginBottom: 16,
+    marginBottom: 10,  // Reduced from 16
   },
   sectionTitle: {
-    fontSize: 11,
+    fontSize: 10,  // Reduced from 11
     fontWeight: 700,
-    marginBottom: 8,
+    marginBottom: 6,  // Reduced from 8
     backgroundColor: '#f5f5f5',
-    padding: '5 8',
-    borderLeft: '3 solid #2c5aa0',
+    padding: '3 6',  // Reduced from '5 8'
+    borderLeft: '2 solid #2c5aa0',  // Thinner border
   },
   row: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 5,
-    paddingBottom: 3,
+    marginBottom: 3,  // Reduced from 5
+    paddingBottom: 2,  // Reduced from 3
     borderBottom: '0.5 solid #eee',
   },
   rowLabel: {
-    fontSize: 9,
+    fontSize: 8,  // Reduced from 9
     color: '#444',
   },
   rowValue: {
-    fontSize: 9,
+    fontSize: 8,  // Reduced from 9
     fontWeight: 600,
   },
   totalRow: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 6,
-    paddingTop: 6,
+    marginTop: 4,  // Reduced from 6
+    paddingTop: 4,  // Reduced from 6
     borderTop: '1.5 solid #333',
-    marginBottom: 5,
+    marginBottom: 3,  // Reduced from 5
   },
   totalLabel: {
-    fontSize: 10,
+    fontSize: 9,  // Reduced from 10
     fontWeight: 700,
   },
   totalValue: {
-    fontSize: 10,
+    fontSize: 9,  // Reduced from 10
     fontWeight: 700,
   },
   onlinePaymentRow: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 3,
-    paddingLeft: 8,
+    marginBottom: 2,  // Reduced from 3
+    paddingLeft: 6,  // Reduced from 8
   },
   onlinePaymentName: {
-    fontSize: 8,
+    fontSize: 7,  // Reduced from 8
     color: '#555',
   },
   grandTotalRow: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
-    paddingTop: 8,
-    paddingBottom: 8,
-    borderTop: '2 solid #000',
-    borderBottom: '2 solid #000',
+    marginTop: 6,  // Reduced from 8
+    paddingTop: 6,  // Reduced from 8
+    paddingBottom: 6,  // Reduced from 8
+    borderTop: '1.5 solid #000',
+    borderBottom: '1.5 solid #000',
     backgroundColor: '#f9f9f9',
-    padding: '8 10',
+    padding: '6 8',  // Reduced from '8 10'
   },
   grandTotalLabel: {
-    fontSize: 11,
+    fontSize: 10,  // Reduced from 11
     fontWeight: 700,
   },
   grandTotalValue: {
-    fontSize: 11,
+    fontSize: 10,  // Reduced from 11
     fontWeight: 700,
   },
   columnHeader: {
-    fontSize: 12,
+    fontSize: 11,  // Reduced from 12
     fontWeight: 700,
     textAlign: 'left',
-    marginBottom: 8,
+    marginBottom: 6,  // Reduced from 8
     color: '#2c5aa0',
   },
   columnContent: {
     backgroundColor: '#fafafa',
-    padding: 10,
+    padding: 8,  // Reduced from 10
     borderRadius: 4,
   },
   subsectionTitle: {
-    fontSize: 9,
+    fontSize: 8,  // Reduced from 9
     fontWeight: 700,
-    marginTop: 10,
-    marginBottom: 4,
+    marginTop: 6,  // Reduced from 10
+    marginBottom: 3,  // Reduced from 4
     color: '#666',
   },
   simpleRow: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 3,  // Reduced from 4
   },
   simpleLabel: {
-    fontSize: 9,
+    fontSize: 8,  // Reduced from 9
     color: '#444',
   },
   simpleValue: {
-    fontSize: 9,
+    fontSize: 8,  // Reduced from 9
     fontWeight: 600,
   },
   columnTotal: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
-    paddingTop: 8,
+    marginTop: 8,  // Reduced from 12
+    paddingTop: 6,  // Reduced from 8
     borderTop: '1 solid #ccc',
   },
   columnTotalLabel: {
-    fontSize: 10,
+    fontSize: 9,  // Reduced from 10
     fontWeight: 700,
   },
   columnTotalValue: {
-    fontSize: 10,
+    fontSize: 9,  // Reduced from 10
     fontWeight: 700,
   },
   combinedSection: {
     backgroundColor: '#f5f5f5',
-    padding: 12,
+    padding: 8,  // Reduced from 12
     borderRadius: 4,
-    marginBottom: 16,
+    marginBottom: 10,  // Reduced from 16
   },
   combinedHeader: {
-    fontSize: 12,
+    fontSize: 11,  // Reduced from 12
     fontWeight: 700,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 6,  // Reduced from 10
     color: '#2c5aa0',
   },
   combinedRow: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 5,
+    marginBottom: 3,  // Reduced from 5
   },
   combinedLabel: {
-    fontSize: 9,
+    fontSize: 8,  // Reduced from 9
     color: '#444',
   },
   combinedValue: {
-    fontSize: 9,
+    fontSize: 8,  // Reduced from 9
     fontWeight: 600,
   },
 });
@@ -244,7 +244,7 @@ const TreasurerReportPDF = ({
         </View>
 
         {/* Two Column Layout - Men and Women */}
-        <View style={{ display: 'flex', flexDirection: 'row', gap: 16, marginBottom: 16 }}>
+        <View style={{ display: 'flex', flexDirection: 'row', gap: 10, marginBottom: 10 }}>
           {/* MEN Column */}
           <View style={{ flex: 1 }}>
             <Text style={pdfStyles.columnHeader}>MEN</Text>
@@ -383,11 +383,11 @@ const TreasurerReportPDF = ({
         {onlinePaymentCandidates.length > 0 && (
           <View style={pdfStyles.section}>
             <Text style={pdfStyles.sectionTitle}>Online Payments (Weekend Fee)</Text>
-            <Text style={{ fontSize: 8, marginTop: 6, marginBottom: 4, color: '#666' }}>
+            <Text style={{ fontSize: 7, marginTop: 4, marginBottom: 3, color: '#666' }}>
               Candidates who paid online ({formatCurrency(totalWeekendOnline)} total):
             </Text>
             {onlinePaymentCandidates.map((name, idx) => (
-              <Text key={idx} style={{ fontSize: 8, color: '#555', marginLeft: 10, marginBottom: 2 }}>
+              <Text key={idx} style={{ fontSize: 7, color: '#555', marginLeft: 8, marginBottom: 1 }}>
                 • {name}
               </Text>
             ))}
@@ -397,9 +397,9 @@ const TreasurerReportPDF = ({
         {/* Scholarship Funding Needed */}
         <View style={pdfStyles.section}>
           <Text style={pdfStyles.sectionTitle}>Scholarship Funding Required</Text>
-          <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-            <Text style={{ fontSize: 9, color: '#444' }}>Total Scholarship Amount Needed from Organization:</Text>
-            <Text style={{ fontSize: 9, fontWeight: 600 }}>{formatCurrency(totalScholarshipNeeded)}</Text>
+          <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+            <Text style={{ fontSize: 8, color: '#444' }}>Total Scholarship Amount Needed from Organization:</Text>
+            <Text style={{ fontSize: 8, fontWeight: 600 }}>{formatCurrency(totalScholarshipNeeded)}</Text>
           </View>
         </View>
       </Page>
