@@ -57,12 +57,14 @@ export default function ViewRoster({ onNavigate }) {
     // Payments
     payment_wk_cash: false,
     payment_wk_check: false,
+    payment_wk_online: false,
     payment_wk_scholarship: false,
     payment_wk_scholarshiptype: '',
     payment_wk_partialamount: '',
-    payment_wk_candidate_paid: 0,  // NEW FIELD
+    payment_wk_candidate_paid: 0,
     payment_sp_cash: false,
     payment_sp_check: false,
+    payment_sp_online: false,
     
     // Letters
     letter_sent_sponsor: false,
@@ -283,12 +285,14 @@ export default function ViewRoster({ onNavigate }) {
       // Payments
       payment_wk_cash: app.payment_wk_cash || false,
       payment_wk_check: app.payment_wk_check || false,
+      payment_wk_online: app.payment_wk_online || false,
       payment_wk_scholarship: app.payment_wk_scholarship || false,
       payment_wk_scholarshiptype: app.payment_wk_scholarshiptype || '',
       payment_wk_partialamount: app.payment_wk_partialamount || '',
       payment_wk_candidate_paid: app.payment_wk_candidate_paid || 0,
       payment_sp_cash: app.payment_sp_cash || false,
       payment_sp_check: app.payment_sp_check || false,
+      payment_sp_online: app.payment_sp_online || false,
       
       // Letters
       letter_sent_sponsor: app.letter_sent_sponsor || false,
@@ -417,12 +421,14 @@ export default function ViewRoster({ onNavigate }) {
         // Payments
         payment_wk_cash: editData.payment_wk_cash,
         payment_wk_check: editData.payment_wk_check,
+        payment_wk_online: editData.payment_wk_online,
         payment_wk_scholarship: editData.payment_wk_scholarship,
         payment_wk_scholarshiptype: editData.payment_wk_scholarshiptype,
         payment_wk_partialamount: editData.payment_wk_partialamount,
         payment_wk_candidate_paid: editData.payment_wk_candidate_paid,
         payment_sp_cash: editData.payment_sp_cash,
         payment_sp_check: editData.payment_sp_check,
+        payment_sp_online: editData.payment_sp_online,
         
         // Letters
         letter_sent_sponsor: editData.letter_sent_sponsor,
@@ -477,14 +483,14 @@ export default function ViewRoster({ onNavigate }) {
           // Partial scholarship with candidate payment
           const candidatePaid = app.payment_wk_candidate_paid || 0;
           const scholarshipAmount = app.payment_wk_partialamount || 0;
-          const method = app.payment_wk_cash ? 'Cash' : app.payment_wk_check ? 'Check' : '';
+          const method = app.payment_wk_cash ? 'Cash' : app.payment_wk_check ? 'Check' : app.payment_wk_online ? 'Online' : '';
           return `Partial ($${candidatePaid} ${method}, $${scholarshipAmount} scholarship)`;
         }
       } else {
-        return (app.payment_wk_cash || app.payment_wk_check) ? 'Paid' : 'Due';
+        return (app.payment_wk_cash || app.payment_wk_check || app.payment_wk_online) ? 'Paid' : 'Due';
       }
     } else if (type === 'sp') {
-      return (app.payment_sp_cash || app.payment_sp_check) ? 'Paid' : 'Due';
+      return (app.payment_sp_cash || app.payment_sp_check || app.payment_sp_online) ? 'Paid' : 'Due';
     }
     return 'Due';
   };
@@ -814,11 +820,12 @@ export default function ViewRoster({ onNavigate }) {
                                     ? 'Full Scholarship' 
                                     : `Partial Scholarship ($${app.payment_wk_partialamount})`}
                                 </div>
-                              ) : (app.payment_wk_cash || app.payment_wk_check) ? (
+                              ) : (app.payment_wk_cash || app.payment_wk_check || app.payment_wk_online) ? (
                                 <div style={{ fontSize: '0.85rem', color: '#28a745', fontWeight: 600 }}>
                                   Paid - {[
                                     app.payment_wk_cash ? 'Cash' : null,
-                                    app.payment_wk_check ? 'Check' : null
+                                    app.payment_wk_check ? 'Check' : null,
+                                    app.payment_wk_online ? 'Online' : null
                                   ].filter(Boolean).join(', ')}
                                 </div>
                               ) : (
@@ -830,11 +837,12 @@ export default function ViewRoster({ onNavigate }) {
                               <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 SPONSOR FEE
                               </div>
-                              {(app.payment_sp_cash || app.payment_sp_check) ? (
+                              {(app.payment_sp_cash || app.payment_sp_check || app.payment_sp_online) ? (
                                 <div style={{ fontSize: '0.85rem', color: '#28a745', fontWeight: 600 }}>
                                   Paid - {[
                                     app.payment_sp_cash ? 'Cash' : null,
-                                    app.payment_sp_check ? 'Check' : null
+                                    app.payment_sp_check ? 'Check' : null,
+                                    app.payment_sp_online ? 'Online' : null
                                   ].filter(Boolean).join(', ')}
                                 </div>
                               ) : (
@@ -1397,11 +1405,12 @@ export default function ViewRoster({ onNavigate }) {
               {/* Main Payment Status - 3 Options */}
               <div className="toggle" style={{ display: 'flex', gap: '0', marginBottom: '12px' }}>
                 <div 
-                  className={`opt ${!editData.payment_wk_scholarship && !editData.payment_wk_cash && !editData.payment_wk_check ? 'active' : ''}`}
+                  className={`opt ${!editData.payment_wk_scholarship && !editData.payment_wk_cash && !editData.payment_wk_check && !editData.payment_wk_online ? 'active' : ''}`}
                   onClick={() => {
                     handleEditFieldChange('payment_wk_scholarship', false);
                     handleEditFieldChange('payment_wk_cash', false);
                     handleEditFieldChange('payment_wk_check', false);
+                    handleEditFieldChange('payment_wk_online', false);
                     handleEditFieldChange('payment_wk_scholarshiptype', '');
                     handleEditFieldChange('payment_wk_partialamount', '');
                     handleEditFieldChange('payment_wk_candidate_paid', 0);
@@ -1411,11 +1420,12 @@ export default function ViewRoster({ onNavigate }) {
                   Unpaid
                 </div>
                 <div 
-                  className={`opt ${!editData.payment_wk_scholarship && (editData.payment_wk_cash || editData.payment_wk_check) ? 'active' : ''}`}
+                  className={`opt ${!editData.payment_wk_scholarship && (editData.payment_wk_cash || editData.payment_wk_check || editData.payment_wk_online) ? 'active' : ''}`}
                   onClick={() => {
                     handleEditFieldChange('payment_wk_scholarship', false);
                     handleEditFieldChange('payment_wk_cash', true);
                     handleEditFieldChange('payment_wk_check', false);
+                    handleEditFieldChange('payment_wk_online', false);
                     handleEditFieldChange('payment_wk_scholarshiptype', '');
                     handleEditFieldChange('payment_wk_partialamount', '');
                     handleEditFieldChange('payment_wk_candidate_paid', WEEKEND_FEE);
@@ -1431,6 +1441,7 @@ export default function ViewRoster({ onNavigate }) {
                     handleEditFieldChange('payment_wk_scholarshiptype', 'full');
                     handleEditFieldChange('payment_wk_cash', false);
                     handleEditFieldChange('payment_wk_check', false);
+                    handleEditFieldChange('payment_wk_online', false);
                     handleEditFieldChange('payment_wk_candidate_paid', 0);
                     handleEditFieldChange('payment_wk_partialamount', WEEKEND_FEE);
                   }}
@@ -1441,7 +1452,7 @@ export default function ViewRoster({ onNavigate }) {
               </div>
 
               {/* If Paid - Show Payment Method & Amount */}
-              {!editData.payment_wk_scholarship && (editData.payment_wk_cash || editData.payment_wk_check) && (
+              {!editData.payment_wk_scholarship && (editData.payment_wk_cash || editData.payment_wk_check || editData.payment_wk_online) && (
                 <div>
                   <div className="field" style={{ marginBottom: '12px' }}>
                     <label className="label">Payment Method</label>
@@ -1451,6 +1462,7 @@ export default function ViewRoster({ onNavigate }) {
                         onClick={() => {
                           handleEditFieldChange('payment_wk_cash', true);
                           handleEditFieldChange('payment_wk_check', false);
+                          handleEditFieldChange('payment_wk_online', false);
                         }}
                         style={{ flex: 1 }}
                       >
@@ -1461,10 +1473,22 @@ export default function ViewRoster({ onNavigate }) {
                         onClick={() => {
                           handleEditFieldChange('payment_wk_cash', false);
                           handleEditFieldChange('payment_wk_check', true);
+                          handleEditFieldChange('payment_wk_online', false);
                         }}
                         style={{ flex: 1 }}
                       >
                         Check
+                      </div>
+                      <div 
+                        className={`opt ${editData.payment_wk_online ? 'active' : ''}`}
+                        onClick={() => {
+                          handleEditFieldChange('payment_wk_cash', false);
+                          handleEditFieldChange('payment_wk_check', false);
+                          handleEditFieldChange('payment_wk_online', true);
+                        }}
+                        style={{ flex: 1 }}
+                      >
+                        Online
                       </div>
                     </div>
                   </div>
@@ -1495,6 +1519,7 @@ export default function ViewRoster({ onNavigate }) {
                           handleEditFieldChange('payment_wk_partialamount', WEEKEND_FEE);
                           handleEditFieldChange('payment_wk_cash', false);
                           handleEditFieldChange('payment_wk_check', false);
+                          handleEditFieldChange('payment_wk_online', false);
                         }}
                         style={{ flex: 1 }}
                       >
@@ -1506,6 +1531,7 @@ export default function ViewRoster({ onNavigate }) {
                           handleEditFieldChange('payment_wk_scholarshiptype', 'partial');
                           handleEditFieldChange('payment_wk_cash', true);
                           handleEditFieldChange('payment_wk_check', false);
+                          handleEditFieldChange('payment_wk_online', false);
                           handleEditFieldChange('payment_wk_candidate_paid', 0);
                           handleEditFieldChange('payment_wk_partialamount', WEEKEND_FEE);
                         }}
@@ -1536,6 +1562,7 @@ export default function ViewRoster({ onNavigate }) {
                             onClick={() => {
                               handleEditFieldChange('payment_wk_cash', true);
                               handleEditFieldChange('payment_wk_check', false);
+                              handleEditFieldChange('payment_wk_online', false);
                             }}
                             style={{ flex: 1 }}
                           >
@@ -1546,10 +1573,22 @@ export default function ViewRoster({ onNavigate }) {
                             onClick={() => {
                               handleEditFieldChange('payment_wk_cash', false);
                               handleEditFieldChange('payment_wk_check', true);
+                              handleEditFieldChange('payment_wk_online', false);
                             }}
                             style={{ flex: 1 }}
                           >
                             Check
+                          </div>
+                          <div 
+                            className={`opt ${editData.payment_wk_online ? 'active' : ''}`}
+                            onClick={() => {
+                              handleEditFieldChange('payment_wk_cash', false);
+                              handleEditFieldChange('payment_wk_check', false);
+                              handleEditFieldChange('payment_wk_online', true);
+                            }}
+                            style={{ flex: 1 }}
+                          >
+                            Online
                           </div>
                         </div>
                       </div>
@@ -1607,29 +1646,53 @@ export default function ViewRoster({ onNavigate }) {
             {/* SPONSOR FEE */}
             <div style={{ marginBottom: '24px' }}>
               <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--ink)' }}>
-                Sponsor Fee Payment Method
+                Sponsor Fee Payment
               </h4>
 
-              <div className="toggle" style={{ display: 'flex', gap: '0' }}>
+              <div className="toggle" style={{ display: 'flex', gap: '0', marginBottom: '12px' }}>
                 <div 
-                  className={`opt ${editData.payment_sp_cash && !editData.payment_sp_check ? 'active' : ''}`}
+                  className={`opt ${!editData.payment_sp_cash && !editData.payment_sp_check && !editData.payment_sp_online ? 'active' : ''}`}
+                  onClick={() => {
+                    handleEditFieldChange('payment_sp_cash', false);
+                    handleEditFieldChange('payment_sp_check', false);
+                    handleEditFieldChange('payment_sp_online', false);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Unpaid
+                </div>
+                <div 
+                  className={`opt ${editData.payment_sp_cash ? 'active' : ''}`}
                   onClick={() => {
                     handleEditFieldChange('payment_sp_cash', true);
                     handleEditFieldChange('payment_sp_check', false);
+                    handleEditFieldChange('payment_sp_online', false);
                   }}
                   style={{ flex: 1 }}
                 >
                   Cash
                 </div>
                 <div 
-                  className={`opt ${editData.payment_sp_check && !editData.payment_sp_cash ? 'active' : ''}`}
+                  className={`opt ${editData.payment_sp_check ? 'active' : ''}`}
                   onClick={() => {
                     handleEditFieldChange('payment_sp_cash', false);
                     handleEditFieldChange('payment_sp_check', true);
+                    handleEditFieldChange('payment_sp_online', false);
                   }}
                   style={{ flex: 1 }}
                 >
                   Check
+                </div>
+                <div 
+                  className={`opt ${editData.payment_sp_online ? 'active' : ''}`}
+                  onClick={() => {
+                    handleEditFieldChange('payment_sp_cash', false);
+                    handleEditFieldChange('payment_sp_check', false);
+                    handleEditFieldChange('payment_sp_online', true);
+                  }}
+                  style={{ flex: 1 }}
+                >
+                  Online
                 </div>
               </div>
             </div>
