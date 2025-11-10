@@ -124,7 +124,7 @@ const pdfStyles = StyleSheet.create({
   columnHeader: {
     fontSize: 12,
     fontWeight: 700,
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 8,
     color: '#2c5aa0',
   },
@@ -491,7 +491,7 @@ export default function Reports() {
     return applications.filter(app => {
       const hasMan = app.m_first && app.m_first.trim() !== '';
       const hasWoman = app.f_first && app.f_first.trim() !== '';
-      const isAttending = app.attendance === 'yes';
+      const isAttending = app.attendance && app.attendance.toLowerCase() === 'yes';
       return (hasMan || hasWoman) && isAttending;
     }).length;
   };
@@ -517,17 +517,35 @@ export default function Reports() {
     };
 
     applications.forEach(app => {
-      if (app.attendance !== 'yes') return; // Only attending candidates
+      // Only include candidates with attendance === 'yes' (case insensitive)
+      if (!app.attendance || app.attendance.toLowerCase() !== 'yes') return;
       
       const hasMan = app.m_first && app.m_first.trim() !== '';
       const hasWoman = app.f_first && app.f_first.trim() !== '';
       
+      // Determine weekend fee amount collected
+      let weekendFeeCollected = 0;
+      if (app.payment_wk_scholarship && app.payment_wk_scholarshiptype === 'partial') {
+        // Partial scholarship: payment_wk_partialamount is what candidate paid
+        weekendFeeCollected = parseFloat(app.payment_wk_partialamount) || 0;
+      } else if (app.payment_wk_scholarship && app.payment_wk_scholarshiptype === 'full') {
+        // Full scholarship: candidate paid $0
+        weekendFeeCollected = 0;
+      } else {
+        // Regular payment: full weekend fee
+        weekendFeeCollected = weekendFee;
+      }
+      
       // Men
       if (hasMan) {
         menTotals.candidateCount++;
-        if (app.payment_wk_cash) menTotals.weekendCash += weekendFee;
-        if (app.payment_wk_check) menTotals.weekendCheck += weekendFee;
-        if (app.payment_wk_online) menTotals.weekendOnline += weekendFee;
+        
+        // Weekend fee by payment method
+        if (app.payment_wk_cash) menTotals.weekendCash += weekendFeeCollected;
+        if (app.payment_wk_check) menTotals.weekendCheck += weekendFeeCollected;
+        if (app.payment_wk_online) menTotals.weekendOnline += weekendFeeCollected;
+        
+        // Sponsor fee (always full amount if paid)
         if (app.payment_sp_cash) menTotals.sponsorCash += sponsorFee;
         if (app.payment_sp_check) menTotals.sponsorCheck += sponsorFee;
       }
@@ -535,9 +553,13 @@ export default function Reports() {
       // Women
       if (hasWoman) {
         womenTotals.candidateCount++;
-        if (app.payment_wk_cash) womenTotals.weekendCash += weekendFee;
-        if (app.payment_wk_check) womenTotals.weekendCheck += weekendFee;
-        if (app.payment_wk_online) womenTotals.weekendOnline += weekendFee;
+        
+        // Weekend fee by payment method
+        if (app.payment_wk_cash) womenTotals.weekendCash += weekendFeeCollected;
+        if (app.payment_wk_check) womenTotals.weekendCheck += weekendFeeCollected;
+        if (app.payment_wk_online) womenTotals.weekendOnline += weekendFeeCollected;
+        
+        // Sponsor fee (always full amount if paid)
         if (app.payment_sp_cash) womenTotals.sponsorCash += sponsorFee;
         if (app.payment_sp_check) womenTotals.sponsorCheck += sponsorFee;
       }
@@ -627,6 +649,9 @@ export default function Reports() {
   const totalExpected = totals.weekendExpected + totals.sponsorExpected;
   const totalCollected = totals.weekendCollected + totals.sponsorCollected;
   const balanceDue = totalExpected - totalCollected;
+  
+  // Compute gender-split totals once for treasurer report
+  const genderTotals = computeTotalsByGender();
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
@@ -689,8 +714,8 @@ export default function Reports() {
                     minute: '2-digit'
                   })}
                   totalCandidates={getTotalCandidatesAllGenders()}
-                  menTotals={computeTotalsByGender().menTotals}
-                  womenTotals={computeTotalsByGender().womenTotals}
+                  menTotals={genderTotals.menTotals}
+                  womenTotals={genderTotals.womenTotals}
                   totalScholarshipNeeded={totals.fullScholarshipAmount + totals.partialScholarshipAmount}
                   onlinePaymentCandidates={getOnlinePaymentCandidates()}
                 />
