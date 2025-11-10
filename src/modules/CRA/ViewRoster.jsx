@@ -64,7 +64,6 @@ export default function ViewRoster({ onNavigate }) {
     payment_wk_candidate_paid: 0,
     payment_sp_cash: false,
     payment_sp_check: false,
-    payment_sp_online: false,
     
     // Letters
     letter_sent_sponsor: false,
@@ -290,7 +289,6 @@ export default function ViewRoster({ onNavigate }) {
       payment_wk_candidate_paid: app.payment_wk_candidate_paid || 0,
       payment_sp_cash: app.payment_sp_cash || false,
       payment_sp_check: app.payment_sp_check || false,
-      payment_sp_online: app.payment_sp_online || false,
       
       // Letters
       letter_sent_sponsor: app.letter_sent_sponsor || false,
@@ -424,7 +422,6 @@ export default function ViewRoster({ onNavigate }) {
         payment_wk_candidate_paid: editData.payment_wk_candidate_paid,
         payment_sp_cash: editData.payment_sp_cash,
         payment_sp_check: editData.payment_sp_check,
-        payment_sp_online: editData.payment_sp_online,
         
         // Letters
         letter_sent_sponsor: editData.letter_sent_sponsor,
@@ -486,7 +483,7 @@ export default function ViewRoster({ onNavigate }) {
         return (app.payment_wk_cash || app.payment_wk_check || app.payment_wk_online) ? 'Paid' : 'Due';
       }
     } else if (type === 'sp') {
-      return (app.payment_sp_cash || app.payment_sp_check || app.payment_sp_online) ? 'Paid' : 'Due';
+      return (app.payment_sp_cash || app.payment_sp_check) ? 'Paid' : 'Due';
     }
     return 'Due';
   };
@@ -833,12 +830,11 @@ export default function ViewRoster({ onNavigate }) {
                               <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '0.9rem', marginBottom: '4px' }}>
                                 SPONSOR FEE
                               </div>
-                              {(app.payment_sp_cash || app.payment_sp_check || app.payment_sp_online) ? (
+                              {(app.payment_sp_cash || app.payment_sp_check) ? (
                                 <div style={{ fontSize: '0.85rem', color: '#28a745', fontWeight: 600 }}>
                                   Paid - {[
                                     app.payment_sp_cash ? 'Cash' : null,
-                                    app.payment_sp_check ? 'Check' : null,
-                                    app.payment_sp_online ? 'Online' : null
+                                    app.payment_sp_check ? 'Check' : null
                                   ].filter(Boolean).join(', ')}
                                 </div>
                               ) : (
@@ -1647,11 +1643,10 @@ export default function ViewRoster({ onNavigate }) {
 
               <div className="toggle" style={{ display: 'flex', gap: '0', marginBottom: '12px' }}>
                 <div 
-                  className={`opt ${!editData.payment_sp_cash && !editData.payment_sp_check && !editData.payment_sp_online ? 'active' : ''}`}
+                  className={`opt ${!editData.payment_sp_cash && !editData.payment_sp_check ? 'active' : ''}`}
                   onClick={() => {
                     handleEditFieldChange('payment_sp_cash', false);
                     handleEditFieldChange('payment_sp_check', false);
-                    handleEditFieldChange('payment_sp_online', false);
                   }}
                   style={{ flex: 1 }}
                 >
@@ -1662,7 +1657,6 @@ export default function ViewRoster({ onNavigate }) {
                   onClick={() => {
                     handleEditFieldChange('payment_sp_cash', true);
                     handleEditFieldChange('payment_sp_check', false);
-                    handleEditFieldChange('payment_sp_online', false);
                   }}
                   style={{ flex: 1 }}
                 >
@@ -1673,22 +1667,10 @@ export default function ViewRoster({ onNavigate }) {
                   onClick={() => {
                     handleEditFieldChange('payment_sp_cash', false);
                     handleEditFieldChange('payment_sp_check', true);
-                    handleEditFieldChange('payment_sp_online', false);
                   }}
                   style={{ flex: 1 }}
                 >
                   Check
-                </div>
-                <div 
-                  className={`opt ${editData.payment_sp_online ? 'active' : ''}`}
-                  onClick={() => {
-                    handleEditFieldChange('payment_sp_cash', false);
-                    handleEditFieldChange('payment_sp_check', false);
-                    handleEditFieldChange('payment_sp_online', true);
-                  }}
-                  style={{ flex: 1 }}
-                >
-                  Online
                 </div>
               </div>
             </div>
