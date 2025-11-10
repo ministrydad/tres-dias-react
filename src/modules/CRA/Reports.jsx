@@ -692,11 +692,13 @@ export default function Reports() {
         const scholarshipNeeded = weekendFee - candidatePaid;
         totals.partialScholarshipCount++;
         totals.partialScholarshipAmount += scholarshipNeeded;
+        console.log('💰 Partial scholarship found:', app.id, 'Candidate paid:', candidatePaid, 'Scholarship needed:', scholarshipNeeded);
       } else if (isFullScholarship) {
         // Full scholarship: $0 collected from candidate
         weekendCollected = 0;
         totals.fullScholarshipCount++;
         totals.fullScholarshipAmount += weekendFee;
+        console.log('💰 Full scholarship found:', app.id, weekendFee);
       } else if (app.payment_wk_cash || app.payment_wk_check || app.payment_wk_online) {
         // Full payment received (cash, check, or online)
         weekendCollected = weekendFee;
@@ -727,6 +729,13 @@ export default function Reports() {
   };
 
   const totals = computeFinancialTotals();
+  console.log('📊 Total Scholarships:', {
+    fullCount: totals.fullScholarshipCount,
+    fullAmount: totals.fullScholarshipAmount,
+    partialCount: totals.partialScholarshipCount,
+    partialAmount: totals.partialScholarshipAmount,
+    total: totals.fullScholarshipAmount + totals.partialScholarshipAmount
+  });
   const totalExpected = totals.weekendExpected + totals.sponsorExpected;
   const totalCollected = totals.weekendCollected + totals.sponsorCollected;
   const balanceDue = totalExpected - totalCollected;
