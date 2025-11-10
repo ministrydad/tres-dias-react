@@ -669,7 +669,7 @@ export default function Reports() {
     };
 
     filteredApps.forEach(app => {
-      const isScholarship = app.payment_wk_scholarship;
+      const isScholarship = app.payment_wk_scholarship === true; // Strict check
       const isFullScholarship = isScholarship && app.payment_wk_scholarshiptype === 'full';
       const isPartialScholarship = isScholarship && app.payment_wk_scholarshiptype === 'partial';
       
