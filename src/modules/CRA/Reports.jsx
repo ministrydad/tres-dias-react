@@ -92,6 +92,7 @@ export default function Reports() {
       sponsorCollected: 0,
       weekendCashCollected: 0,
       weekendCheckCollected: 0,
+      weekendOnlineCollected: 0,
       sponsorCashCollected: 0,
       sponsorCheckCollected: 0,
       overdueItems: 0
@@ -115,8 +116,8 @@ export default function Reports() {
       if (isPartialScholarship) {
         // Partial scholarship: they paid the partial amount
         weekendCollected = parseFloat(app.payment_wk_partialamount) || 0;
-      } else if (app.payment_wk_cash || app.payment_wk_check) {
-        // Full payment received (either cash or check)
+      } else if (app.payment_wk_cash || app.payment_wk_check || app.payment_wk_online) {
+        // Full payment received (cash, check, or online)
         weekendCollected = weekendFee;
       }
       // Note: Full scholarships contribute $0 to collected (no actual money received)
@@ -127,9 +128,10 @@ export default function Reports() {
       totals.weekendCollected += weekendCollected;
       totals.sponsorCollected += sponsorCollected;
       
-      // Payment methods breakdown - GRANULAR (weekend vs sponsor, cash vs check)
+      // Payment methods breakdown - GRANULAR (weekend vs sponsor, cash vs check vs online)
       if (app.payment_wk_cash) totals.weekendCashCollected += weekendFee;
       if (app.payment_wk_check) totals.weekendCheckCollected += weekendFee;
+      if (app.payment_wk_online) totals.weekendOnlineCollected += weekendFee;
       if (app.payment_sp_cash) totals.sponsorCashCollected += sponsorFee;
       if (app.payment_sp_check) totals.sponsorCheckCollected += sponsorFee;
 
@@ -263,6 +265,12 @@ export default function Reports() {
                   {formatCurrency(totals.weekendCheckCollected)}
                 </span>
               </div>
+              <div className="financial-line">
+                <span>Online:</span>
+                <span id="cra_weekendOnlineCollected" style={{ color: '#9333ea' }}>
+                  {formatCurrency(totals.weekendOnlineCollected)}
+                </span>
+              </div>
             </div>
 
             <div className="card pad">
@@ -392,7 +400,7 @@ export default function Reports() {
                             ? 'Full Scholarship' 
                             : `Partial ($${app.payment_wk_partialamount})`;
                         } else {
-                          wkFee = (app.payment_wk_cash || app.payment_wk_check) ? 'Paid' : 'Due';
+                          wkFee = (app.payment_wk_cash || app.payment_wk_check || app.payment_wk_online) ? 'Paid' : 'Due';
                         }
                         const spFee = (app.payment_sp_cash || app.payment_sp_check) ? 'Paid' : 'Due';
 
