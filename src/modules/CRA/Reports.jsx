@@ -27,98 +27,98 @@ Font.register({
 const pdfStyles = StyleSheet.create({
   page: {
     padding: 40,
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: 'Source Sans 3',
   },
   header: {
     textAlign: 'center',
-    marginBottom: 30,
-    borderBottom: '2 solid #333',
-    paddingBottom: 15,
+    marginBottom: 20,
+    borderBottom: '1.5 solid #333',
+    paddingBottom: 12,
   },
   title: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 700,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 9,
     color: '#666',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: 700,
-    marginBottom: 10,
+    marginBottom: 8,
     backgroundColor: '#f5f5f5',
-    padding: '6 10',
-    borderLeft: '4 solid #2c5aa0',
+    padding: '5 8',
+    borderLeft: '3 solid #2c5aa0',
   },
   row: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
-    paddingBottom: 4,
+    marginBottom: 5,
+    paddingBottom: 3,
     borderBottom: '0.5 solid #eee',
   },
   rowLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#444',
   },
   rowValue: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 600,
   },
   totalRow: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTop: '2 solid #333',
-    marginBottom: 6,
+    marginTop: 6,
+    paddingTop: 6,
+    borderTop: '1.5 solid #333',
+    marginBottom: 5,
   },
   totalLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 700,
   },
   totalValue: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 700,
   },
   onlinePaymentRow: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
-    paddingLeft: 10,
+    marginBottom: 3,
+    paddingLeft: 8,
   },
   onlinePaymentName: {
-    fontSize: 9,
+    fontSize: 8,
     color: '#555',
   },
   grandTotalRow: {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
-    paddingTop: 12,
-    paddingBottom: 12,
-    borderTop: '3 solid #000',
-    borderBottom: '3 solid #000',
+    marginTop: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
+    borderTop: '2 solid #000',
+    borderBottom: '2 solid #000',
     backgroundColor: '#f9f9f9',
-    padding: '12 10',
+    padding: '8 10',
   },
   grandTotalLabel: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: 700,
   },
   grandTotalValue: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: 700,
   },
 });
@@ -165,9 +165,9 @@ const TreasurerReportPDF = ({
           </View>
         </View>
 
-        {/* Money Being Deposited */}
+        {/* Money Being Transferred */}
         <View style={pdfStyles.section}>
-          <Text style={pdfStyles.sectionTitle}>Funds Being Deposited</Text>
+          <Text style={pdfStyles.sectionTitle}>Funds Being Transferred to Treasurer</Text>
           
           <View style={pdfStyles.row}>
             <Text style={pdfStyles.rowLabel}>Weekend Fee - Cash</Text>
@@ -190,17 +190,17 @@ const TreasurerReportPDF = ({
           </View>
 
           <View style={pdfStyles.totalRow}>
-            <Text style={pdfStyles.totalLabel}>Total Cash Being Deposited</Text>
+            <Text style={pdfStyles.totalLabel}>Total Cash</Text>
             <Text style={pdfStyles.totalValue}>{formatCurrency(totalCash)}</Text>
           </View>
 
           <View style={pdfStyles.totalRow}>
-            <Text style={pdfStyles.totalLabel}>Total Checks Being Deposited</Text>
+            <Text style={pdfStyles.totalLabel}>Total Checks</Text>
             <Text style={pdfStyles.totalValue}>{formatCurrency(totalChecks)}</Text>
           </View>
 
           <View style={pdfStyles.grandTotalRow}>
-            <Text style={pdfStyles.grandTotalLabel}>GRAND TOTAL BEING DEPOSITED</Text>
+            <Text style={pdfStyles.grandTotalLabel}>GRAND TOTAL TRANSFER</Text>
             <Text style={pdfStyles.grandTotalValue}>{formatCurrency(totalDeposit)}</Text>
           </View>
         </View>
@@ -339,6 +339,16 @@ export default function Reports() {
     const isAttending = app.attendance === 'yes';
     return hasGender && isAttending;
   });
+
+  // Get TOTAL candidates across BOTH genders for treasurer report
+  const getTotalCandidatesAllGenders = () => {
+    return applications.filter(app => {
+      const hasMan = app.m_first && app.m_first.trim() !== '';
+      const hasWoman = app.f_first && app.f_first.trim() !== '';
+      const isAttending = app.attendance === 'yes';
+      return (hasMan || hasWoman) && isAttending;
+    }).length;
+  };
 
   // Calculate financial totals
   const computeFinancialTotals = () => {
@@ -482,7 +492,7 @@ export default function Reports() {
                     hour: 'numeric',
                     minute: '2-digit'
                   })}
-                  totalCandidates={filteredApps.length}
+                  totalCandidates={getTotalCandidatesAllGenders()}
                   weekendFeeCash={totals.weekendCashCollected}
                   weekendFeeCheck={totals.weekendCheckCollected}
                   weekendFeeOnline={totals.weekendOnlineCollected}
