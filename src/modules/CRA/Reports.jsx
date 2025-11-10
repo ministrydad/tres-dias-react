@@ -412,14 +412,20 @@ export default function Reports() {
   }, []);
 
   const loadAppSettings = async () => {
+    console.log('🔍 Loading App Settings... orgId:', orgId);
     try {
       const { data, error } = await supabase
         .from('app_settings')
         .select('weekend_fee, sponsor_fee, community_name, active_weekend')
-        .eq('org_id', orgId)
+        .eq('id', 1)
         .single();
 
-      if (error) throw error;
+      console.log('📦 App Settings Query Result:', { data, error });
+
+      if (error) {
+        console.error('❌ App Settings Error:', error);
+        throw error;
+      }
 
       if (data) {
         const loadedWeekendFee = parseFloat(data.weekend_fee) || 150;
@@ -434,6 +440,8 @@ export default function Reports() {
         setSponsorFee(loadedSponsorFee);
         setCommunityName(data.community_name || '');
         setActiveWeekendNumber(data.active_weekend || '');
+      } else {
+        console.warn('⚠️ No data returned from app_settings');
       }
 
       // Load user name
@@ -452,8 +460,9 @@ export default function Reports() {
         }
       }
     } catch (error) {
-      console.error('Error loading app settings:', error);
+      console.error('❌ Error loading app settings:', error);
       // Use defaults if settings not found
+      console.warn('⚠️ Using fallback defaults: weekendFee=150, sponsorFee=50');
       setWeekendFee(150);
       setSponsorFee(50);
     }
