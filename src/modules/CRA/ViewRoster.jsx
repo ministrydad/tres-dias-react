@@ -38,8 +38,8 @@ export default function ViewRoster({ onNavigate }) {
   const [currentEditApp, setCurrentEditApp] = useState(null);
   const [editData, setEditData] = useState({
     // Candidate info
-    m_first: '', m_pref: '', m_last: '',
-    f_first: '', f_pref: '', f_last: '',
+    m_first: '', m_pref: '',
+    f_first: '', f_pref: '',
     m_cell: '', f_cell: '',
     m_email: '', f_email: '',
     c_address: '', c_city: '', c_state: '', c_zip: '',
@@ -252,10 +252,8 @@ export default function ViewRoster({ onNavigate }) {
       // Candidate info
       m_first: app.m_first || '',
       m_pref: app.m_pref || '',
-      m_last: app.m_last || '',
       f_first: app.f_first || '',
       f_pref: app.f_pref || '',
-      f_last: app.f_last || '',
       m_cell: app.m_cell || '',
       f_cell: app.f_cell || '',
       m_email: app.m_email || '',
@@ -388,10 +386,8 @@ export default function ViewRoster({ onNavigate }) {
         // Candidate info
         m_first: editData.m_first,
         m_pref: editData.m_pref,
-        m_last: editData.m_last,
         f_first: editData.f_first,
         f_pref: editData.f_pref,
-        f_last: editData.f_last,
         m_cell: editData.m_cell,
         f_cell: editData.f_cell,
         m_email: editData.m_email,
