@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
-import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, PDFViewer, Font } from '@react-pdf/renderer';
 
 // Register Source Sans 3 font
 Font.register({
@@ -394,6 +394,7 @@ export default function Reports() {
   const [communityName, setCommunityName] = useState('');
   const [activeWeekendNumber, setActiveWeekendNumber] = useState('');
   const [userName, setUserName] = useState('');
+  const [showTreasurerPreview, setShowTreasurerPreview] = useState(false);
 
   useEffect(() => {
     if (orgId) {
@@ -748,8 +749,58 @@ export default function Reports() {
           {/* Treasurer's Report PDF Button */}
           <div>
             <div className="label">Treasurer's Report</div>
-            <PDFDownloadLink
-              document={
+            <button 
+              className="btn btn-primary" 
+              onClick={() => setShowTreasurerPreview(!showTreasurerPreview)}
+              disabled={loading}
+            >
+              {showTreasurerPreview ? 'Hide Preview' : 'Preview Funds Report'}
+            </button>
+          </div>
+        </div>
+        
+        {/* Treasurer Report Preview */}
+        {showTreasurerPreview && (
+          <div style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Treasurer's Funds Report Preview</h3>
+              <PDFDownloadLink
+                document={
+                  <TreasurerReportPDF
+                    communityName={communityName}
+                    weekendNumber={activeWeekendNumber}
+                    generatedBy={userName}
+                    generatedDate={new Date().toLocaleDateString('en-US', { 
+                      month: 'long', 
+                      day: 'numeric', 
+                      year: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit'
+                    })}
+                    totalCandidates={getTotalCandidatesAllGenders()}
+                    menTotals={genderTotals.menTotals}
+                    womenTotals={genderTotals.womenTotals}
+                    totalScholarshipNeeded={totals.fullScholarshipAmount + totals.partialScholarshipAmount}
+                    onlinePaymentCandidates={getOnlinePaymentCandidates()}
+                  />
+                }
+                fileName={`Treasurer_Report_Weekend_${activeWeekendNumber}.pdf`}
+              >
+                {({ loading: pdfLoading }) => (
+                  <button className="btn btn-primary" disabled={pdfLoading}>
+                    {pdfLoading ? 'Generating...' : 'Download PDF'}
+                  </button>
+                )}
+              </PDFDownloadLink>
+            </div>
+            <div style={{ 
+              width: '100%', 
+              height: '800px', 
+              border: '1px solid var(--border)', 
+              borderRadius: '4px',
+              overflow: 'hidden'
+            }}>
+              <PDFViewer width="100%" height="100%">
                 <TreasurerReportPDF
                   communityName={communityName}
                   weekendNumber={activeWeekendNumber}
@@ -767,17 +818,10 @@ export default function Reports() {
                   totalScholarshipNeeded={totals.fullScholarshipAmount + totals.partialScholarshipAmount}
                   onlinePaymentCandidates={getOnlinePaymentCandidates()}
                 />
-              }
-              fileName={`Treasurer_Report_Weekend_${activeWeekendNumber}.pdf`}
-            >
-              {({ loading: pdfLoading }) => (
-                <button className="btn btn-primary" disabled={pdfLoading || loading}>
-                  {pdfLoading ? 'Generating...' : 'Generate Funds Report'}
-                </button>
-              )}
-            </PDFDownloadLink>
+              </PDFViewer>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Financial Summary - Always Visible */}
