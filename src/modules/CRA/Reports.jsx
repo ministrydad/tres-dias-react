@@ -121,6 +121,82 @@ const pdfStyles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 700,
   },
+  columnHeader: {
+    fontSize: 12,
+    fontWeight: 700,
+    textAlign: 'center',
+    marginBottom: 8,
+    color: '#2c5aa0',
+  },
+  columnContent: {
+    backgroundColor: '#fafafa',
+    padding: 10,
+    borderRadius: 4,
+  },
+  subsectionTitle: {
+    fontSize: 9,
+    fontWeight: 700,
+    marginTop: 10,
+    marginBottom: 4,
+    color: '#666',
+  },
+  simpleRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  simpleLabel: {
+    fontSize: 9,
+    color: '#444',
+  },
+  simpleValue: {
+    fontSize: 9,
+    fontWeight: 600,
+  },
+  columnTotal: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingTop: 8,
+    borderTop: '1 solid #ccc',
+  },
+  columnTotalLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+  },
+  columnTotalValue: {
+    fontSize: 10,
+    fontWeight: 700,
+  },
+  combinedSection: {
+    backgroundColor: '#f5f5f5',
+    padding: 12,
+    borderRadius: 4,
+    marginBottom: 16,
+  },
+  combinedHeader: {
+    fontSize: 12,
+    fontWeight: 700,
+    textAlign: 'center',
+    marginBottom: 10,
+    color: '#2c5aa0',
+  },
+  combinedRow: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  combinedLabel: {
+    fontSize: 9,
+    color: '#444',
+  },
+  combinedValue: {
+    fontSize: 9,
+    fontWeight: 600,
+  },
 });
 
 // Treasurer's Funds Report PDF Component
@@ -130,11 +206,8 @@ const TreasurerReportPDF = ({
   generatedBy, 
   generatedDate,
   totalCandidates,
-  weekendFeeCash,
-  weekendFeeCheck,
-  weekendFeeOnline,
-  sponsorFeeCash,
-  sponsorFeeCheck,
+  menTotals,
+  womenTotals,
   totalScholarshipNeeded,
   onlinePaymentCandidates
 }) => {
@@ -142,9 +215,23 @@ const TreasurerReportPDF = ({
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
   };
 
-  const totalCash = weekendFeeCash + sponsorFeeCash;
-  const totalChecks = weekendFeeCheck + sponsorFeeCheck;
-  const totalDeposit = totalCash + totalChecks;
+  // Calculate combined totals
+  const totalWeekendCash = menTotals.weekendCash + womenTotals.weekendCash;
+  const totalWeekendCheck = menTotals.weekendCheck + womenTotals.weekendCheck;
+  const totalWeekendOnline = menTotals.weekendOnline + womenTotals.weekendOnline;
+  const totalSponsorCash = menTotals.sponsorCash + womenTotals.sponsorCash;
+  const totalSponsorCheck = menTotals.sponsorCheck + womenTotals.sponsorCheck;
+  
+  const totalWeekendFees = totalWeekendCash + totalWeekendCheck + totalWeekendOnline;
+  const totalSponsorFees = totalSponsorCash + totalSponsorCheck;
+  const totalCash = totalWeekendCash + totalSponsorCash;
+  const totalChecks = totalWeekendCheck + totalSponsorCheck;
+  const grandTotalTransfer = totalCash + totalChecks;
+  
+  const menTotal = menTotals.weekendCash + menTotals.weekendCheck + menTotals.weekendOnline + 
+                   menTotals.sponsorCash + menTotals.sponsorCheck;
+  const womenTotal = womenTotals.weekendCash + womenTotals.weekendCheck + womenTotals.weekendOnline + 
+                     womenTotals.sponsorCash + womenTotals.sponsorCheck;
 
   return (
     <Document>
@@ -156,52 +243,115 @@ const TreasurerReportPDF = ({
           <Text style={pdfStyles.subtitle}>Generated: {generatedDate} by {generatedBy}</Text>
         </View>
 
-        {/* Candidate Count */}
-        <View style={pdfStyles.section}>
-          <Text style={pdfStyles.sectionTitle}>Weekend Summary</Text>
-          <View style={pdfStyles.row}>
-            <Text style={pdfStyles.rowLabel}>Total Candidates Attending</Text>
-            <Text style={pdfStyles.rowValue}>{totalCandidates}</Text>
+        {/* Two Column Layout - Men and Women */}
+        <View style={{ display: 'flex', flexDirection: 'row', gap: 16, marginBottom: 16 }}>
+          {/* MEN Column */}
+          <View style={{ flex: 1 }}>
+            <Text style={pdfStyles.columnHeader}>MEN</Text>
+            <View style={pdfStyles.columnContent}>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Candidates:</Text>
+                <Text style={pdfStyles.simpleValue}>{menTotals.candidateCount}</Text>
+              </View>
+              
+              <Text style={pdfStyles.subsectionTitle}>Weekend Fees</Text>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Cash</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.weekendCash)}</Text>
+              </View>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Check</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.weekendCheck)}</Text>
+              </View>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Online</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.weekendOnline)}</Text>
+              </View>
+              
+              <Text style={pdfStyles.subsectionTitle}>Sponsor Fees</Text>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Cash</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.sponsorCash)}</Text>
+              </View>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Check</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.sponsorCheck)}</Text>
+              </View>
+              
+              <View style={pdfStyles.columnTotal}>
+                <Text style={pdfStyles.columnTotalLabel}>Total Men:</Text>
+                <Text style={pdfStyles.columnTotalValue}>{formatCurrency(menTotal)}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* WOMEN Column */}
+          <View style={{ flex: 1 }}>
+            <Text style={pdfStyles.columnHeader}>WOMEN</Text>
+            <View style={pdfStyles.columnContent}>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Candidates:</Text>
+                <Text style={pdfStyles.simpleValue}>{womenTotals.candidateCount}</Text>
+              </View>
+              
+              <Text style={pdfStyles.subsectionTitle}>Weekend Fees</Text>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Cash</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.weekendCash)}</Text>
+              </View>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Check</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.weekendCheck)}</Text>
+              </View>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Online</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.weekendOnline)}</Text>
+              </View>
+              
+              <Text style={pdfStyles.subsectionTitle}>Sponsor Fees</Text>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Cash</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.sponsorCash)}</Text>
+              </View>
+              <View style={pdfStyles.simpleRow}>
+                <Text style={pdfStyles.simpleLabel}>Check</Text>
+                <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.sponsorCheck)}</Text>
+              </View>
+              
+              <View style={pdfStyles.columnTotal}>
+                <Text style={pdfStyles.columnTotalLabel}>Total Women:</Text>
+                <Text style={pdfStyles.columnTotalValue}>{formatCurrency(womenTotal)}</Text>
+              </View>
+            </View>
           </View>
         </View>
 
-        {/* Money Being Transferred */}
-        <View style={pdfStyles.section}>
-          <Text style={pdfStyles.sectionTitle}>Funds Being Transferred to Treasurer</Text>
-          
-          <View style={pdfStyles.row}>
-            <Text style={pdfStyles.rowLabel}>Weekend Fee - Cash</Text>
-            <Text style={pdfStyles.rowValue}>{formatCurrency(weekendFeeCash)}</Text>
+        {/* Combined Totals */}
+        <View style={pdfStyles.combinedSection}>
+          <Text style={pdfStyles.combinedHeader}>COMBINED TOTALS</Text>
+          <View style={pdfStyles.combinedRow}>
+            <Text style={pdfStyles.combinedLabel}>Total Candidates:</Text>
+            <Text style={pdfStyles.combinedValue}>{totalCandidates}</Text>
           </View>
-          
-          <View style={pdfStyles.row}>
-            <Text style={pdfStyles.rowLabel}>Weekend Fee - Check</Text>
-            <Text style={pdfStyles.rowValue}>{formatCurrency(weekendFeeCheck)}</Text>
+          <View style={pdfStyles.combinedRow}>
+            <Text style={pdfStyles.combinedLabel}>Total Weekend Fees Collected:</Text>
+            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalWeekendFees)}</Text>
           </View>
-          
-          <View style={pdfStyles.row}>
-            <Text style={pdfStyles.rowLabel}>Sponsor Fee - Cash</Text>
-            <Text style={pdfStyles.rowValue}>{formatCurrency(sponsorFeeCash)}</Text>
+          <View style={pdfStyles.combinedRow}>
+            <Text style={pdfStyles.combinedLabel}>Total Sponsor Fees Collected:</Text>
+            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalSponsorFees)}</Text>
           </View>
-          
-          <View style={pdfStyles.row}>
-            <Text style={pdfStyles.rowLabel}>Sponsor Fee - Check</Text>
-            <Text style={pdfStyles.rowValue}>{formatCurrency(sponsorFeeCheck)}</Text>
+          <View style={pdfStyles.combinedRow}>
+            <Text style={pdfStyles.combinedLabel}>Total Cash:</Text>
+            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalCash)}</Text>
           </View>
-
-          <View style={pdfStyles.totalRow}>
-            <Text style={pdfStyles.totalLabel}>Total Cash</Text>
-            <Text style={pdfStyles.totalValue}>{formatCurrency(totalCash)}</Text>
+          <View style={pdfStyles.combinedRow}>
+            <Text style={pdfStyles.combinedLabel}>Total Checks:</Text>
+            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalChecks)}</Text>
           </View>
-
-          <View style={pdfStyles.totalRow}>
-            <Text style={pdfStyles.totalLabel}>Total Checks</Text>
-            <Text style={pdfStyles.totalValue}>{formatCurrency(totalChecks)}</Text>
-          </View>
-
           <View style={pdfStyles.grandTotalRow}>
-            <Text style={pdfStyles.grandTotalLabel}>GRAND TOTAL TRANSFER</Text>
-            <Text style={pdfStyles.grandTotalValue}>{formatCurrency(totalDeposit)}</Text>
+            <Text style={pdfStyles.grandTotalLabel}>GRAND TOTAL TRANSFER:</Text>
+            <Text style={pdfStyles.grandTotalValue}>{formatCurrency(grandTotalTransfer)}</Text>
           </View>
         </View>
 
@@ -209,17 +359,13 @@ const TreasurerReportPDF = ({
         {onlinePaymentCandidates.length > 0 && (
           <View style={pdfStyles.section}>
             <Text style={pdfStyles.sectionTitle}>Online Payments (Weekend Fee)</Text>
-            <View style={pdfStyles.row}>
-              <Text style={pdfStyles.rowLabel}>Total Online Payments</Text>
-              <Text style={pdfStyles.rowValue}>{formatCurrency(weekendFeeOnline)}</Text>
-            </View>
-            <Text style={{ fontSize: 9, marginTop: 8, marginBottom: 6, fontWeight: 600, color: '#666' }}>
-              Candidates who paid online:
+            <Text style={{ fontSize: 8, marginTop: 6, marginBottom: 4, color: '#666' }}>
+              Candidates who paid online ({formatCurrency(totalWeekendOnline)} total):
             </Text>
             {onlinePaymentCandidates.map((name, idx) => (
-              <View key={idx} style={pdfStyles.onlinePaymentRow}>
-                <Text style={pdfStyles.onlinePaymentName}>• {name}</Text>
-              </View>
+              <Text key={idx} style={{ fontSize: 8, color: '#555', marginLeft: 10, marginBottom: 2 }}>
+                • {name}
+              </Text>
             ))}
           </View>
         )}
@@ -227,9 +373,9 @@ const TreasurerReportPDF = ({
         {/* Scholarship Funding Needed */}
         <View style={pdfStyles.section}>
           <Text style={pdfStyles.sectionTitle}>Scholarship Funding Required</Text>
-          <View style={pdfStyles.row}>
-            <Text style={pdfStyles.rowLabel}>Total Scholarship Amount Needed from Organization</Text>
-            <Text style={pdfStyles.rowValue}>{formatCurrency(totalScholarshipNeeded)}</Text>
+          <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+            <Text style={{ fontSize: 9, color: '#444' }}>Total Scholarship Amount Needed from Organization:</Text>
+            <Text style={{ fontSize: 9, fontWeight: 600 }}>{formatCurrency(totalScholarshipNeeded)}</Text>
           </View>
         </View>
       </Page>
@@ -348,6 +494,56 @@ export default function Reports() {
       const isAttending = app.attendance === 'yes';
       return (hasMan || hasWoman) && isAttending;
     }).length;
+  };
+
+  // Compute financial totals BY GENDER for treasurer report
+  const computeTotalsByGender = () => {
+    const menTotals = {
+      candidateCount: 0,
+      weekendCash: 0,
+      weekendCheck: 0,
+      weekendOnline: 0,
+      sponsorCash: 0,
+      sponsorCheck: 0,
+    };
+    
+    const womenTotals = {
+      candidateCount: 0,
+      weekendCash: 0,
+      weekendCheck: 0,
+      weekendOnline: 0,
+      sponsorCash: 0,
+      sponsorCheck: 0,
+    };
+
+    applications.forEach(app => {
+      if (app.attendance !== 'yes') return; // Only attending candidates
+      
+      const hasMan = app.m_first && app.m_first.trim() !== '';
+      const hasWoman = app.f_first && app.f_first.trim() !== '';
+      
+      // Men
+      if (hasMan) {
+        menTotals.candidateCount++;
+        if (app.payment_wk_cash) menTotals.weekendCash += weekendFee;
+        if (app.payment_wk_check) menTotals.weekendCheck += weekendFee;
+        if (app.payment_wk_online) menTotals.weekendOnline += weekendFee;
+        if (app.payment_sp_cash) menTotals.sponsorCash += sponsorFee;
+        if (app.payment_sp_check) menTotals.sponsorCheck += sponsorFee;
+      }
+      
+      // Women
+      if (hasWoman) {
+        womenTotals.candidateCount++;
+        if (app.payment_wk_cash) womenTotals.weekendCash += weekendFee;
+        if (app.payment_wk_check) womenTotals.weekendCheck += weekendFee;
+        if (app.payment_wk_online) womenTotals.weekendOnline += weekendFee;
+        if (app.payment_sp_cash) womenTotals.sponsorCash += sponsorFee;
+        if (app.payment_sp_check) womenTotals.sponsorCheck += sponsorFee;
+      }
+    });
+
+    return { menTotals, womenTotals };
   };
 
   // Calculate financial totals
@@ -493,16 +689,13 @@ export default function Reports() {
                     minute: '2-digit'
                   })}
                   totalCandidates={getTotalCandidatesAllGenders()}
-                  weekendFeeCash={totals.weekendCashCollected}
-                  weekendFeeCheck={totals.weekendCheckCollected}
-                  weekendFeeOnline={totals.weekendOnlineCollected}
-                  sponsorFeeCash={totals.sponsorCashCollected}
-                  sponsorFeeCheck={totals.sponsorCheckCollected}
+                  menTotals={computeTotalsByGender().menTotals}
+                  womenTotals={computeTotalsByGender().womenTotals}
                   totalScholarshipNeeded={totals.fullScholarshipAmount + totals.partialScholarshipAmount}
                   onlinePaymentCandidates={getOnlinePaymentCandidates()}
                 />
               }
-              fileName={`Treasurer_Report_Weekend_${activeWeekendNumber}_${currentFilter}.pdf`}
+              fileName={`Treasurer_Report_Weekend_${activeWeekendNumber}.pdf`}
             >
               {({ loading: pdfLoading }) => (
                 <button className="btn btn-primary" disabled={pdfLoading || loading}>
