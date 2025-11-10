@@ -416,7 +416,7 @@ export default function Reports() {
     try {
       const { data, error } = await supabase
         .from('app_settings')
-        .select('weekend_fee, sponsor_fee, community_name, active_weekend')
+        .select('weekend_fee, sponsor_fee, community_name')
         .eq('id', 1)
         .single();
 
@@ -439,9 +439,27 @@ export default function Reports() {
         setWeekendFee(loadedWeekendFee);
         setSponsorFee(loadedSponsorFee);
         setCommunityName(data.community_name || '');
-        setActiveWeekendNumber(data.active_weekend || '');
       } else {
         console.warn('⚠️ No data returned from app_settings');
+      }
+
+      // Load active weekend number from men_team_rosters
+      const { data: rosterData, error: rosterError } = await supabase
+        .from('men_team_rosters')
+        .select('weekend_identifier')
+        .eq('org_id', orgId)
+        .order('weekend_identifier', { ascending: false })
+        .limit(1);
+
+      if (!rosterError && rosterData && rosterData.length > 0) {
+        const weekendIdentifier = rosterData[0].weekend_identifier;
+        // Extract just the number from "Men's 45" or "Men 45" etc.
+        const numberMatch = weekendIdentifier.match(/\d+/);
+        const weekendNumber = numberMatch ? numberMatch[0] : '';
+        console.log('🎯 Active Weekend Number:', weekendNumber, 'from', weekendIdentifier);
+        setActiveWeekendNumber(weekendNumber);
+      } else {
+        console.warn('⚠️ Could not load active weekend number');
       }
 
       // Load user name
