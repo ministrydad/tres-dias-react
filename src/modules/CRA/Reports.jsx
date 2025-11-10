@@ -422,8 +422,16 @@ export default function Reports() {
       if (error) throw error;
 
       if (data) {
-        setWeekendFee(parseFloat(data.weekend_fee) || 150);
-        setSponsorFee(parseFloat(data.sponsor_fee) || 50);
+        const loadedWeekendFee = parseFloat(data.weekend_fee) || 150;
+        const loadedSponsorFee = parseFloat(data.sponsor_fee) || 50;
+        console.log('📊 App Settings Loaded:', {
+          raw_weekend_fee: data.weekend_fee,
+          parsed_weekend_fee: loadedWeekendFee,
+          raw_sponsor_fee: data.sponsor_fee,
+          parsed_sponsor_fee: loadedSponsorFee
+        });
+        setWeekendFee(loadedWeekendFee);
+        setSponsorFee(loadedSponsorFee);
         setCommunityName(data.community_name || '');
         setActiveWeekendNumber(data.active_weekend || '');
       }
@@ -576,6 +584,13 @@ export default function Reports() {
 
   // Calculate financial totals
   const computeFinancialTotals = () => {
+    console.log('💰 Computing Financial Totals:', {
+      weekendFee,
+      sponsorFee,
+      filteredAppsCount: filteredApps.length,
+      currentFilter
+    });
+    
     const totals = {
       weekendExpected: 0,
       sponsorExpected: 0,
