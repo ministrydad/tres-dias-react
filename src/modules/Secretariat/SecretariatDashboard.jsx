@@ -645,8 +645,14 @@ export default function SecretariatDashboard() {
 
   return (
     <div className="app-panel" id="secretariat-app" >
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-        {/* Main Content */}
+      {/* Dashboard Cards - Always Full Width */}
+      <div className="secretariat-dashboard-grid">
+        {renderDashboardCards()}
+      </div>
+
+      {/* Weekend History Section with Edit Panel */}
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', marginTop: '24px' }}>
+        {/* Weekend History Card */}
         <div 
           ref={mainContentRef}
           style={{ 
@@ -655,13 +661,7 @@ export default function SecretariatDashboard() {
             minWidth: 0
           }}
         >
-          {/* Dashboard Cards */}
-          <div className="secretariat-dashboard-grid">
-            {renderDashboardCards()}
-          </div>
-
-          {/* Weekend History Section */}
-          <div className="card pad" style={{ marginTop: '24px' }}>
+          <div className="card pad">
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
