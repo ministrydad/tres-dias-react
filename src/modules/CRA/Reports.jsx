@@ -229,6 +229,12 @@ const TreasurerReportPDF = ({
   const totalChecks = totalWeekendCheck + totalSponsorCheck;
   const grandTotalTransfer = totalCash + totalChecks;
   
+  // P&L Style calculations
+  const totalExpectedRevenue = menTotals.weekendExpected + menTotals.sponsorExpected + 
+                                womenTotals.weekendExpected + womenTotals.sponsorExpected;
+  const totalCollectedFromCandidates = totalWeekendFees + totalSponsorFees;
+  const balanceDue = totalExpectedRevenue - totalCollectedFromCandidates - totalScholarshipNeeded;
+  
   const menTotal = menTotals.weekendCash + menTotals.weekendCheck + menTotals.weekendOnline + 
                    menTotals.sponsorCash + menTotals.sponsorCheck;
   const womenTotal = womenTotals.weekendCash + womenTotals.weekendCheck + womenTotals.weekendOnline + 
@@ -354,6 +360,30 @@ const TreasurerReportPDF = ({
         {/* Combined Totals */}
         <View style={pdfStyles.combinedSection}>
           <Text style={pdfStyles.combinedHeader}>COMBINED TOTALS</Text>
+          
+          {/* P&L Style Summary */}
+          <View style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1 solid #ddd' }}>
+            <View style={pdfStyles.combinedRow}>
+              <Text style={pdfStyles.combinedLabel}>Total Expected Revenue:</Text>
+              <Text style={pdfStyles.combinedValue}>{formatCurrency(totalExpectedRevenue)}</Text>
+            </View>
+            <View style={pdfStyles.combinedRow}>
+              <Text style={{...pdfStyles.combinedLabel, paddingLeft: 10}}>Less: Collected from Candidates</Text>
+              <Text style={pdfStyles.combinedValue}>({formatCurrency(totalCollectedFromCandidates)})</Text>
+            </View>
+            <View style={pdfStyles.combinedRow}>
+              <Text style={{...pdfStyles.combinedLabel, paddingLeft: 10}}>Less: Scholarships Applied</Text>
+              <Text style={pdfStyles.combinedValue}>({formatCurrency(totalScholarshipNeeded)})</Text>
+            </View>
+            <View style={{...pdfStyles.combinedRow, marginTop: 4, paddingTop: 4, borderTop: '1 solid #333'}}>
+              <Text style={{...pdfStyles.combinedLabel, fontWeight: 700}}>Balance Due:</Text>
+              <Text style={{...pdfStyles.combinedValue, fontWeight: 700, color: balanceDue === 0 ? '#28a745' : '#dc3545'}}>
+                {formatCurrency(balanceDue)}
+              </Text>
+            </View>
+          </View>
+          
+          {/* Detailed Breakdown */}
           <View style={pdfStyles.combinedRow}>
             <Text style={pdfStyles.combinedLabel}>Total Candidates:</Text>
             <Text style={pdfStyles.combinedValue}>{totalCandidates}</Text>
