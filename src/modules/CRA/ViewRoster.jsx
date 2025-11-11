@@ -1187,7 +1187,7 @@ export default function ViewRoster({ onNavigate }) {
                 <div className="field" style={{ marginBottom: 0 }}>
                   <label className="label">Email</label>
                   <input
-                    type="email"
+                    type="text"
                     className="input"
                     value={currentFilter === 'men' ? editData.m_email : editData.f_email}
                     onChange={(e) => handleEditFieldChange(currentFilter === 'men' ? 'm_email' : 'f_email', e.target.value)}
