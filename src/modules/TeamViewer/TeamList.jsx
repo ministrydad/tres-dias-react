@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { generatePrintableProfileHTML, PRINT_PROFILE_CSS } from './../../utils/profilePrintUtils';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from '@react-pdf/renderer';
+import { FileText, Users, Database, CalendarPlus, BookOpen, Award } from 'lucide-react';
 
 // Register Source Sans 3 font from local TTF files
 Font.register({
@@ -1511,37 +1512,37 @@ export default function TeamList() {
           {/* Action Buttons */}
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button className="btn btn-warning" onClick={handlePrintRoster}>
+              <FileText size={16} style={{ marginRight: '6px' }} />
               {showPdfPreview ? 'Hide PDF Preview' : 'Print Report'}
             </button>
             <button className="btn btn-warning" onClick={handlePrintAllProfiles}>
+              <Users size={16} style={{ marginRight: '6px' }} />
               Print All Profiles
             </button>
             <button 
               className="btn btn-primary" 
               onClick={handleUpdateDatabaseClick}
               disabled={!weekendIdentifier || teamRoster.length === 0 || isUpdating}
-              style={{
-                backgroundColor: '#28a745',
-                borderColor: '#28a745',
-                color: 'white',
-                fontWeight: 'bold'
-              }}
               title='Update database with service records'
             >
+              <Database size={16} style={{ marginRight: '6px' }} />
               {isUpdating ? 'Processing...' : 'Update Database'}
             </button>
             <button 
-              className="btn btn-info" 
+              className="btn btn-primary" 
               onClick={() => setShowSetupNextWeekend(!showSetupNextWeekend)}
               disabled={!weekendIdentifier || teamRoster.length === 0}
               title='Setup theme, verse, and image for next weekend'
             >
+              <CalendarPlus size={16} style={{ marginRight: '6px' }} />
               {showSetupNextWeekend ? 'Hide Setup' : 'Setup Next Weekend'}
             </button>
             <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
+              <BookOpen size={16} style={{ marginRight: '6px' }} />
               Export for Team Book
             </button>
             <button className="btn btn-primary" onClick={handleOpenBadgePanel}>
+              <Award size={16} style={{ marginRight: '6px' }} />
               Export to Team Badges
             </button>
           </div>
