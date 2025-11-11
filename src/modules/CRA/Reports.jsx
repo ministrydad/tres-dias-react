@@ -365,8 +365,33 @@ const TreasurerReportPDF = ({
         <View style={pdfStyles.combinedSection}>
           <Text style={pdfStyles.combinedHeader}>COMBINED TOTALS</Text>
           
-          {/* P&L Style Summary */}
-          <View style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1 solid #ddd' }}>
+          {/* Collected Breakdown - TOP */}
+          <Text style={{ fontSize: 8, fontWeight: 700, marginBottom: 4, color: '#666', textAlign: 'center' }}>
+            — Collected —
+          </Text>
+          <View style={pdfStyles.combinedRow}>
+            <Text style={pdfStyles.combinedLabel}>Weekend Fees:</Text>
+            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalWeekendFees)}</Text>
+          </View>
+          <View style={pdfStyles.combinedRow}>
+            <Text style={pdfStyles.combinedLabel}>Sponsor Fees:</Text>
+            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalSponsorFees)}</Text>
+          </View>
+          <View style={pdfStyles.combinedRow}>
+            <Text style={pdfStyles.combinedLabel}>Cash:</Text>
+            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalCash)}</Text>
+          </View>
+          <View style={pdfStyles.combinedRow}>
+            <Text style={pdfStyles.combinedLabel}>Checks:</Text>
+            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalChecks)}</Text>
+          </View>
+          <View style={pdfStyles.grandTotalRow}>
+            <Text style={pdfStyles.grandTotalLabel}>GRAND TOTAL TRANSFER:</Text>
+            <Text style={pdfStyles.grandTotalValue}>{formatCurrency(grandTotalTransfer)}</Text>
+          </View>
+          
+          {/* P&L Style Summary - BOTTOM */}
+          <View style={{ marginTop: 8, paddingTop: 8, borderTop: '1 solid #ddd' }}>
             <View style={pdfStyles.combinedRow}>
               <Text style={pdfStyles.combinedLabel}>Total Expected Revenue:</Text>
               <Text style={pdfStyles.combinedValue}>{formatCurrency(totalExpectedRevenue)}</Text>
@@ -385,32 +410,6 @@ const TreasurerReportPDF = ({
                 {formatCurrency(balanceDue)}
               </Text>
             </View>
-          </View>
-          
-          {/* Detailed Breakdown */}
-          <View style={pdfStyles.combinedRow}>
-            <Text style={pdfStyles.combinedLabel}>Total Candidates:</Text>
-            <Text style={pdfStyles.combinedValue}>{totalCandidates}</Text>
-          </View>
-          <View style={pdfStyles.combinedRow}>
-            <Text style={pdfStyles.combinedLabel}>Total Weekend Fees Collected:</Text>
-            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalWeekendFees)}</Text>
-          </View>
-          <View style={pdfStyles.combinedRow}>
-            <Text style={pdfStyles.combinedLabel}>Total Sponsor Fees Collected:</Text>
-            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalSponsorFees)}</Text>
-          </View>
-          <View style={pdfStyles.combinedRow}>
-            <Text style={pdfStyles.combinedLabel}>Total Cash:</Text>
-            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalCash)}</Text>
-          </View>
-          <View style={pdfStyles.combinedRow}>
-            <Text style={pdfStyles.combinedLabel}>Total Checks:</Text>
-            <Text style={pdfStyles.combinedValue}>{formatCurrency(totalChecks)}</Text>
-          </View>
-          <View style={pdfStyles.grandTotalRow}>
-            <Text style={pdfStyles.grandTotalLabel}>GRAND TOTAL TRANSFER:</Text>
-            <Text style={pdfStyles.grandTotalValue}>{formatCurrency(grandTotalTransfer)}</Text>
           </View>
         </View>
 
