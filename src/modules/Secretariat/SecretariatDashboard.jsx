@@ -28,6 +28,7 @@ export default function SecretariatDashboard() {
   const [editFormData, setEditFormData] = useState({
     theme: '',
     verse: '',
+    theme_song: '',
     image: null,
     imagePreview: '',
     start_date: '',
@@ -204,6 +205,7 @@ export default function SecretariatDashboard() {
     setEditFormData({
       theme: record.theme || '',
       verse: record.verse || '',
+      theme_song: record.theme_song || '',
       image: null,
       imagePreview: record.image || '',
       start_date: record.start_date || '',
@@ -218,6 +220,7 @@ export default function SecretariatDashboard() {
     setEditFormData({
       theme: '',
       verse: '',
+      theme_song: '',
       image: null,
       imagePreview: '',
       start_date: '',
@@ -264,6 +267,7 @@ export default function SecretariatDashboard() {
         .update({
           theme: editFormData.theme.trim(),
           verse: editFormData.verse.trim(),
+          theme_song: editFormData.theme_song.trim(),
           image: imageUrl,
           start_date: editFormData.start_date || null,
           end_date: editFormData.end_date || null
@@ -321,6 +325,9 @@ export default function SecretariatDashboard() {
         <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>
           <div style={{ marginBottom: '4px' }}>
             <strong>Theme:</strong> {data.theme || 'N/A'}
+          </div>
+          <div style={{ marginBottom: '4px' }}>
+            <strong>Song:</strong> {data.theme_song || 'N/A'}
           </div>
           <div style={{ marginBottom: '4px' }}>
             <strong>Verse:</strong> {data.verse || 'N/A'}
@@ -800,6 +807,17 @@ export default function SecretariatDashboard() {
                 placeholder="e.g., Stand Firm"
                 value={editFormData.theme}
                 onChange={(e) => setEditFormData(prev => ({ ...prev, theme: e.target.value }))}
+              />
+            </div>
+
+            <div className="field">
+              <label className="label">Theme Song</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., Amazing Grace"
+                value={editFormData.theme_song}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, theme_song: e.target.value }))}
               />
             </div>
 
