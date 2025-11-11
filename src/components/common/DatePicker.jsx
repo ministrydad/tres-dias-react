@@ -1,5 +1,6 @@
 // src/components/common/DatePicker.jsx
 import { useState, useEffect, useRef } from 'react';
+import { HiCalendar } from 'react-icons/hi2';
 
 export default function DatePicker({ value, onChange, placeholder = 'Select date' }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -144,7 +145,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Select date
         className="date-picker-icon"
         onClick={() => setIsOpen(!isOpen)}
       >
-        📅
+        <HiCalendar size={20} />
       </button>
 
       {isOpen && (
