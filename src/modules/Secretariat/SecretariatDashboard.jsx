@@ -1,5 +1,5 @@
 // src/modules/Secretariat/SecretariatDashboard.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -21,6 +21,18 @@ export default function SecretariatDashboard() {
   const [craApps, setCraApps] = useState([]);
   const [mciData, setMciData] = useState([]);
   const [expandedRows, setExpandedRows] = useState(new Set());
+  
+  // Edit panel state
+  const [showEditPanel, setShowEditPanel] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    theme: '',
+    verse: '',
+    image: null,
+    imagePreview: ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const mainContentRef = useRef(null);
 
   // Positions array from original
   const POSITIONS = [
@@ -185,12 +197,97 @@ export default function SecretariatDashboard() {
     });
   }
 
+  function handleEditHistory(record) {
+    setEditingRecord(record);
+    setEditFormData({
+      theme: record.theme || '',
+      verse: record.verse || '',
+      image: null,
+      imagePreview: record.image || ''
+    });
+    setShowEditPanel(true);
+  }
+
+  function handleCloseEditPanel() {
+    setShowEditPanel(false);
+    setEditingRecord(null);
+    setEditFormData({
+      theme: '',
+      verse: '',
+      image: null,
+      imagePreview: ''
+    });
+  }
+
+  async function handleSaveEdit() {
+    if (!editingRecord) return;
+
+    setIsSaving(true);
+
+    try {
+      let imageUrl = editFormData.imagePreview;
+
+      // Upload new image if one was selected
+      if (editFormData.image) {
+        const fileExt = editFormData.image.name.split('.').pop();
+        const fileName = `${orgId}/${editingRecord.weekend_identifier.replace(/[^a-zA-Z0-9]/g, '_')}_${editingRecord.gender}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('weekend-images')
+          .upload(fileName, editFormData.image, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) {
+          console.error('Image upload error:', uploadError);
+          throw new Error(`Failed to upload image: ${uploadError.message}`);
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('weekend-images')
+          .getPublicUrl(fileName);
+
+        imageUrl = publicUrl;
+      }
+
+      // Update the record
+      const { error: updateError } = await supabase
+        .from('weekend_history')
+        .update({
+          theme: editFormData.theme.trim(),
+          verse: editFormData.verse.trim(),
+          image: imageUrl
+        })
+        .eq('id', editingRecord.id)
+        .eq('org_id', orgId);
+
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw new Error(`Failed to update record: ${updateError.message}`);
+      }
+
+      // Reload data
+      await loadAllData();
+
+      window.showMainStatus('Weekend history updated successfully!', false);
+      handleCloseEditPanel();
+
+    } catch (error) {
+      console.error('Error saving edit:', error);
+      window.showMainStatus(`Error: ${error.message}`, true);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   function renderDetailRow(gender, data, isActive) {
     if (!data) {
       return (
         <tr key={gender}>
           <td><strong>{gender}</strong></td>
-          <td colSpan="5" style={{ color: 'var(--muted)', fontStyle: 'italic' }}>
+          <td colSpan="6" style={{ color: 'var(--muted)', fontStyle: 'italic' }}>
             No data for this weekend
           </td>
         </tr>
@@ -204,23 +301,42 @@ export default function SecretariatDashboard() {
 
     const editButton = isActive
       ? <button className="btn btn-small" disabled title="Active weekend data cannot be edited here.">Edit</button>
-      : <button className="btn btn-small" onClick={() => handleEditHistory(data.id)}>Edit</button>;
+      : <button className="btn btn-small" onClick={() => handleEditHistory(data)}>Edit</button>;
 
     return (
       <tr key={gender}>
-        <td><strong>{gender}</strong></td>
-        <td>{rectorName}</td>
-        <td>{data.team_member_count || 0}</td>
-        <td>{data.candidate_count || 0}</td>
-        <td>{meetingAttdDisplay}</td>
-        <td>{editButton}</td>
+        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}><strong>{gender}</strong></td>
+        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>{rectorName}</td>
+        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>{data.team_member_count || 0}</td>
+        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>{data.candidate_count || 0}</td>
+        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>{meetingAttdDisplay}</td>
+        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>
+          <div style={{ marginBottom: '4px' }}>
+            <strong>Theme:</strong> {data.theme || 'N/A'}
+          </div>
+          <div style={{ marginBottom: '4px' }}>
+            <strong>Verse:</strong> {data.verse || 'N/A'}
+          </div>
+          {data.image && (
+            <div>
+              <img 
+                src={data.image} 
+                alt="Weekend" 
+                style={{ 
+                  maxWidth: '80px', 
+                  maxHeight: '80px', 
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  border: '1px solid var(--border)'
+                }}
+                onClick={() => window.open(data.image, '_blank')}
+              />
+            </div>
+          )}
+        </td>
+        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>{editButton}</td>
       </tr>
     );
-  }
-
-  function handleEditHistory(recordId) {
-    // TODO: Implement edit history modal
-    window.showMainStatus('Edit history functionality coming soon!', false);
   }
 
   function renderDashboardCards() {
@@ -427,6 +543,7 @@ export default function SecretariatDashboard() {
                       <th style={{ width: '100px' }}>Team</th>
                       <th style={{ width: '120px' }}>Candidates</th>
                       <th style={{ width: '150px' }}>Avg. Meeting Attd.</th>
+                      <th style={{ width: '200px' }}>Theme / Verse / Image</th>
                       <th style={{ width: '100px' }}>Actions</th>
                     </tr>
                   </thead>
@@ -497,6 +614,7 @@ export default function SecretariatDashboard() {
                       <th style={{ width: '100px' }}>Team</th>
                       <th style={{ width: '120px' }}>Candidates</th>
                       <th style={{ width: '150px' }}>Avg. Meeting Attd.</th>
+                      <th style={{ width: '200px' }}>Theme / Verse / Image</th>
                       <th style={{ width: '100px' }}>Actions</th>
                     </tr>
                   </thead>
@@ -527,41 +645,259 @@ export default function SecretariatDashboard() {
 
   return (
     <div className="app-panel" id="secretariat-app" >
-      {/* Dashboard Cards */}
-      <div className="secretariat-dashboard-grid">
-        {renderDashboardCards()}
-      </div>
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+        {/* Main Content */}
+        <div 
+          ref={mainContentRef}
+          style={{ 
+            width: showEditPanel ? '62%' : '100%',
+            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            minWidth: 0
+          }}
+        >
+          {/* Dashboard Cards */}
+          <div className="secretariat-dashboard-grid">
+            {renderDashboardCards()}
+          </div>
 
-      {/* Weekend History Section */}
-      <div className="card pad" style={{ marginTop: '24px' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          borderBottom: '2px solid var(--accentB)', 
-          paddingBottom: '10px', 
-          marginBottom: '14px' 
-        }}>
-          <div className="section-title" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
-            Weekend History
+          {/* Weekend History Section */}
+          <div className="card pad" style={{ marginTop: '24px' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              borderBottom: '2px solid var(--accentB)', 
+              paddingBottom: '10px', 
+              marginBottom: '14px' 
+            }}>
+              <div className="section-title" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
+                Weekend History
+              </div>
+            </div>
+            <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: 0, marginBottom: '20px' }}>
+              A historical record of past weekends. Click a row to expand and see details for the Men's and Women's weekends.
+            </p>
+            <table className="table" id="weekend-history-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '30px' }}></th>
+                  <th>Weekend</th>
+                  <th style={{ textAlign: 'right' }}>Total Participants</th>
+                </tr>
+              </thead>
+              <tbody id="weekend-history-tbody">
+                {renderWeekendHistoryTable()}
+              </tbody>
+            </table>
           </div>
         </div>
-        <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: 0, marginBottom: '20px' }}>
-          A historical record of past weekends. Click a row to expand and see details for the Men's and Women's weekends.
-        </p>
-        <table className="table" id="weekend-history-table">
-          <thead>
-            <tr>
-              <th style={{ width: '30px' }}></th>
-              <th>Weekend</th>
-              <th style={{ textAlign: 'right' }}>Total Participants</th>
-            </tr>
-          </thead>
-          <tbody id="weekend-history-tbody">
-            {renderWeekendHistoryTable()}
-          </tbody>
-        </table>
+
+        {/* Edit Panel - Slide Out */}
+        {showEditPanel && editingRecord && (
+          <div 
+            className="card pad"
+            style={{
+              width: '38%',
+              animation: 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              height: mainContentRef.current ? `${mainContentRef.current.offsetHeight}px` : 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              overflowY: 'auto'
+            }}
+          >
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '20px',
+              paddingBottom: '16px',
+              borderBottom: '2px solid var(--accentB)'
+            }}>
+              <h3 style={{ margin: 0, color: 'var(--accentB)', fontSize: '1.1rem' }}>
+                Edit: {editingRecord.weekend_identifier}
+              </h3>
+              <button 
+                className="btn btn-small"
+                onClick={handleCloseEditPanel}
+                style={{ padding: '4px 12px', fontSize: '0.9rem' }}
+              >
+                Close ✕
+              </button>
+            </div>
+
+            <div className="field">
+              <label className="label">Rector</label>
+              <div style={{ fontWeight: 600, color: 'var(--ink)' }}>
+                {findMemberName(editingRecord.rector_pescadore_key) || 'N/A'}
+              </div>
+            </div>
+
+            <div className="field">
+              <label className="label">Weekend Number</label>
+              <div style={{ fontWeight: 600, color: 'var(--ink)' }}>
+                {editingRecord.weekend_number}
+              </div>
+            </div>
+
+            <div className="field">
+              <label className="label">Theme</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., Stand Firm"
+                value={editFormData.theme}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, theme: e.target.value }))}
+              />
+            </div>
+
+            <div className="field">
+              <label className="label">Scripture Verse</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="e.g., John 3:16"
+                value={editFormData.verse}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, verse: e.target.value }))}
+              />
+            </div>
+
+            <div className="field">
+              <label className="label">Weekend Image</label>
+              <div style={{ 
+                position: 'relative',
+                border: '2px dashed var(--border)',
+                borderRadius: '8px',
+                padding: '20px',
+                textAlign: 'center',
+                backgroundColor: 'var(--panel-header)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--accentB)';
+                e.currentTarget.style.backgroundColor = 'rgba(0, 163, 255, 0.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.backgroundColor = 'var(--panel-header)';
+              }}
+              onClick={() => document.getElementById('editWeekendImageUpload').click()}
+              >
+                <input
+                  id="editWeekendImageUpload"
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      if (file.size > 5 * 1024 * 1024) {
+                        window.showMainStatus?.('Image must be 5MB or less', true);
+                        e.target.value = '';
+                        return;
+                      }
+                      // Create preview URL
+                      const previewUrl = URL.createObjectURL(file);
+                      setEditFormData(prev => ({
+                        ...prev,
+                        image: file,
+                        imagePreview: previewUrl
+                      }));
+                    }
+                  }}
+                  style={{ display: 'none' }}
+                />
+                {!editFormData.imagePreview ? (
+                  <>
+                    <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📷</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '4px', color: 'var(--ink)' }}>
+                      Click to upload image
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                      JPG, PNG, or WebP • Max 5MB
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <img 
+                      src={editFormData.imagePreview} 
+                      alt="Preview" 
+                      style={{ 
+                        maxWidth: '150px', 
+                        maxHeight: '150px',
+                        borderRadius: '4px',
+                        marginBottom: '8px'
+                      }}
+                    />
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--accentA)' }}>
+                      {editFormData.image ? editFormData.image.name : 'Current Image'}
+                    </div>
+                    {editFormData.image && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
+                        {(editFormData.image.size / 1024).toFixed(1)} KB
+                      </div>
+                    )}
+                    <button
+                      className="btn btn-small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditFormData(prev => ({
+                          ...prev,
+                          image: null,
+                          imagePreview: ''
+                        }));
+                        document.getElementById('editWeekendImageUpload').value = '';
+                      }}
+                      style={{ 
+                        marginTop: '8px',
+                        padding: '4px 12px',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div style={{ 
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'flex-end',
+              paddingTop: '16px',
+              borderTop: '1px solid var(--border)',
+              marginTop: 'auto'
+            }}>
+              <button 
+                className="btn"
+                onClick={handleCloseEditPanel}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={handleSaveEdit}
+                disabled={!editFormData.theme.trim() || !editFormData.verse.trim() || isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
