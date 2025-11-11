@@ -347,7 +347,7 @@ export default function ViewRoster({ onNavigate }) {
 
   // Email validation function
   const validateEmail = (email) => {
-    if (!email) return true; // Empty is OK (no required fields)
+    if (!email || email.trim() === '' || email.toUpperCase() === 'N/A') return true; // Empty and N/A are OK
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
