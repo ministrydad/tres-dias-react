@@ -446,6 +446,21 @@ const TreasurerReportPDF = ({
             </Text>
           </View>
         )}
+        
+        {/* Page Numbers */}
+        <Text 
+          style={{ 
+            position: 'absolute', 
+            bottom: 20, 
+            left: 0, 
+            right: 0, 
+            textAlign: 'center', 
+            fontSize: 8, 
+            color: '#666' 
+          }} 
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} 
+          fixed 
+        />
       </Page>
     </Document>
   );
