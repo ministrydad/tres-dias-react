@@ -699,12 +699,12 @@ export default function Reports() {
       // Weekend Fee Collected: Only count actual money received
       let weekendCollected = 0;
       if (isPartialScholarship) {
-        // Partial scholarship: they paid the partial amount
-        const candidatePaid = parseFloat(app.payment_wk_partialamount) || 0;
+        // Partial scholarship: use payment_wk_candidate_paid for what was collected
+        const candidatePaid = parseFloat(app.payment_wk_candidate_paid) || 0;
         weekendCollected = candidatePaid;
         
-        // Track scholarship amount needed
-        const scholarshipNeeded = weekendFee - candidatePaid;
+        // payment_wk_partialamount stores the SCHOLARSHIP AMOUNT needed
+        const scholarshipNeeded = parseFloat(app.payment_wk_partialamount) || 0;
         totals.partialScholarshipCount++;
         totals.partialScholarshipAmount += scholarshipNeeded;
         console.log('💰 Partial scholarship found:', app.id, 'Candidate paid:', candidatePaid, 'Scholarship needed:', scholarshipNeeded);
@@ -778,8 +778,8 @@ export default function Reports() {
       const isPartialScholarship = isScholarship && app.payment_wk_scholarshiptype === 'partial';
       
       if (isPartialScholarship) {
-        const candidatePaid = parseFloat(app.payment_wk_partialamount) || 0;
-        const scholarshipNeeded = weekendFee - candidatePaid;
+        // payment_wk_partialamount stores the SCHOLARSHIP AMOUNT (what org needs to pay)
+        const scholarshipNeeded = parseFloat(app.payment_wk_partialamount) || 0;
         partialScholarshipAmount += scholarshipNeeded;
       } else if (isFullScholarship) {
         fullScholarshipAmount += weekendFee;
