@@ -1531,15 +1531,9 @@ export default function TeamList() {
               {isUpdating ? 'Processing...' : 'Update Database'}
             </button>
             <button 
-              className="btn btn-primary" 
+              className="btn btn-info" 
               onClick={() => setShowSetupNextWeekend(!showSetupNextWeekend)}
               disabled={!weekendIdentifier || teamRoster.length === 0}
-              style={{
-                backgroundColor: '#007bff',
-                borderColor: '#007bff',
-                color: 'white',
-                fontWeight: 'bold'
-              }}
               title='Setup theme, verse, and image for next weekend'
             >
               {showSetupNextWeekend ? 'Hide Setup' : 'Setup Next Weekend'}
@@ -1685,22 +1679,81 @@ export default function TeamList() {
               <div>
                 <div className="field">
                   <label className="label">Weekend Image</label>
-                  <input
-                    type="file"
-                    className="input"
-                    accept="image/*"
-                    onChange={(e) => setNextWeekendImage(e.target.files[0])}
-                    style={{ padding: '8px' }}
-                  />
-                  {nextWeekendImage && (
-                    <div style={{ 
-                      marginTop: '8px',
-                      fontSize: '0.85rem',
-                      color: 'var(--muted)'
-                    }}>
-                      Selected: {nextWeekendImage.name}
-                    </div>
-                  )}
+                  <div style={{ 
+                    position: 'relative',
+                    border: '2px dashed var(--border)',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    textAlign: 'center',
+                    backgroundColor: 'var(--panel-header)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--accentB)';
+                    e.currentTarget.style.backgroundColor = 'rgba(0, 163, 255, 0.05)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                    e.currentTarget.style.backgroundColor = 'var(--panel-header)';
+                  }}
+                  onClick={() => document.getElementById('weekendImageUpload').click()}
+                  >
+                    <input
+                      id="weekendImageUpload"
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          // Validate file size (5MB max)
+                          if (file.size > 5 * 1024 * 1024) {
+                            window.showMainStatus?.('Image must be 5MB or less', true);
+                            e.target.value = '';
+                            return;
+                          }
+                          setNextWeekendImage(file);
+                        }
+                      }}
+                      style={{ display: 'none' }}
+                    />
+                    {!nextWeekendImage ? (
+                      <>
+                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📷</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '4px', color: 'var(--ink)' }}>
+                          Click to upload image
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                          JPG, PNG, or WebP • Max 5MB
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✓</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--accentA)' }}>
+                          {nextWeekendImage.name}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
+                          {(nextWeekendImage.size / 1024).toFixed(1)} KB
+                        </div>
+                        <button
+                          className="btn btn-small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setNextWeekendImage(null);
+                            document.getElementById('weekendImageUpload').value = '';
+                          }}
+                          style={{ 
+                            marginTop: '8px',
+                            padding: '4px 12px',
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
