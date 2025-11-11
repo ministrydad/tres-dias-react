@@ -383,11 +383,11 @@ const TreasurerReportPDF = ({
         {onlinePaymentCandidates.length > 0 && (
           <View style={pdfStyles.section}>
             <Text style={pdfStyles.sectionTitle}>Online Payments (Weekend Fee)</Text>
-            <Text style={{ fontSize: 7, marginTop: 4, marginBottom: 3, color: '#666' }}>
+            <Text style={{ fontSize: 8, marginTop: 4, marginBottom: 3, color: '#666' }}>
               Candidates who paid online ({formatCurrency(totalWeekendOnline)} total):
             </Text>
             {onlinePaymentCandidates.map((name, idx) => (
-              <Text key={idx} style={{ fontSize: 7, color: '#555', marginLeft: 8, marginBottom: 1 }}>
+              <Text key={idx} style={{ fontSize: 8, color: '#555', marginLeft: 8, marginBottom: 1 }}>
                 • {name}
               </Text>
             ))}
@@ -487,18 +487,20 @@ export default function Reports() {
         console.warn('⚠️ Could not load active weekend number');
       }
 
-      // Load user name
+      // Load user name from profiles table
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('name')
-          .eq('id', user.id)
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('email', user.email)
           .single();
         
-        if (!userError && userData) {
-          setUserName(userData.name || user.email || 'Unknown User');
+        if (!profileError && profileData && profileData.display_name) {
+          setUserName(profileData.display_name);
+          console.log('👤 User name loaded:', profileData.display_name);
         } else {
+          console.warn('⚠️ Could not load display_name, using email');
           setUserName(user.email || 'Unknown User');
         }
       }
