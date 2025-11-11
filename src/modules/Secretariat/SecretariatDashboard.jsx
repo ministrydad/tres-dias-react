@@ -299,7 +299,7 @@ export default function SecretariatDashboard() {
       return (
         <tr key={gender}>
           <td><strong>{gender}</strong></td>
-          <td colSpan="6" style={{ color: 'var(--muted)', fontStyle: 'italic' }}>
+          <td colSpan="10" style={{ color: 'var(--muted)', fontStyle: 'italic' }}>
             No data for this weekend
           </td>
         </tr>
@@ -317,45 +317,39 @@ export default function SecretariatDashboard() {
 
     return (
       <tr key={gender}>
-        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}><strong>{gender}</strong></td>
-        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>{rectorName}</td>
-        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>{data.team_member_count || 0}</td>
-        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>{data.candidate_count || 0}</td>
-        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>{meetingAttdDisplay}</td>
-        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>
-          <div style={{ marginBottom: '4px' }}>
-            <strong>Theme:</strong> {data.theme || 'N/A'}
-          </div>
-          <div style={{ marginBottom: '4px' }}>
-            <strong>Song:</strong> {data.theme_song || 'N/A'}
-          </div>
-          <div style={{ marginBottom: '4px' }}>
-            <strong>Verse:</strong> {data.verse || 'N/A'}
-          </div>
-          <div style={{ marginBottom: '4px' }}>
-            <strong>Dates:</strong> {data.start_date && data.end_date 
-              ? `${new Date(data.start_date).toLocaleDateString()} - ${new Date(data.end_date).toLocaleDateString()}`
-              : 'N/A'
-            }
-          </div>
-          {data.image && (
-            <div>
-              <img 
-                src={data.image} 
-                alt="Weekend" 
-                style={{ 
-                  maxWidth: '80px', 
-                  maxHeight: '80px', 
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  border: '1px solid var(--border)'
-                }}
-                onClick={() => window.open(data.image, '_blank')}
-              />
-            </div>
+        <td><strong>{gender}</strong></td>
+        <td>{rectorName}</td>
+        <td>{data.team_member_count || 0}</td>
+        <td>{data.candidate_count || 0}</td>
+        <td>{meetingAttdDisplay}</td>
+        <td>{data.theme || 'N/A'}</td>
+        <td>{data.theme_song || 'N/A'}</td>
+        <td>{data.verse || 'N/A'}</td>
+        <td>
+          {data.start_date && data.end_date 
+            ? `${new Date(data.start_date).toLocaleDateString()} - ${new Date(data.end_date).toLocaleDateString()}`
+            : 'N/A'
+          }
+        </td>
+        <td>
+          {data.image ? (
+            <img 
+              src={data.image} 
+              alt="Weekend" 
+              style={{ 
+                maxWidth: '60px', 
+                maxHeight: '60px', 
+                borderRadius: '4px',
+                cursor: 'pointer',
+                border: '1px solid var(--border)'
+              }}
+              onClick={() => window.open(data.image, '_blank')}
+            />
+          ) : (
+            'N/A'
           )}
         </td>
-        <td style={{ verticalAlign: 'top', paddingTop: '12px' }}>{editButton}</td>
+        <td>{editButton}</td>
       </tr>
     );
   }
@@ -560,12 +554,16 @@ export default function SecretariatDashboard() {
                   <thead>
                     <tr>
                       <th style={{ width: '80px' }}>Gender</th>
-                      <th>Rector</th>
-                      <th style={{ width: '100px' }}>Team</th>
-                      <th style={{ width: '120px' }}>Candidates</th>
-                      <th style={{ width: '150px' }}>Avg. Meeting Attd.</th>
-                      <th style={{ width: '200px' }}>Theme / Verse / Image</th>
-                      <th style={{ width: '100px' }}>Actions</th>
+                      <th style={{ width: '150px' }}>Rector</th>
+                      <th style={{ width: '80px' }}>Team</th>
+                      <th style={{ width: '100px' }}>Candidates</th>
+                      <th style={{ width: '100px' }}>Avg. Meeting</th>
+                      <th style={{ width: '120px' }}>Theme</th>
+                      <th style={{ width: '120px' }}>Song</th>
+                      <th style={{ width: '120px' }}>Verse</th>
+                      <th style={{ width: '140px' }}>Dates</th>
+                      <th style={{ width: '80px' }}>Image</th>
+                      <th style={{ width: '80px' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -631,12 +629,16 @@ export default function SecretariatDashboard() {
                   <thead>
                     <tr>
                       <th style={{ width: '80px' }}>Gender</th>
-                      <th>Rector</th>
-                      <th style={{ width: '100px' }}>Team</th>
-                      <th style={{ width: '120px' }}>Candidates</th>
-                      <th style={{ width: '150px' }}>Avg. Meeting Attd.</th>
-                      <th style={{ width: '200px' }}>Theme / Verse / Image</th>
-                      <th style={{ width: '100px' }}>Actions</th>
+                      <th style={{ width: '150px' }}>Rector</th>
+                      <th style={{ width: '80px' }}>Team</th>
+                      <th style={{ width: '100px' }}>Candidates</th>
+                      <th style={{ width: '100px' }}>Avg. Meeting</th>
+                      <th style={{ width: '120px' }}>Theme</th>
+                      <th style={{ width: '120px' }}>Song</th>
+                      <th style={{ width: '120px' }}>Verse</th>
+                      <th style={{ width: '140px' }}>Dates</th>
+                      <th style={{ width: '80px' }}>Image</th>
+                      <th style={{ width: '80px' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -764,7 +766,7 @@ export default function SecretariatDashboard() {
               <label className="label">Start Date</label>
               <input
                 type="date"
-                className="input"
+                className="input date-input"
                 value={editFormData.start_date}
                 onChange={(e) => {
                   const startDate = e.target.value;
@@ -790,7 +792,7 @@ export default function SecretariatDashboard() {
               <label className="label">End Date</label>
               <input
                 type="date"
-                className="input"
+                className="input date-input"
                 value={editFormData.end_date}
                 onChange={(e) => setEditFormData(prev => ({ ...prev, end_date: e.target.value }))}
               />
@@ -798,6 +800,35 @@ export default function SecretariatDashboard() {
                 Auto-fills to 4 days after start date
               </div>
             </div>
+
+            <style>{`
+              .date-input {
+                font-family: 'Source Sans Pro', sans-serif;
+                font-weight: 600;
+                color: var(--ink);
+                cursor: pointer;
+              }
+              
+              .date-input::-webkit-calendar-picker-indicator {
+                cursor: pointer;
+                filter: invert(0.5);
+                opacity: 0.7;
+                transition: opacity 0.2s;
+              }
+              
+              .date-input::-webkit-calendar-picker-indicator:hover {
+                opacity: 1;
+              }
+              
+              body.light-theme .date-input::-webkit-calendar-picker-indicator {
+                filter: invert(0);
+                opacity: 0.6;
+              }
+              
+              body.light-theme .date-input::-webkit-calendar-picker-indicator:hover {
+                opacity: 0.8;
+              }
+            `}</style>
 
             <div className="field">
               <label className="label">Theme</label>
