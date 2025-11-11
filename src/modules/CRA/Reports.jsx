@@ -644,8 +644,8 @@ export default function Reports() {
       // ONLY trust scholarship fields when payment_wk_scholarship is explicitly TRUE
       if (app.payment_wk_scholarship === true) {
         if (app.payment_wk_scholarshiptype === 'partial') {
-          // Partial scholarship: payment_wk_partialamount is what candidate paid
-          weekendFeeCollected = parseFloat(app.payment_wk_partialamount) || 0;
+          // Partial scholarship: use payment_wk_candidate_paid for what candidate actually paid
+          weekendFeeCollected = parseFloat(app.payment_wk_candidate_paid) || 0;
         } else if (app.payment_wk_scholarshiptype === 'full') {
           // Full scholarship: candidate paid $0
           weekendFeeCollected = 0;
