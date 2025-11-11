@@ -209,7 +209,8 @@ const TreasurerReportPDF = ({
   menTotals,
   womenTotals,
   totalScholarshipNeeded,
-  onlinePaymentCandidates
+  onlinePaymentCandidates,
+  notes
 }) => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
@@ -402,6 +403,16 @@ const TreasurerReportPDF = ({
             <Text style={{ fontSize: 8, fontWeight: 600 }}>{formatCurrency(totalScholarshipNeeded)}</Text>
           </View>
         </View>
+
+        {/* Notes Section */}
+        {notes && notes.trim() !== '' && (
+          <View style={pdfStyles.section}>
+            <Text style={pdfStyles.sectionTitle}>Notes</Text>
+            <Text style={{ fontSize: 8, color: '#444', marginTop: 4, lineHeight: 1.4 }}>
+              {notes}
+            </Text>
+          </View>
+        )}
       </Page>
     </Document>
   );
@@ -419,6 +430,8 @@ export default function Reports() {
   const [activeWeekendNumber, setActiveWeekendNumber] = useState('');
   const [userName, setUserName] = useState('');
   const [showTreasurerPreview, setShowTreasurerPreview] = useState(false);
+  const [showNotesField, setShowNotesField] = useState(false);
+  const [reportNotes, setReportNotes] = useState('');
 
   useEffect(() => {
     if (orgId) {
@@ -842,18 +855,57 @@ export default function Reports() {
             </div>
           </div>
           
-          {/* Treasurer's Report PDF Button */}
+          {/* Treasurer's Report PDF Buttons */}
           <div>
             <div className="label">Treasurer's Report</div>
-            <button 
-              className="btn btn-primary" 
-              onClick={() => setShowTreasurerPreview(!showTreasurerPreview)}
-              disabled={loading}
-            >
-              {showTreasurerPreview ? 'Hide Preview' : 'Preview Funds Report'}
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setShowTreasurerPreview(!showTreasurerPreview);
+                  if (!showTreasurerPreview) setShowNotesField(false); // Close notes when opening preview
+                }}
+                disabled={loading}
+              >
+                {showTreasurerPreview ? 'Close' : 'Preview Funds Report'}
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setShowNotesField(!showNotesField);
+                  if (!showNotesField) setShowTreasurerPreview(false); // Close preview when opening notes
+                }}
+                disabled={loading}
+              >
+                {showNotesField ? 'Close' : 'Add Notes'}
+              </button>
+            </div>
           </div>
         </div>
+        
+        {/* Notes Field */}
+        {showNotesField && (
+          <div style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label className="label" style={{ marginBottom: 0 }}>Report Notes (optional, max 500 characters)</label>
+              <span style={{ fontSize: '0.85rem', color: reportNotes.length > 500 ? 'var(--error)' : 'var(--muted)' }}>
+                {reportNotes.length} / 500
+              </span>
+            </div>
+            <textarea
+              className="input"
+              value={reportNotes}
+              onChange={(e) => setReportNotes(e.target.value.slice(0, 500))}
+              placeholder="Add any notes for this report (e.g., outstanding items, special circumstances, reminders)..."
+              rows={4}
+              style={{ 
+                width: '100%', 
+                resize: 'vertical',
+                fontFamily: 'inherit'
+              }}
+            />
+          </div>
+        )}
         
         {/* Treasurer Report Preview */}
         {showTreasurerPreview && (
@@ -878,6 +930,7 @@ export default function Reports() {
                     womenTotals={genderTotals.womenTotals}
                     totalScholarshipNeeded={combinedScholarships.fullScholarshipAmount + combinedScholarships.partialScholarshipAmount}
                     onlinePaymentCandidates={getAllOnlinePaymentCandidates()}
+                    notes={reportNotes}
                   />
                 }
                 fileName={`Treasurer_Report_Weekend_${activeWeekendNumber}.pdf`}
@@ -913,6 +966,7 @@ export default function Reports() {
                   womenTotals={genderTotals.womenTotals}
                   totalScholarshipNeeded={combinedScholarships.fullScholarshipAmount + combinedScholarships.partialScholarshipAmount}
                   onlinePaymentCandidates={getAllOnlinePaymentCandidates()}
+                  notes={reportNotes}
                 />
               </PDFViewer>
             </div>
