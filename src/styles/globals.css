@@ -4050,3 +4050,256 @@ input:focus + .slider {
 input:checked + .slider:before {
   transform: translateX(20px);
 }
+
+/* ===============================================
+   CUSTOM DATE PICKER COMPONENT
+   Add this section to globals.css
+   =============================================== */
+
+/* Date Input Wrapper */
+.custom-date-picker {
+    position: relative;
+    width: 100%;
+}
+
+/* Date Input Field */
+.custom-date-input {
+    width: 100%;
+    padding: 10px 40px 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--ink);
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-date-input:hover {
+    border-color: var(--accentB);
+}
+
+.custom-date-input:focus {
+    outline: none;
+    border-color: var(--accentB);
+    box-shadow: 0 0 0 3px rgba(0, 163, 255, 0.1);
+}
+
+.custom-date-input::placeholder {
+    color: var(--muted);
+    font-weight: 400;
+}
+
+/* Calendar Icon Button */
+.date-picker-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 1.2rem;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.date-picker-icon:hover {
+    color: var(--accentB);
+}
+
+/* Calendar Dropdown */
+.date-picker-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 16px;
+    z-index: 1000;
+    min-width: 300px;
+    animation: slideInDown 0.2s ease-out;
+}
+
+body.light-theme .date-picker-dropdown {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Calendar Header */
+.date-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.date-picker-month-year {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.date-picker-nav {
+    display: flex;
+    gap: 8px;
+}
+
+.date-picker-nav-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--ink);
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.date-picker-nav-btn:hover {
+    background: var(--panel-header);
+    border-color: var(--accentB);
+}
+
+/* Weekday Headers */
+.date-picker-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.date-picker-weekday {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 8px 0;
+    text-transform: uppercase;
+}
+
+/* Calendar Days Grid */
+.date-picker-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.date-picker-day {
+    aspect-ratio: 1;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    color: var(--ink);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.date-picker-day:hover {
+    background: var(--panel-header);
+    color: var(--accentB);
+}
+
+.date-picker-day.other-month {
+    color: var(--muted);
+    opacity: 0.4;
+}
+
+.date-picker-day.selected {
+    background: var(--accentA);
+    color: white;
+    font-weight: 700;
+}
+
+.date-picker-day.selected:hover {
+    background: var(--accentA);
+    color: white;
+}
+
+.date-picker-day.today {
+    border: 2px solid var(--accentB);
+}
+
+.date-picker-day:disabled {
+    cursor: not-allowed;
+    opacity: 0.3;
+}
+
+/* Close/Clear Actions */
+.date-picker-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.date-picker-clear-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--ink);
+    cursor: pointer;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.date-picker-clear-btn:hover {
+    background: var(--panel-header);
+    border-color: var(--accentD);
+    color: var(--accentD);
+}
+
+.date-picker-today-btn {
+    background: var(--accentB);
+    border: 1px solid var(--accentB);
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+body.light-theme .date-picker-today-btn {
+    background: var(--accentB);
+    color: white;
+}
+
+.date-picker-today-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 163, 255, 0.3);
+}
+
+/* Animation */
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
