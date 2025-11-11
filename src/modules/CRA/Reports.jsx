@@ -254,16 +254,18 @@ const TreasurerReportPDF = ({
         <View style={{ display: 'flex', flexDirection: 'row', gap: 10, marginBottom: 10 }}>
           {/* MEN Column */}
           <View style={{ flex: 1 }}>
-            <Text style={pdfStyles.columnHeader}>MEN</Text>
-            <View style={pdfStyles.columnContent}>
-              <View style={pdfStyles.simpleRow}>
-                <Text style={pdfStyles.simpleLabel}>Candidates:</Text>
-                <Text style={pdfStyles.simpleValue}>{menTotals.candidateCount}</Text>
-              </View>
+            <Text style={pdfStyles.columnHeader}>MEN - {menTotals.candidateCount}</Text>
+            <View style={{ marginBottom: 6 }}>
               <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Expected Revenue:</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(menTotals.weekendExpected + menTotals.sponsorExpected)}</Text>
               </View>
+            </View>
+            
+            <View style={pdfStyles.columnContent}>
+              <Text style={{ fontSize: 8, fontWeight: 700, marginBottom: 4, color: '#666', textAlign: 'center' }}>
+                Collected
+              </Text>
               
               <Text style={pdfStyles.subsectionTitle}>Weekend Fees</Text>
               <View style={pdfStyles.simpleRow}>
@@ -306,16 +308,18 @@ const TreasurerReportPDF = ({
 
           {/* WOMEN Column */}
           <View style={{ flex: 1 }}>
-            <Text style={pdfStyles.columnHeader}>WOMEN</Text>
-            <View style={pdfStyles.columnContent}>
-              <View style={pdfStyles.simpleRow}>
-                <Text style={pdfStyles.simpleLabel}>Candidates:</Text>
-                <Text style={pdfStyles.simpleValue}>{womenTotals.candidateCount}</Text>
-              </View>
+            <Text style={pdfStyles.columnHeader}>WOMEN - {womenTotals.candidateCount}</Text>
+            <View style={{ marginBottom: 6 }}>
               <View style={pdfStyles.simpleRow}>
                 <Text style={pdfStyles.simpleLabel}>Expected Revenue:</Text>
                 <Text style={pdfStyles.simpleValue}>{formatCurrency(womenTotals.weekendExpected + womenTotals.sponsorExpected)}</Text>
               </View>
+            </View>
+            
+            <View style={pdfStyles.columnContent}>
+              <Text style={{ fontSize: 8, fontWeight: 700, marginBottom: 4, color: '#666', textAlign: 'center' }}>
+                Collected
+              </Text>
               
               <Text style={pdfStyles.subsectionTitle}>Weekend Fees</Text>
               <View style={pdfStyles.simpleRow}>
