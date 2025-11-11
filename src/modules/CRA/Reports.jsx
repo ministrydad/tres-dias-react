@@ -242,7 +242,7 @@ const TreasurerReportPDF = ({
 
   return (
     <Document>
-      <Page size="LETTER" style={pdfStyles.page}>
+      <Page size="LETTER" style={{...pdfStyles.page, paddingBottom: 40}}>
         {/* Header */}
         <View style={pdfStyles.header}>
           <Text style={pdfStyles.title}>Treasurer's Funds Report</Text>
@@ -447,21 +447,20 @@ const TreasurerReportPDF = ({
           </View>
         )}
         
-        {/* Footer with Page Numbers */}
-        <View style={{ 
-          marginTop: 'auto',
-          paddingTop: 12,
-          borderTop: '0.5 solid #ddd'
-        }}>
-          <Text 
-            style={{ 
-              textAlign: 'center', 
-              fontSize: 8, 
-              color: '#666' 
-            }} 
-            render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} 
-          />
-        </View>
+        {/* Footer with Page Numbers - Fixed on every page */}
+        <Text 
+          style={{ 
+            position: 'absolute',
+            bottom: 16,
+            left: 0,
+            right: 0,
+            textAlign: 'center', 
+            fontSize: 8, 
+            color: '#666' 
+          }} 
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} 
+          fixed
+        />
       </Page>
     </Document>
   );
