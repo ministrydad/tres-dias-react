@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import { generatePrintableProfileHTML, PRINT_PROFILE_CSS } from './../../utils/profilePrintUtils';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from '@react-pdf/renderer';
-import { FileText, Users, Database, CalendarPlus, BookOpen, Award } from 'lucide-react';
+import { HiDocumentText, HiUsers, HiCircleStack, HiCalendarDays, HiBookOpen, HiIdentification } from 'react-icons/hi2';
 
 // Register Source Sans 3 font from local TTF files
 Font.register({
@@ -1512,11 +1512,11 @@ export default function TeamList() {
           {/* Action Buttons */}
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button className="btn btn-warning" onClick={handlePrintRoster}>
-              <FileText size={16} style={{ marginRight: '6px' }} />
+              <HiDocumentText size={16} style={{ marginRight: '6px' }} />
               {showPdfPreview ? 'Hide PDF Preview' : 'Print Report'}
             </button>
             <button className="btn btn-warning" onClick={handlePrintAllProfiles}>
-              <Users size={16} style={{ marginRight: '6px' }} />
+              <HiUsers size={16} style={{ marginRight: '6px' }} />
               Print All Profiles
             </button>
             <button 
@@ -1525,7 +1525,7 @@ export default function TeamList() {
               disabled={!weekendIdentifier || teamRoster.length === 0 || isUpdating}
               title='Update database with service records'
             >
-              <Database size={16} style={{ marginRight: '6px' }} />
+              <HiCircleStack size={16} style={{ marginRight: '6px' }} />
               {isUpdating ? 'Processing...' : 'Update Database'}
             </button>
             <button 
@@ -1534,15 +1534,15 @@ export default function TeamList() {
               disabled={!weekendIdentifier || teamRoster.length === 0}
               title='Setup theme, verse, and image for next weekend'
             >
-              <CalendarPlus size={16} style={{ marginRight: '6px' }} />
+              <HiCalendarDays size={16} style={{ marginRight: '6px' }} />
               {showSetupNextWeekend ? 'Hide Setup' : 'Setup Next Weekend'}
             </button>
             <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
-              <BookOpen size={16} style={{ marginRight: '6px' }} />
+              <HiBookOpen size={16} style={{ marginRight: '6px' }} />
               Export for Team Book
             </button>
             <button className="btn btn-primary" onClick={handleOpenBadgePanel}>
-              <Award size={16} style={{ marginRight: '6px' }} />
+              <HiIdentification size={16} style={{ marginRight: '6px' }} />
               Export to Team Badges
             </button>
           </div>
