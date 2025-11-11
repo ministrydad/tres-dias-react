@@ -439,7 +439,7 @@ const TreasurerReportPDF = ({
 
         {/* Notes Section */}
         {notes && notes.trim() !== '' && (
-          <View style={pdfStyles.section}>
+          <View style={pdfStyles.section} wrap={false}>
             <Text style={pdfStyles.sectionTitle}>Notes</Text>
             <Text style={{ fontSize: 8, color: '#444', marginTop: 4, lineHeight: 1.4 }}>
               {notes}
