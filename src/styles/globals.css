@@ -4052,8 +4052,10 @@ input:checked + .slider:before {
 }
 
 /* ===============================================
+
    CUSTOM DATE PICKER COMPONENT
    Add this section to globals.css
+
    =============================================== */
 
 /* Date Input Wrapper */
