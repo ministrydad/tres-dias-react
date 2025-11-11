@@ -29,7 +29,9 @@ export default function SecretariatDashboard() {
     theme: '',
     verse: '',
     image: null,
-    imagePreview: ''
+    imagePreview: '',
+    start_date: '',
+    end_date: ''
   });
   const [isSaving, setIsSaving] = useState(false);
   const mainContentRef = useRef(null);
@@ -203,7 +205,9 @@ export default function SecretariatDashboard() {
       theme: record.theme || '',
       verse: record.verse || '',
       image: null,
-      imagePreview: record.image || ''
+      imagePreview: record.image || '',
+      start_date: record.start_date || '',
+      end_date: record.end_date || ''
     });
     setShowEditPanel(true);
   }
@@ -215,7 +219,9 @@ export default function SecretariatDashboard() {
       theme: '',
       verse: '',
       image: null,
-      imagePreview: ''
+      imagePreview: '',
+      start_date: '',
+      end_date: ''
     });
   }
 
@@ -258,7 +264,9 @@ export default function SecretariatDashboard() {
         .update({
           theme: editFormData.theme.trim(),
           verse: editFormData.verse.trim(),
-          image: imageUrl
+          image: imageUrl,
+          start_date: editFormData.start_date || null,
+          end_date: editFormData.end_date || null
         })
         .eq('id', editingRecord.id)
         .eq('org_id', orgId);
@@ -316,6 +324,12 @@ export default function SecretariatDashboard() {
           </div>
           <div style={{ marginBottom: '4px' }}>
             <strong>Verse:</strong> {data.verse || 'N/A'}
+          </div>
+          <div style={{ marginBottom: '4px' }}>
+            <strong>Dates:</strong> {data.start_date && data.end_date 
+              ? `${new Date(data.start_date).toLocaleDateString()} - ${new Date(data.end_date).toLocaleDateString()}`
+              : 'N/A'
+            }
           </div>
           {data.image && (
             <div>
@@ -736,6 +750,45 @@ export default function SecretariatDashboard() {
               <label className="label">Weekend Number</label>
               <div style={{ fontWeight: 600, color: 'var(--ink)' }}>
                 {editingRecord.weekend_number}
+              </div>
+            </div>
+
+            <div className="field">
+              <label className="label">Start Date</label>
+              <input
+                type="date"
+                className="input"
+                value={editFormData.start_date}
+                onChange={(e) => {
+                  const startDate = e.target.value;
+                  setEditFormData(prev => {
+                    // Auto-calculate end date (4 days after start)
+                    let endDate = '';
+                    if (startDate) {
+                      const start = new Date(startDate);
+                      start.setDate(start.getDate() + 4);
+                      endDate = start.toISOString().split('T')[0];
+                    }
+                    return {
+                      ...prev,
+                      start_date: startDate,
+                      end_date: endDate
+                    };
+                  });
+                }}
+              />
+            </div>
+
+            <div className="field">
+              <label className="label">End Date</label>
+              <input
+                type="date"
+                className="input"
+                value={editFormData.end_date}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, end_date: e.target.value }))}
+              />
+              <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
+                Auto-fills to 4 days after start date
               </div>
             </div>
 
