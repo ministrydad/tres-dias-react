@@ -393,7 +393,7 @@ export default function SecretariatDashboard() {
         if (remainingDays < 0) {
           timeRemainingText = 'Term Expired';
           segmentColor = 'red';
-        } else if (remainingMonths < 6) {
+        } else if (remainingMonths < 12) {
           timeRemainingText = `${remainingMonths} mo. remaining`;
           segmentColor = 'yellow';
         } else {
