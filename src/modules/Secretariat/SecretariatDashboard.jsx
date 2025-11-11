@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
+import DatePicker from '../../components/common/DatePicker';
 
 // Configuration constant from original
 const MEETING_COUNT = 6; // Number of meetings per team (matches CONFIG.MEETING_COUNT in original)
@@ -764,71 +765,39 @@ export default function SecretariatDashboard() {
 
             <div className="field">
               <label className="label">Start Date</label>
-              <input
-                type="date"
-                className="input date-input"
+              <DatePicker
                 value={editFormData.start_date}
-                onChange={(e) => {
-                  const startDate = e.target.value;
+                onChange={(dateValue) => {
                   setEditFormData(prev => {
                     // Auto-calculate end date (4 days after start)
                     let endDate = '';
-                    if (startDate) {
-                      const start = new Date(startDate);
+                    if (dateValue) {
+                      const start = new Date(dateValue);
                       start.setDate(start.getDate() + 4);
                       endDate = start.toISOString().split('T')[0];
                     }
                     return {
                       ...prev,
-                      start_date: startDate,
+                      start_date: dateValue,
                       end_date: endDate
                     };
                   });
                 }}
+                placeholder="Select start date"
               />
             </div>
 
             <div className="field">
               <label className="label">End Date</label>
-              <input
-                type="date"
-                className="input date-input"
+              <DatePicker
                 value={editFormData.end_date}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                onChange={(dateValue) => setEditFormData(prev => ({ ...prev, end_date: dateValue }))}
+                placeholder="Select end date"
               />
               <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
                 Auto-fills to 4 days after start date
               </div>
             </div>
-
-            <style>{`
-              .date-input {
-                font-family: 'Source Sans Pro', sans-serif;
-                font-weight: 600;
-                color: var(--ink);
-                cursor: pointer;
-              }
-              
-              .date-input::-webkit-calendar-picker-indicator {
-                cursor: pointer;
-                filter: invert(0.5);
-                opacity: 0.7;
-                transition: opacity 0.2s;
-              }
-              
-              .date-input::-webkit-calendar-picker-indicator:hover {
-                opacity: 1;
-              }
-              
-              body.light-theme .date-input::-webkit-calendar-picker-indicator {
-                filter: invert(0);
-                opacity: 0.6;
-              }
-              
-              body.light-theme .date-input::-webkit-calendar-picker-indicator:hover {
-                opacity: 0.8;
-              }
-            `}</style>
 
             <div className="field">
               <label className="label">Theme</label>
