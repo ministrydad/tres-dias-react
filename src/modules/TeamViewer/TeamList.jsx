@@ -1,5 +1,5 @@
 // src/modules/TeamViewer/TeamList.jsx
-// UPDATED: Card-based PDF preview (no modal), removed guided tour
+// UPDATED: Card-based PDF preview (no modal), removed guided tour, ADDED ROVER TO LEADERSHIP SECTION
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -955,8 +955,9 @@ export default function TeamList() {
     const heads = teamRoster.filter(m => m.role === 'Head');
     const asstHeads = teamRoster.filter(m => m.role === 'Asst Head');
     const burs = teamRoster.filter(m => m.role === 'BUR');
+    const rovers = teamRoster.filter(m => m.role === 'Rover');
 
-    const totalCount = headSpirDirector.length + spirDirectors.length + heads.length + asstHeads.length + burs.length;
+    const totalCount = headSpirDirector.length + spirDirectors.length + heads.length + asstHeads.length + burs.length + rovers.length;
 
     const renderRow = (role, person, showLabel = true) => {
       if (!person) {
@@ -1067,6 +1068,7 @@ export default function TeamList() {
               {renderRow('Head', heads[0])}
               {renderRow('Asst Head', asstHeads[0])}
               {renderRow('BUR', burs[0])}
+              {renderRow('Rover', rovers[0])}
             </tbody>
           </table>
           <table className="table">
