@@ -1394,10 +1394,10 @@ export default function ViewRoster({ onNavigate }) {
                 Weekend Fee Payment
               </h4>
 
-              {/* Main Payment Status - 3 Options */}
+              {/* Main Payment Status - 2 Options */}
               <div className="toggle" style={{ display: 'flex', gap: '0', marginBottom: '12px' }}>
                 <div 
-                  className={`opt ${!editData.payment_wk_scholarship && !editData.payment_wk_cash && !editData.payment_wk_check && !editData.payment_wk_online ? 'active' : ''}`}
+                  className={`opt ${!editData.payment_wk_cash && !editData.payment_wk_check && !editData.payment_wk_online ? 'active' : ''}`}
                   onClick={() => {
                     handleEditFieldChange('payment_wk_scholarship', false);
                     handleEditFieldChange('payment_wk_cash', false);
@@ -1412,7 +1412,7 @@ export default function ViewRoster({ onNavigate }) {
                   Unpaid
                 </div>
                 <div 
-                  className={`opt ${!editData.payment_wk_scholarship && (editData.payment_wk_cash || editData.payment_wk_check || editData.payment_wk_online) ? 'active' : ''}`}
+                  className={`opt ${editData.payment_wk_cash || editData.payment_wk_check || editData.payment_wk_online ? 'active' : ''}`}
                   onClick={() => {
                     handleEditFieldChange('payment_wk_scholarship', false);
                     handleEditFieldChange('payment_wk_cash', true);
@@ -1426,25 +1426,10 @@ export default function ViewRoster({ onNavigate }) {
                 >
                   Paid
                 </div>
-                <div 
-                  className={`opt ${editData.payment_wk_scholarship ? 'active' : ''}`}
-                  onClick={() => {
-                    handleEditFieldChange('payment_wk_scholarship', true);
-                    handleEditFieldChange('payment_wk_scholarshiptype', 'full');
-                    handleEditFieldChange('payment_wk_cash', false);
-                    handleEditFieldChange('payment_wk_check', false);
-                    handleEditFieldChange('payment_wk_online', false);
-                    handleEditFieldChange('payment_wk_candidate_paid', 0);
-                    handleEditFieldChange('payment_wk_partialamount', WEEKEND_FEE);
-                  }}
-                  style={{ flex: 1 }}
-                >
-                  Scholarship
-                </div>
               </div>
 
               {/* If Paid - Show Payment Method & Amount */}
-              {!editData.payment_wk_scholarship && (editData.payment_wk_cash || editData.payment_wk_check || editData.payment_wk_online) && (
+              {(editData.payment_wk_cash || editData.payment_wk_check || editData.payment_wk_online) && (
                 <div>
                   <div className="field" style={{ marginBottom: '12px' }}>
                     <label className="label">Payment Method</label>
@@ -1484,151 +1469,109 @@ export default function ViewRoster({ onNavigate }) {
                       </div>
                     </div>
                   </div>
-                  <div className="field" style={{ marginBottom: 0 }}>
+
+                  <div className="field" style={{ marginBottom: '12px' }}>
                     <label className="label">Amount Paid</label>
                     <input
                       type="number"
                       className="input"
                       value={editData.payment_wk_candidate_paid}
-                      onChange={(e) => handleEditFieldChange('payment_wk_candidate_paid', parseFloat(e.target.value) || 0)}
-                      placeholder="Amount"
+                      onChange={(e) => {
+                        const amountPaid = parseFloat(e.target.value) || 0;
+                        handleEditFieldChange('payment_wk_candidate_paid', amountPaid);
+                        
+                        // Clear scholarship if amount = full fee
+                        if (amountPaid >= WEEKEND_FEE) {
+                          handleEditFieldChange('payment_wk_scholarship', false);
+                          handleEditFieldChange('payment_wk_scholarshiptype', '');
+                          handleEditFieldChange('payment_wk_partialamount', '');
+                        }
+                      }}
+                      placeholder="Amount paid"
+                      step="0.01"
                     />
                   </div>
-                </div>
-              )}
 
-              {/* If Scholarship - Show Type & Partial Details */}
-              {editData.payment_wk_scholarship && (
-                <div>
-                  <div className="field" style={{ marginBottom: '12px' }}>
-                    <label className="label">Scholarship Type</label>
-                    <div className="toggle" style={{ display: 'flex', gap: '0' }}>
-                      <div 
-                        className={`opt ${editData.payment_wk_scholarshiptype === 'full' ? 'active' : ''}`}
+                  {/* Show "Apply Balance as Scholarship" button if amount < weekend fee AND not already a scholarship */}
+                  {editData.payment_wk_candidate_paid > 0 && 
+                   editData.payment_wk_candidate_paid < WEEKEND_FEE && 
+                   !editData.payment_wk_scholarship && (
+                    <div style={{ marginBottom: '12px' }}>
+                      <button
+                        className="btn btn-primary"
                         onClick={() => {
-                          handleEditFieldChange('payment_wk_scholarshiptype', 'full');
-                          handleEditFieldChange('payment_wk_candidate_paid', 0);
-                          handleEditFieldChange('payment_wk_partialamount', WEEKEND_FEE);
-                          handleEditFieldChange('payment_wk_cash', false);
-                          handleEditFieldChange('payment_wk_check', false);
-                          handleEditFieldChange('payment_wk_online', false);
-                        }}
-                        style={{ flex: 1 }}
-                      >
-                        Full
-                      </div>
-                      <div 
-                        className={`opt ${editData.payment_wk_scholarshiptype === 'partial' ? 'active' : ''}`}
-                        onClick={() => {
+                          const balanceNeeded = WEEKEND_FEE - editData.payment_wk_candidate_paid;
+                          handleEditFieldChange('payment_wk_scholarship', true);
                           handleEditFieldChange('payment_wk_scholarshiptype', 'partial');
-                          handleEditFieldChange('payment_wk_cash', true);
-                          handleEditFieldChange('payment_wk_check', false);
-                          handleEditFieldChange('payment_wk_online', false);
-                          handleEditFieldChange('payment_wk_candidate_paid', 0);
-                          handleEditFieldChange('payment_wk_partialamount', WEEKEND_FEE);
+                          handleEditFieldChange('payment_wk_partialamount', balanceNeeded);
                         }}
-                        style={{ flex: 1 }}
+                        style={{ width: '100%' }}
                       >
-                        Partial
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* If Partial Scholarship - Show Candidate Payment */}
-                  {editData.payment_wk_scholarshiptype === 'partial' && (
-                    <div style={{ 
-                      background: 'var(--surface)', 
-                      padding: '16px', 
-                      borderRadius: '8px',
-                      border: '1px solid var(--border)'
-                    }}>
-                      <h5 style={{ margin: '0 0 12px 0', fontSize: '0.9rem', fontWeight: 600 }}>
-                        Candidate Payment
-                      </h5>
-                      
-                      <div className="field" style={{ marginBottom: '12px' }}>
-                        <label className="label">Payment Method</label>
-                        <div className="toggle" style={{ display: 'flex', gap: '0' }}>
-                          <div 
-                            className={`opt ${editData.payment_wk_cash ? 'active' : ''}`}
-                            onClick={() => {
-                              handleEditFieldChange('payment_wk_cash', true);
-                              handleEditFieldChange('payment_wk_check', false);
-                              handleEditFieldChange('payment_wk_online', false);
-                            }}
-                            style={{ flex: 1 }}
-                          >
-                            Cash
-                          </div>
-                          <div 
-                            className={`opt ${editData.payment_wk_check ? 'active' : ''}`}
-                            onClick={() => {
-                              handleEditFieldChange('payment_wk_cash', false);
-                              handleEditFieldChange('payment_wk_check', true);
-                              handleEditFieldChange('payment_wk_online', false);
-                            }}
-                            style={{ flex: 1 }}
-                          >
-                            Check
-                          </div>
-                          <div 
-                            className={`opt ${editData.payment_wk_online ? 'active' : ''}`}
-                            onClick={() => {
-                              handleEditFieldChange('payment_wk_cash', false);
-                              handleEditFieldChange('payment_wk_check', false);
-                              handleEditFieldChange('payment_wk_online', true);
-                            }}
-                            style={{ flex: 1 }}
-                          >
-                            Online
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="field" style={{ marginBottom: '12px' }}>
-                        <label className="label">Amount Candidate Paid</label>
-                        <input
-                          type="number"
-                          className="input"
-                          value={editData.payment_wk_candidate_paid}
-                          onChange={(e) => {
-                            const candidatePaid = parseFloat(e.target.value) || 0;
-                            const scholarshipAmount = WEEKEND_FEE - candidatePaid;
-                            handleEditFieldChange('payment_wk_candidate_paid', candidatePaid);
-                            handleEditFieldChange('payment_wk_partialamount', scholarshipAmount);
-                          }}
-                          placeholder="Amount paid by candidate"
-                        />
-                      </div>
-
-                      <div style={{ 
-                        padding: '12px', 
-                        background: 'var(--panel)', 
-                        borderRadius: '6px',
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(3, 1fr)',
-                        gap: '8px',
-                        fontSize: '0.85rem'
-                      }}>
-                        <div>
-                          <div style={{ color: 'var(--muted)', marginBottom: '4px' }}>Weekend Fee</div>
-                          <div style={{ fontWeight: 700 }}>${WEEKEND_FEE}</div>
-                        </div>
-                        <div>
-                          <div style={{ color: 'var(--muted)', marginBottom: '4px' }}>Candidate Paid</div>
-                          <div style={{ fontWeight: 700, color: 'var(--accentA)' }}>
-                            ${editData.payment_wk_candidate_paid || 0}
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{ color: 'var(--muted)', marginBottom: '4px' }}>Scholarship</div>
-                          <div style={{ fontWeight: 700, color: 'var(--accentB)' }}>
-                            ${editData.payment_wk_partialamount || WEEKEND_FEE}
-                          </div>
-                        </div>
-                      </div>
+                        Apply Balance as Scholarship (${(WEEKEND_FEE - editData.payment_wk_candidate_paid).toFixed(2)})
+                      </button>
                     </div>
                   )}
+
+                  {/* Show scholarship indicator if applied */}
+                  {editData.payment_wk_scholarship && editData.payment_wk_scholarshiptype === 'partial' && (
+                    <div style={{ 
+                      padding: '12px', 
+                      background: 'var(--accentB-bg)', 
+                      border: '1px solid var(--accentB)',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '12px'
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: 600, color: 'var(--accentB)', marginBottom: '4px' }}>
+                          ✓ Partial Scholarship Applied
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+                          Candidate paid: ${editData.payment_wk_candidate_paid} | Scholarship: ${editData.payment_wk_partialamount}
+                        </div>
+                      </div>
+                      <button
+                        className="btn"
+                        onClick={() => {
+                          handleEditFieldChange('payment_wk_scholarship', false);
+                          handleEditFieldChange('payment_wk_scholarshiptype', '');
+                          handleEditFieldChange('payment_wk_partialamount', '');
+                        }}
+                        style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Summary Box */}
+                  <div style={{ 
+                    padding: '12px', 
+                    background: 'var(--panel)', 
+                    borderRadius: '6px',
+                    fontSize: '0.85rem'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ color: 'var(--muted)' }}>Weekend Fee:</span>
+                      <span style={{ fontWeight: 600 }}>${WEEKEND_FEE}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ color: 'var(--muted)' }}>Amount Paid:</span>
+                      <span style={{ fontWeight: 600, color: 'var(--accentA)' }}>
+                        ${editData.payment_wk_candidate_paid || 0}
+                      </span>
+                    </div>
+                    {editData.payment_wk_scholarship && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid var(--border)' }}>
+                        <span style={{ color: 'var(--muted)' }}>Scholarship Needed:</span>
+                        <span style={{ fontWeight: 700, color: 'var(--accentB)' }}>
+                          ${editData.payment_wk_partialamount || 0}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
