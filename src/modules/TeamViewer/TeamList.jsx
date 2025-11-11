@@ -260,6 +260,13 @@ export default function TeamList() {
   const [badgeTheme, setBadgeTheme] = useState('');
   const [badgeProfPosition, setBadgeProfPosition] = useState('blank');
   const [candidates, setCandidates] = useState([]);
+  
+  // Setup Next Weekend state
+  const [showSetupNextWeekend, setShowSetupNextWeekend] = useState(false);
+  const [nextWeekendTheme, setNextWeekendTheme] = useState('');
+  const [nextWeekendVerse, setNextWeekendVerse] = useState('');
+  const [nextWeekendImage, setNextWeekendImage] = useState(null);
+  const [isCreatingNextWeekend, setIsCreatingNextWeekend] = useState(false);
 
   const ROLE_CONFIG = {
     team: [
@@ -870,6 +877,105 @@ export default function TeamList() {
     handleCloseBadgePanel();
   };
 
+  const handleCreateNextWeekend = async () => {
+    // Find the Rover
+    const rover = teamRoster.find(m => m.role === 'Rover');
+    
+    if (!rover) {
+      window.showMainStatus?.('No Rover assigned to current team. Please assign a Rover first.', true);
+      return;
+    }
+
+    // Calculate next weekend details
+    const currentWeekendNum = parseInt(weekendIdentifier.match(/\d+/)?.[0] || '0', 10);
+    const nextWeekendNum = currentWeekendNum + 1;
+    const nextWeekendId = weekendIdentifier.replace(/\d+$/, nextWeekendNum.toString());
+
+    setIsCreatingNextWeekend(true);
+
+    try {
+      let imageUrl = '';
+
+      // Step 1: Upload image to Supabase Storage (if provided)
+      if (nextWeekendImage) {
+        const fileExt = nextWeekendImage.name.split('.').pop();
+        const fileName = `${orgId}/${nextWeekendId.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('weekend-images')
+          .upload(fileName, nextWeekendImage, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) {
+          console.error('Image upload error:', uploadError);
+          throw new Error(`Failed to upload image: ${uploadError.message}`);
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('weekend-images')
+          .getPublicUrl(fileName);
+
+        imageUrl = publicUrl;
+      }
+
+      // Step 2: Insert into weekend_history
+      const { error: historyError } = await supabase
+        .from('weekend_history')
+        .insert({
+          org_id: orgId,
+          weekend_identifier: nextWeekendId,
+          weekend_number: nextWeekendNum,
+          gender: currentGender,
+          theme: nextWeekendTheme.trim(),
+          verse: nextWeekendVerse.trim(),
+          image: imageUrl
+        });
+
+      if (historyError) {
+        console.error('Weekend history insert error:', historyError);
+        throw new Error(`Failed to create weekend history: ${historyError.message}`);
+      }
+
+      // Step 3: Insert Rover as Rector in next weekend roster
+      const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
+      
+      const { error: rosterError } = await supabase
+        .from(rosterTable)
+        .insert({
+          weekend_identifier: nextWeekendId,
+          role: 'Rector',
+          pescadore_key: rover.id,
+          org_id: orgId
+        });
+
+      if (rosterError) {
+        console.error('Roster insert error:', rosterError);
+        throw new Error(`Failed to assign Rector for next weekend: ${rosterError.message}`);
+      }
+
+      // Success!
+      window.showMainStatus?.(
+        `✅ ${nextWeekendId} created! ${rover.name} is now Rector.`,
+        false
+      );
+
+      // Reset form
+      setShowSetupNextWeekend(false);
+      setNextWeekendTheme('');
+      setNextWeekendVerse('');
+      setNextWeekendImage(null);
+
+    } catch (error) {
+      console.error('Error creating next weekend:', error);
+      window.showMainStatus?.(`Error: ${error.message}`, true);
+    } finally {
+      setIsCreatingNextWeekend(false);
+    }
+  };
+
   const renderRectorSection = () => {
     const rector = teamRoster.find(m => m.role === 'Rector');
     const isExpanded = rector && expandedRows.has(rector.id);
@@ -1424,6 +1530,20 @@ export default function TeamList() {
             >
               {isUpdating ? 'Processing...' : 'Update Database'}
             </button>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => setShowSetupNextWeekend(!showSetupNextWeekend)}
+              disabled={!weekendIdentifier || teamRoster.length === 0}
+              style={{
+                backgroundColor: '#007bff',
+                borderColor: '#007bff',
+                color: 'white',
+                fontWeight: 'bold'
+              }}
+              title='Setup theme, verse, and image for next weekend'
+            >
+              {showSetupNextWeekend ? 'Hide Setup' : 'Setup Next Weekend'}
+            </button>
             <button className="btn btn-primary" onClick={() => console.log('Export for Team Book')}>
               Export for Team Book
             </button>
@@ -1475,6 +1595,145 @@ export default function TeamList() {
                   roleOrder={ROLE_ORDER}
                 />
               </PDFViewer>
+            </div>
+          </div>
+        )}
+        
+        {/* Setup Next Weekend Section */}
+        {showSetupNextWeekend && (
+          <div style={{ 
+            marginTop: '20px',
+            paddingTop: '20px',
+            borderTop: '2px solid var(--border)',
+            animation: 'slideInDown 0.3s ease-out'
+          }}>
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <div>
+                <div style={{ 
+                  fontSize: '1.1rem', 
+                  fontWeight: 600, 
+                  color: 'var(--ink)',
+                  marginBottom: '8px'
+                }}>
+                  Setup Next Weekend
+                </div>
+                {(() => {
+                  const rover = teamRoster.find(m => m.role === 'Rover');
+                  const currentWeekendNum = parseInt(weekendIdentifier.match(/\d+/)?.[0] || '0', 10);
+                  const nextWeekendNum = currentWeekendNum + 1;
+                  const nextWeekendId = weekendIdentifier.replace(/\d+$/, nextWeekendNum.toString());
+                  
+                  return (
+                    <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+                      {rover ? (
+                        <>
+                          <strong>{rover.name}</strong> (current Rover) will become <strong>Rector</strong> for <strong>{nextWeekendId}</strong>
+                        </>
+                      ) : (
+                        <span style={{ color: '#dc3545' }}>⚠️ No Rover assigned to current team</span>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+              <button 
+                className="btn btn-small"
+                onClick={() => setShowSetupNextWeekend(false)}
+                style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+              >
+                Close ✕
+              </button>
+            </div>
+
+            <div style={{ 
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '20px',
+              marginBottom: '20px'
+            }}>
+              {/* Left Column */}
+              <div>
+                <div className="field">
+                  <label className="label">Weekend Theme</label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="e.g., Stand Firm"
+                    value={nextWeekendTheme}
+                    onChange={(e) => setNextWeekendTheme(e.target.value)}
+                  />
+                </div>
+                
+                <div className="field">
+                  <label className="label">Scripture Verse</label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="e.g., John 3:16"
+                    value={nextWeekendVerse}
+                    onChange={(e) => setNextWeekendVerse(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div>
+                <div className="field">
+                  <label className="label">Weekend Image</label>
+                  <input
+                    type="file"
+                    className="input"
+                    accept="image/*"
+                    onChange={(e) => setNextWeekendImage(e.target.files[0])}
+                    style={{ padding: '8px' }}
+                  />
+                  {nextWeekendImage && (
+                    <div style={{ 
+                      marginTop: '8px',
+                      fontSize: '0.85rem',
+                      color: 'var(--muted)'
+                    }}>
+                      Selected: {nextWeekendImage.name}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ 
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'flex-end',
+              paddingTop: '16px',
+              borderTop: '1px solid var(--border)'
+            }}>
+              <button 
+                className="btn"
+                onClick={() => {
+                  setShowSetupNextWeekend(false);
+                  setNextWeekendTheme('');
+                  setNextWeekendVerse('');
+                  setNextWeekendImage(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={handleCreateNextWeekend}
+                disabled={!nextWeekendTheme.trim() || !nextWeekendVerse.trim() || isCreatingNextWeekend}
+                style={{
+                  backgroundColor: '#28a745',
+                  borderColor: '#28a745'
+                }}
+              >
+                {isCreatingNextWeekend ? 'Creating...' : 'Create Next Weekend'}
+              </button>
             </div>
           </div>
         )}
@@ -1876,6 +2135,17 @@ export default function TeamList() {
           to {
             opacity: 1;
             transform: translateX(0);
+          }
+        }
+        
+        @keyframes slideInDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
         
