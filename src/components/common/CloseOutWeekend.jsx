@@ -758,9 +758,31 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                 marginBottom: '24px',
                 lineHeight: '1.6'
               }}>
-                The following data will be <strong>permanently deleted</strong>:
+                This will perform the following actions:
               </p>
 
+              {/* Positive Actions */}
+              <div style={{
+                background: '#d4edda',
+                border: '1px solid #28a745',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '16px',
+                textAlign: 'left',
+                width: '100%',
+                maxWidth: '450px'
+              }}>
+                <div style={{ fontWeight: 700, marginBottom: '12px', color: '#155724' }}>
+                  ✓ Weekend will be archived:
+                </div>
+                <div style={{ paddingLeft: '20px', color: '#155724' }}>
+                  • Update team service records<br/>
+                  • Convert pescadores to team members<br/>
+                  • Save weekend statistics to history
+                </div>
+              </div>
+
+              {/* Deletions Warning */}
               <div style={{
                 background: '#f8f9fa',
                 border: '1px solid #dee2e6',
@@ -771,19 +793,22 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                 width: '100%',
                 maxWidth: '450px'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ fontWeight: 700, marginBottom: '12px', color: '#dc3545' }}>
+                  ⚠️ The following data will be permanently deleted:
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingLeft: '20px' }}>
                   <span style={{ color: '#666' }}>Meeting check-in records:</span>
                   <strong style={{ color: '#000' }}>{deletionCounts.meetings}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingLeft: '20px' }}>
                   <span style={{ color: '#666' }}>Candidate applications:</span>
                   <strong style={{ color: '#000' }}>{deletionCounts.applications}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingLeft: '20px' }}>
                   <span style={{ color: '#666' }}>Email distribution lists:</span>
                   <strong style={{ color: '#000' }}>{deletionCounts.emailLists}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '20px' }}>
                   <span style={{ color: '#666' }}>Team roster assignments:</span>
                   <strong style={{ color: '#000' }}>{deletionCounts.rosterRecords}</strong>
                 </div>
