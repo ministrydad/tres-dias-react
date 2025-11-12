@@ -706,24 +706,17 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         </div>
 
         {/* Body */}
-        <div className="closeout-modal-body" style={{ position: 'relative', overflow: showWarning ? 'hidden' : 'auto' }}>
-          {/* Warning Confirmation Screen - Overlays everything */}
-          {showWarning && (
+        <div className="closeout-modal-body">
+          {showWarning ? (
+            // Warning Screen - Completely replaces body content
             <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'white',
-              zIndex: 9999,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
+              minHeight: '400px',
               padding: '32px 24px',
-              textAlign: 'center',
-              overflowY: 'auto'
+              textAlign: 'center'
             }}>
               <div style={{
                 display: 'flex',
@@ -738,7 +731,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                   style={{ 
                     width: '64px', 
                     height: '64px', 
-                    color: 'var(--accentC)',
+                    color: '#ffc107',
                     strokeWidth: '2px'
                   }}
                 >
@@ -754,14 +747,14 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                 fontSize: '1.3rem',
                 fontWeight: 700,
                 marginBottom: '16px',
-                color: 'var(--ink)'
+                color: '#000'
               }}>
                 Confirm Weekend Close Out
               </h3>
 
               <p style={{
                 fontSize: '1rem',
-                color: 'var(--muted)',
+                color: '#666',
                 marginBottom: '24px',
                 lineHeight: '1.6'
               }}>
@@ -769,8 +762,8 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               </p>
 
               <div style={{
-                background: 'var(--panel-header)',
-                border: '1px solid var(--border)',
+                background: '#f8f9fa',
+                border: '1px solid #dee2e6',
                 borderRadius: '8px',
                 padding: '20px',
                 marginBottom: '24px',
@@ -779,26 +772,26 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                 maxWidth: '450px'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ color: 'var(--muted)' }}>Meeting check-in records:</span>
-                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.meetings}</strong>
+                  <span style={{ color: '#666' }}>Meeting check-in records:</span>
+                  <strong style={{ color: '#000' }}>{deletionCounts.meetings}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ color: 'var(--muted)' }}>Candidate applications:</span>
-                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.applications}</strong>
+                  <span style={{ color: '#666' }}>Candidate applications:</span>
+                  <strong style={{ color: '#000' }}>{deletionCounts.applications}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ color: 'var(--muted)' }}>Email distribution lists:</span>
-                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.emailLists}</strong>
+                  <span style={{ color: '#666' }}>Email distribution lists:</span>
+                  <strong style={{ color: '#000' }}>{deletionCounts.emailLists}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--muted)' }}>Team roster assignments:</span>
-                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.rosterRecords}</strong>
+                  <span style={{ color: '#666' }}>Team roster assignments:</span>
+                  <strong style={{ color: '#000' }}>{deletionCounts.rosterRecords}</strong>
                 </div>
               </div>
 
               <div style={{
-                background: 'rgba(255, 193, 7, 0.1)',
-                border: '1px solid var(--accentC)',
+                background: '#fff3cd',
+                border: '1px solid #ffc107',
                 borderRadius: '8px',
                 padding: '16px',
                 marginBottom: '24px',
@@ -808,7 +801,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                 <p style={{
                   margin: 0,
                   fontSize: '0.95rem',
-                  color: 'var(--ink)',
+                  color: '#000',
                   fontWeight: 600
                 }}>
                   ⚠️ This action cannot be undone!
@@ -835,9 +828,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                 </button>
               </div>
             </div>
-          )}
-
-          {!isComplete ? (
+          ) : !isComplete ? (
             <div className="closeout-steps">
               {steps.map(step => {
                 const status = getStepStatus(step.id);
