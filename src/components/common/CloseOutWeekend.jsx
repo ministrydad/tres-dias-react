@@ -222,6 +222,9 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
       // Mark as processing
       setStepStatuses(prev => ({ ...prev, [step.id]: 'processing' }));
 
+      // Add delay so user can see the processing state (1-2 seconds)
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+
       // Execute with real validation
       const result = await executeStepWithValidation(step.id, activeWeekend);
 
@@ -257,6 +260,9 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
           [step.id]: { status: 'complete', message: result.message }
         }));
       }
+
+      // Small delay before next step (0.5 seconds)
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     // All steps complete!
