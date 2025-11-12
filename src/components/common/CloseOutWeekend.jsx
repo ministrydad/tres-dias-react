@@ -83,16 +83,16 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             .select('*', { count: 'exact', head: true })
             .eq('org_id', orgId);
 
-          if (menError || womenError) throw new Error('Failed to check team rosters');
+          if (menError || womenError) throw new Error('Unable to access team roster data');
 
           const totalCount = (menRoster?.length || 0) + (womenRoster?.length || 0);
           
           if (totalCount === 0) {
             result.skipped = true;
-            result.message = 'No team roster data found - skipping';
+            result.message = 'No team members found - skipping this step';
           } else {
             result.count = totalCount;
-            result.message = `Found ${totalCount} team members to update`;
+            result.message = `Updating service records for ${totalCount} team members`;
             // TODO: Actually update service records (backend logic)
           }
           break;
@@ -105,14 +105,14 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             .select('*', { count: 'exact', head: true })
             .eq('org_id', orgId);
 
-          if (error) throw new Error('Failed to check applications');
+          if (error) throw new Error('Unable to access candidate applications');
 
           if (count === 0) {
             result.skipped = true;
-            result.message = 'No candidate applications found - skipping';
+            result.message = 'No pescadores found - skipping this step';
           } else {
             result.count = count;
-            result.message = `Found ${count} pescadores to convert`;
+            result.message = `Converting ${count} pescadores to team members`;
             // TODO: Actually convert candidates (backend logic)
           }
           break;
@@ -120,7 +120,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
 
         case 3: {
           // Step 3: Archive weekend data (always runs)
-          result.message = 'Weekend data archived to history';
+          result.message = 'Weekend statistics saved to history';
           // TODO: Actually archive data (backend logic)
           break;
         }
@@ -132,14 +132,14 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             .select('*', { count: 'exact', head: true })
             .eq('org_id', orgId);
 
-          if (error) throw new Error('Failed to check meeting data');
+          if (error) throw new Error('Unable to access meeting attendance data');
 
           if (count === 0) {
             result.skipped = true;
-            result.message = 'No meeting check-in data found - skipping';
+            result.message = 'No meeting attendance records found - skipping this step';
           } else {
             result.count = count;
-            result.message = `Clearing ${count} meeting records`;
+            result.message = `Clearing ${count} meeting attendance records`;
             // TODO: Actually clear MCI data (backend logic)
           }
           break;
@@ -152,14 +152,14 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             .select('*', { count: 'exact', head: true })
             .eq('org_id', orgId);
 
-          if (error) throw new Error('Failed to check applications');
+          if (error) throw new Error('Unable to access candidate applications');
 
           if (count === 0) {
             result.skipped = true;
-            result.message = 'No candidate applications found - skipping';
+            result.message = 'No candidate applications found - skipping this step';
           } else {
             result.count = count;
-            result.message = `Clearing ${count} applications`;
+            result.message = `Clearing ${count} candidate application records`;
             // TODO: Actually clear applications (backend logic)
           }
           break;
@@ -177,16 +177,16 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             .select('*', { count: 'exact', head: true })
             .eq('org_id', orgId);
 
-          if (menError || womenError) throw new Error('Failed to check rosters');
+          if (menError || womenError) throw new Error('Unable to access team roster data');
 
           const totalCount = (menRoster?.length || 0) + (womenRoster?.length || 0);
 
           if (totalCount === 0) {
             result.skipped = true;
-            result.message = 'No team roster data found - skipping';
+            result.message = 'No team roster records found - skipping this step';
           } else {
             result.count = totalCount;
-            result.message = `Clearing ${totalCount} roster records`;
+            result.message = `Clearing ${totalCount} team roster records`;
             // TODO: Actually clear roster data (backend logic)
           }
           break;
@@ -353,6 +353,8 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               {steps.map(step => {
                 const status = getStepStatus(step.id);
                 const message = getStepMessage(step.id);
+                const stepData = stepStatuses[step.id];
+                const hasError = status === 'error';
 
                 return (
                   <div key={step.id} className={`closeout-step ${status}`}>
@@ -366,8 +368,14 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                     <div className="closeout-step-content">
                       <div className="closeout-step-title">{step.title}</div>
                       <div className="closeout-step-description">
-                        {message || step.description}
+                        {(status === 'waiting' || status === 'processing') && step.description}
+                        {(status === 'complete' || status === 'skipped') && message}
                       </div>
+                      {hasError && (
+                        <div className="closeout-step-error">
+                          ⚠️ Error: {stepData?.error || 'An unexpected error occurred'}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
