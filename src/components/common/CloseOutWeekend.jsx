@@ -706,7 +706,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         </div>
 
         {/* Body */}
-        <div className="closeout-modal-body" style={{ position: 'relative' }}>
+        <div className="closeout-modal-body" style={{ position: 'relative', overflow: showWarning ? 'hidden' : 'auto' }}>
           {/* Warning Confirmation Screen - Overlays everything */}
           {showWarning && (
             <div style={{
@@ -715,8 +715,8 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               left: 0,
               right: 0,
               bottom: 0,
-              background: 'var(--panel)',
-              zIndex: 100,
+              background: 'white',
+              zIndex: 9999,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
