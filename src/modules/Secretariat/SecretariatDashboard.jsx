@@ -1,9 +1,9 @@
-//TEST UPLOAD
 // src/modules/Secretariat/SecretariatDashboard.jsx
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import DatePicker from '../../components/common/DatePicker';
+import CloseOutWeekend from '../../components/common/CloseOutWeekend';
 
 // Configuration constant from original
 const MEETING_COUNT = 6; // Number of meetings per team (matches CONFIG.MEETING_COUNT in original)
@@ -38,6 +38,9 @@ export default function SecretariatDashboard() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const mainContentRef = useRef(null);
+  
+  // Close Out Weekend modal state
+  const [showCloseOutModal, setShowCloseOutModal] = useState(false);
 
   // Positions array from original
   const POSITIONS = [
@@ -698,6 +701,15 @@ export default function SecretariatDashboard() {
               <div className="section-title" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
                 Weekend History
               </div>
+              {calculateActiveWeekend() && (
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => setShowCloseOutModal(true)}
+                  style={{ fontSize: '0.9rem' }}
+                >
+                  Close Out Weekend
+                </button>
+              )}
             </div>
             <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: 0, marginBottom: '20px' }}>
               A historical record of past weekends. Click a row to expand and see details for the Men's and Women's weekends.
@@ -970,6 +982,18 @@ export default function SecretariatDashboard() {
           }
         }
       `}</style>
+
+      {/* Close Out Weekend Modal */}
+      <CloseOutWeekend
+        isOpen={showCloseOutModal}
+        onClose={() => {
+          setShowCloseOutModal(false);
+          // Reload data after closing (in case weekend was archived)
+          loadAllData();
+        }}
+        weekendNumber={calculateActiveWeekend()?.num || 0}
+        orgId={orgId}
+      />
     </div>
   );
 }
