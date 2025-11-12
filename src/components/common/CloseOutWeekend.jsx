@@ -1,6 +1,3 @@
-
-//
-
 // src/components/common/CloseOutWeekend.jsx
 import { useState, useEffect } from 'react';
 import { HiCheckCircle, HiXCircle, HiCheckBadge } from 'react-icons/hi2';
@@ -23,32 +20,32 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
     {
       id: 1,
       title: 'Update Team Service Records',
-      description: 'Incrementing service counts in men_raw and women_raw tables'
+      description: 'Incrementing service counts for all team members'
     },
     {
       id: 2,
       title: 'Convert Pescadores to Team Members',
-      description: 'Adding candidates from applications to men_raw and women_raw'
+      description: 'Adding new pescadores to the main directory'
     },
     {
       id: 3,
       title: 'Archive Weekend Data',
-      description: 'Saving weekend statistics to weekend_history table'
+      description: 'Saving weekend statistics to permanent history'
     },
     {
       id: 4,
       title: 'Clear Meeting Check-In Data',
-      description: 'Removing mci_checkin_data for this organization'
+      description: 'Removing meeting attendance records for this weekend'
     },
     {
       id: 5,
       title: 'Clear Candidate Applications',
-      description: 'Removing cra_applications for this organization'
+      description: 'Removing candidate registration forms for this weekend'
     },
     {
       id: 6,
       title: 'Clear Team Roster Data',
-      description: 'Removing team roster records for this organization'
+      description: 'Removing team assignment records for this weekend'
     }
   ];
 
