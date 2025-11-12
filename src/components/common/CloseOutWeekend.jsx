@@ -1,3 +1,6 @@
+
+//
+
 // src/components/common/CloseOutWeekend.jsx
 import { useState, useEffect } from 'react';
 import { HiCheckCircle, HiXCircle, HiCheckBadge } from 'react-icons/hi2';
