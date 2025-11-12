@@ -897,7 +897,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
 
         {/* Footer */}
         <div className="closeout-modal-footer">
-          {!hasStarted && (
+          {!hasStarted && !showWarning && (
             <>
               <button 
                 className="btn"
@@ -912,120 +912,6 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                 Start Close Out
               </button>
             </>
-          )}
-
-          {/* Warning Confirmation Step */}
-          {showWarning && (
-            <div style={{
-              padding: '32px 24px',
-              textAlign: 'center'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginBottom: '24px'
-              }}>
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor" 
-                  style={{ 
-                    width: '64px', 
-                    height: '64px', 
-                    color: 'var(--accentC)',
-                    strokeWidth: '2px'
-                  }}
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" 
-                  />
-                </svg>
-              </div>
-
-              <h3 style={{
-                fontSize: '1.3rem',
-                fontWeight: 700,
-                marginBottom: '16px',
-                color: 'var(--ink)'
-              }}>
-                Confirm Weekend Close Out
-              </h3>
-
-              <p style={{
-                fontSize: '1rem',
-                color: 'var(--muted)',
-                marginBottom: '24px',
-                lineHeight: '1.6'
-              }}>
-                The following data will be <strong>permanently deleted</strong>:
-              </p>
-
-              <div style={{
-                background: 'var(--panel-header)',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                padding: '20px',
-                marginBottom: '24px',
-                textAlign: 'left'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ color: 'var(--muted)' }}>Meeting check-in records:</span>
-                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.meetings}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ color: 'var(--muted)' }}>Candidate applications:</span>
-                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.applications}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ color: 'var(--muted)' }}>Email distribution lists:</span>
-                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.emailLists}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--muted)' }}>Team roster assignments:</span>
-                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.rosterRecords}</strong>
-                </div>
-              </div>
-
-              <div style={{
-                background: 'rgba(255, 193, 7, 0.1)',
-                border: '1px solid var(--accentC)',
-                borderRadius: '8px',
-                padding: '16px',
-                marginBottom: '24px'
-              }}>
-                <p style={{
-                  margin: 0,
-                  fontSize: '0.95rem',
-                  color: 'var(--ink)',
-                  fontWeight: 600
-                }}>
-                  ⚠️ This action cannot be undone!
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                <button 
-                  className="btn"
-                  onClick={() => setShowWarning(false)}
-                  style={{ minWidth: '120px' }}
-                >
-                  Cancel
-                </button>
-                <button 
-                  className="btn btn-danger"
-                  onClick={() => {
-                    setShowWarning(false);
-                    executeSteps();
-                  }}
-                  style={{ minWidth: '120px' }}
-                >
-                  Yes, Proceed
-                </button>
-              </div>
-            </div>
           )}
           
           {hasStarted && !isComplete && (
