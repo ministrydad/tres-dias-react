@@ -714,14 +714,13 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              minHeight: '400px',
-              padding: '32px 24px',
+              padding: '24px',
               textAlign: 'center'
             }}>
               <div style={{
                 display: 'flex',
                 justifyContent: 'center',
-                marginBottom: '24px'
+                marginBottom: '20px'
               }}>
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
@@ -729,8 +728,8 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                   viewBox="0 0 24 24" 
                   stroke="currentColor" 
                   style={{ 
-                    width: '64px', 
-                    height: '64px', 
+                    width: '56px', 
+                    height: '56px', 
                     color: '#ffc107',
                     strokeWidth: '2px'
                   }}
@@ -744,21 +743,21 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               </div>
 
               <h3 style={{
-                fontSize: '1.3rem',
+                fontSize: '1.2rem',
                 fontWeight: 700,
-                marginBottom: '16px',
+                marginBottom: '8px',
                 color: '#000'
               }}>
                 Confirm Weekend Close Out
               </h3>
 
               <p style={{
-                fontSize: '1rem',
+                fontSize: '0.9rem',
                 color: '#666',
-                marginBottom: '24px',
-                lineHeight: '1.6'
+                marginBottom: '20px',
+                lineHeight: '1.4'
               }}>
-                This will perform the following actions:
+                This will archive the weekend and clear data for the next cycle
               </p>
 
               {/* Positive Actions */}
@@ -766,71 +765,60 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                 background: '#d4edda',
                 border: '1px solid #28a745',
                 borderRadius: '8px',
-                padding: '20px',
-                marginBottom: '16px',
+                padding: '16px',
+                marginBottom: '12px',
                 textAlign: 'left',
                 width: '100%',
-                maxWidth: '450px'
+                maxWidth: '480px'
               }}>
-                <div style={{ fontWeight: 700, marginBottom: '12px', color: '#155724' }}>
-                  ✓ Weekend will be archived:
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: '20px', height: '20px', color: '#28a745' }}>
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                  </svg>
+                  <span style={{ fontWeight: 700, color: '#155724', fontSize: '0.95rem' }}>Weekend will be archived</span>
                 </div>
-                <div style={{ paddingLeft: '20px', color: '#155724' }}>
-                  • Update team service records<br/>
-                  • Convert pescadores to team members<br/>
-                  • Save weekend statistics to history
+                <div style={{ paddingLeft: '28px', color: '#155724', fontSize: '0.85rem', lineHeight: '1.5' }}>
+                  • Update service records for team<br/>
+                  • Convert pescadores to members<br/>
+                  • Save statistics to history
                 </div>
               </div>
 
               {/* Deletions Warning */}
               <div style={{
-                background: '#f8f9fa',
-                border: '1px solid #dee2e6',
-                borderRadius: '8px',
-                padding: '20px',
-                marginBottom: '24px',
-                textAlign: 'left',
-                width: '100%',
-                maxWidth: '450px'
-              }}>
-                <div style={{ fontWeight: 700, marginBottom: '12px', color: '#dc3545' }}>
-                  ⚠️ The following data will be permanently deleted:
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingLeft: '20px' }}>
-                  <span style={{ color: '#666' }}>Meeting check-in records:</span>
-                  <strong style={{ color: '#000' }}>{deletionCounts.meetings}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingLeft: '20px' }}>
-                  <span style={{ color: '#666' }}>Candidate applications:</span>
-                  <strong style={{ color: '#000' }}>{deletionCounts.applications}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingLeft: '20px' }}>
-                  <span style={{ color: '#666' }}>Email distribution lists:</span>
-                  <strong style={{ color: '#000' }}>{deletionCounts.emailLists}</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: '20px' }}>
-                  <span style={{ color: '#666' }}>Team roster assignments:</span>
-                  <strong style={{ color: '#000' }}>{deletionCounts.rosterRecords}</strong>
-                </div>
-              </div>
-
-              <div style={{
                 background: '#fff3cd',
                 border: '1px solid #ffc107',
                 borderRadius: '8px',
                 padding: '16px',
-                marginBottom: '24px',
+                marginBottom: '20px',
+                textAlign: 'left',
                 width: '100%',
-                maxWidth: '450px'
+                maxWidth: '480px'
               }}>
-                <p style={{
-                  margin: 0,
-                  fontSize: '0.95rem',
-                  color: '#000',
-                  fontWeight: 600
-                }}>
-                  ⚠️ This action cannot be undone!
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: '20px', height: '20px', color: '#dc3545' }}>
+                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                  <span style={{ fontWeight: 700, color: '#856404', fontSize: '0.95rem' }}>Data to be permanently deleted:</span>
+                </div>
+                <div style={{ paddingLeft: '28px', fontSize: '0.85rem', color: '#856404' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span>Meeting check-ins:</span>
+                    <strong>{deletionCounts.meetings}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span>Candidate applications:</span>
+                    <strong>{deletionCounts.applications}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span>Email lists:</span>
+                    <strong>{deletionCounts.emailLists}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Team roster records:</span>
+                    <strong>{deletionCounts.rosterRecords}</strong>
+                  </div>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
