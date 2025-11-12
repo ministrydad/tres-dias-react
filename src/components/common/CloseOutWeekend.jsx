@@ -317,9 +317,17 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
   }
 
   // Calculate progress percentage
-  const progressPercent = (Object.keys(stepStatuses).filter(
-    key => stepStatuses[key] === 'complete'
-  ).length / steps.length) * 100;
+  const completedSteps = Object.keys(stepStatuses).filter(key => {
+    const status = stepStatuses[key];
+    if (typeof status === 'string') {
+      return status === 'complete' || status === 'skipped';
+    } else if (typeof status === 'object') {
+      return status.status === 'complete' || status.status === 'skipped';
+    }
+    return false;
+  }).length;
+  
+  const progressPercent = (completedSteps / steps.length) * 100;
 
   if (!isOpen) return null;
 
