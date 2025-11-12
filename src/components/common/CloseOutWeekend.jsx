@@ -706,7 +706,137 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         </div>
 
         {/* Body */}
-        <div className="closeout-modal-body">
+        <div className="closeout-modal-body" style={{ position: 'relative' }}>
+          {/* Warning Confirmation Screen - Overlays everything */}
+          {showWarning && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'var(--panel)',
+              zIndex: 100,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '32px 24px',
+              textAlign: 'center',
+              overflowY: 'auto'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginBottom: '24px'
+              }}>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor" 
+                  style={{ 
+                    width: '64px', 
+                    height: '64px', 
+                    color: 'var(--accentC)',
+                    strokeWidth: '2px'
+                  }}
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" 
+                  />
+                </svg>
+              </div>
+
+              <h3 style={{
+                fontSize: '1.3rem',
+                fontWeight: 700,
+                marginBottom: '16px',
+                color: 'var(--ink)'
+              }}>
+                Confirm Weekend Close Out
+              </h3>
+
+              <p style={{
+                fontSize: '1rem',
+                color: 'var(--muted)',
+                marginBottom: '24px',
+                lineHeight: '1.6'
+              }}>
+                The following data will be <strong>permanently deleted</strong>:
+              </p>
+
+              <div style={{
+                background: 'var(--panel-header)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '24px',
+                textAlign: 'left',
+                width: '100%',
+                maxWidth: '450px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--muted)' }}>Meeting check-in records:</span>
+                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.meetings}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--muted)' }}>Candidate applications:</span>
+                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.applications}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--muted)' }}>Email distribution lists:</span>
+                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.emailLists}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--muted)' }}>Team roster assignments:</span>
+                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.rosterRecords}</strong>
+                </div>
+              </div>
+
+              <div style={{
+                background: 'rgba(255, 193, 7, 0.1)',
+                border: '1px solid var(--accentC)',
+                borderRadius: '8px',
+                padding: '16px',
+                marginBottom: '24px',
+                width: '100%',
+                maxWidth: '450px'
+              }}>
+                <p style={{
+                  margin: 0,
+                  fontSize: '0.95rem',
+                  color: 'var(--ink)',
+                  fontWeight: 600
+                }}>
+                  ⚠️ This action cannot be undone!
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button 
+                  className="btn"
+                  onClick={() => setShowWarning(false)}
+                  style={{ minWidth: '120px' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn btn-danger"
+                  onClick={() => {
+                    setShowWarning(false);
+                    executeSteps();
+                  }}
+                  style={{ minWidth: '120px' }}
+                >
+                  Yes, Proceed
+                </button>
+              </div>
+            </div>
+          )}
+
           {!isComplete ? (
             <div className="closeout-steps">
               {steps.map(step => {
