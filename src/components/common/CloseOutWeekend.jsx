@@ -8,6 +8,13 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
   const [stepStatuses, setStepStatuses] = useState({});
   const [isComplete, setIsComplete] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [showWarning, setShowWarning] = useState(false); // NEW: Warning confirmation step
+  const [deletionCounts, setDeletionCounts] = useState({ // NEW: Counts for warning
+    meetings: 0,
+    applications: 0,
+    emailLists: 0,
+    rosterRecords: 0
+  });
   const [stats, setStats] = useState({
     teamMembersUpdated: 0,
     pescadoresAdded: 0,
@@ -66,128 +73,434 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
   }, [isOpen]);
 
   // Validate and execute each step with real database queries
-  async function executeStepWithValidation(stepId, weekendIdentifier) {
+  async function executeStepWithValidation(stepId, weekendNumber) {
     try {
       let result = { success: true, count: 0, skipped: false };
 
       switch (stepId) {
         case 1: {
-          // Step 1: Check team roster data exists
+          // Step 1: Update team service records
+          
+          // 1. Get community code from app_settings
+          const { data: settings, error: settingsError } = await supabase
+            .from('app_settings')
+            .select('community_code')
+            .eq('org_id', orgId)
+            .single();
+
+          if (settingsError) throw new Error('Unable to access app settings');
+          
+          const communityCode = settings?.community_code || 'UNK';
+          const newServiceCode = `${communityCode}${weekendNumber}`;
+
+          // 2. Get all team members from both rosters
           const { data: menRoster, error: menError } = await supabase
             .from('men_team_rosters')
-            .select('*', { count: 'exact', head: true })
+            .select('pescadore_key, role')
             .eq('org_id', orgId);
           
           const { data: womenRoster, error: womenError } = await supabase
             .from('women_team_rosters')
-            .select('*', { count: 'exact', head: true })
+            .select('pescadore_key, role')
             .eq('org_id', orgId);
 
           if (menError || womenError) throw new Error('Unable to access team roster data');
 
-          const totalCount = (menRoster?.length || 0) + (womenRoster?.length || 0);
-          
-          if (totalCount === 0) {
+          const allRosterEntries = [
+            ...(menRoster || []).map(r => ({ ...r, gender: 'men' })),
+            ...(womenRoster || []).map(r => ({ ...r, gender: 'women' }))
+          ];
+
+          if (allRosterEntries.length === 0) {
             result.skipped = true;
             result.message = 'No team members found - skipping this step';
-          } else {
-            result.count = totalCount;
-            result.message = `Updating service records for ${totalCount} team members`;
-            // TODO: Actually update service records (backend logic)
+            break;
           }
+
+          // 3. Update each team member's service record
+          let updateCount = 0;
+          for (const entry of allRosterEntries) {
+            const tableName = entry.gender === 'men' ? 'men_raw' : 'women_raw';
+            const role = entry.role;
+
+            // Calculate column names
+            const statusCol = role; // Keep spaces (e.g., "Head Dorm")
+            const serviceCol = `${role} Service`; // Keep spaces (e.g., "Head Dorm Service")
+            const qtyCol = `${role.replace(/ /g, '_')}_Service_Qty`; // Replace spaces (e.g., "Head_Dorm_Service_Qty")
+
+            // Fetch current record
+            const { data: person, error: fetchError } = await supabase
+              .from(tableName)
+              .select(`PescadoreKey, "${statusCol}", "${serviceCol}", "${qtyCol}"`)
+              .eq('PescadoreKey', entry.pescadore_key)
+              .eq('org_id', orgId)
+              .single();
+
+            if (fetchError || !person) {
+              console.warn(`Person not found: ${entry.pescadore_key} in ${tableName}`);
+              continue;
+            }
+
+            // Calculate new status (N→I, I→E, E→E)
+            const currentStatus = person[statusCol] || 'N';
+            let newStatus;
+            if (currentStatus === 'N') newStatus = 'I';
+            else if (currentStatus === 'I') newStatus = 'E';
+            else newStatus = 'E'; // E stays E
+
+            // Calculate new qty (increment by 1, or set to "1" if null)
+            const currentQty = person[qtyCol];
+            const newQty = currentQty ? String(parseInt(currentQty) + 1) : '1';
+
+            // Update the record
+            const updateData = {
+              [statusCol]: newStatus,
+              [serviceCol]: newServiceCode,
+              [qtyCol]: newQty
+            };
+
+            const { error: updateError } = await supabase
+              .from(tableName)
+              .update(updateData)
+              .eq('PescadoreKey', entry.pescadore_key)
+              .eq('org_id', orgId);
+
+            if (updateError) {
+              console.error(`Failed to update ${entry.pescadore_key}:`, updateError);
+            } else {
+              updateCount++;
+            }
+          }
+
+          result.count = updateCount;
+          result.message = `Updated service records for ${updateCount} team members`;
           break;
         }
 
         case 2: {
-          // Step 2: Check candidate applications exist
-          const { count, error } = await supabase
+          // Step 2: Convert Pescadores to Team Members
+          
+          // 1. Get community code for current weekend identifier
+          const { data: settings, error: settingsError } = await supabase
+            .from('app_settings')
+            .select('community_code')
+            .eq('org_id', orgId)
+            .single();
+
+          if (settingsError) throw new Error('Unable to access app settings');
+          
+          const communityCode = settings?.community_code || 'UNK';
+          const currentWeekendCode = `${communityCode}${weekendNumber}`;
+
+          // 2. Get all candidate applications where attendance = 'yes'
+          const { data: applications, error: appsError } = await supabase
             .from('cra_applications')
-            .select('*', { count: 'exact', head: true })
-            .eq('org_id', orgId);
+            .select('*')
+            .eq('org_id', orgId)
+            .eq('attendance', 'yes');
 
-          if (error) throw new Error('Unable to access candidate applications');
+          if (appsError) throw new Error('Unable to access candidate applications');
 
-          if (count === 0) {
+          if (!applications || applications.length === 0) {
             result.skipped = true;
             result.message = 'No pescadores found - skipping this step';
-          } else {
-            result.count = count;
-            result.message = `Converting ${count} pescadores to team members`;
-            // TODO: Actually convert candidates (backend logic)
+            break;
           }
+
+          // 3. Get current max PescadoreKey from both tables
+          const { data: menMax } = await supabase
+            .from('men_raw')
+            .select('PescadoreKey')
+            .order('PescadoreKey', { ascending: false })
+            .limit(1)
+            .single();
+
+          const { data: womenMax } = await supabase
+            .from('women_raw')
+            .select('PescadoreKey')
+            .order('PescadoreKey', { ascending: false })
+            .limit(1)
+            .single();
+
+          let nextKey = Math.max(
+            menMax?.PescadoreKey || 0,
+            womenMax?.PescadoreKey || 0
+          ) + 1;
+
+          // 4. Insert each candidate into men_raw or women_raw
+          let addedCount = 0;
+          for (const app of applications) {
+            const tableName = app.gender === 'men' ? 'men_raw' : 'women_raw';
+            const isMale = app.gender === 'men';
+
+            // Build the new pescadore record
+            const newPescadore = {
+              PescadoreKey: nextKey,
+              LastServiceKey: '0',
+              Last: app.c_lastname,
+              First: isMale ? app.m_first : app.f_first,
+              Preferred: isMale ? app.m_pref : app.f_pref,
+              Church: app.c_church,
+              Phone1: isMale ? app.m_cell : app.f_cell,
+              Phone2: null,
+              Email: isMale ? app.m_email : app.f_email,
+              Address: app.c_address,
+              City: app.c_city,
+              State: app.c_state,
+              Zip: app.c_zip,
+              'Candidate Weekend': currentWeekendCode,
+              'Last weekend worked': null,
+              
+              // All team roles = 'N'
+              Rector: 'N',
+              BUR: 'N',
+              Rover: 'N',
+              Head: 'N',
+              'Asst Head': 'N',
+              'Head Spiritual Director': 'N',
+              'Spiritual Director': 'N',
+              'Head Prayer': 'N',
+              Prayer: 'N',
+              'Head Kitchen': 'N',
+              'Asst Head Kitchen': 'N',
+              Kitchen: 'N',
+              'Head Table': 'N',
+              Table: 'N',
+              'Head Chapel': 'N',
+              Chapel: 'N',
+              'Head Dorm': 'N',
+              Dorm: 'N',
+              'Head Palanca': 'N',
+              Palanca: 'N',
+              'Head Gopher': 'N',
+              Gopher: 'N',
+              'Head Storeroom': 'N',
+              Storeroom: 'N',
+              'Head Floater Supply': 'N',
+              'Floater Supply': 'N',
+              'Head Worship': 'N',
+              Worship: 'N',
+              Media: 'N',
+              'Head Media': 'N',
+              
+              // All professor roles = 'N'
+              Prof_Silent: 'N',
+              Prof_Ideals: 'N',
+              Prof_Church: 'N',
+              Prof_Piety: 'N',
+              Prof_Study: 'N',
+              Prof_Action: 'N',
+              Prof_Leaders: 'N',
+              Prof_Environments: 'N',
+              Prof_CCIA: 'N',
+              Prof_Reunion: 'N',
+              
+              // All service/qty columns = null (Supabase will handle defaults)
+              org_id: orgId
+            };
+
+            // Insert into appropriate table
+            const { error: insertError } = await supabase
+              .from(tableName)
+              .insert(newPescadore);
+
+            if (insertError) {
+              console.error(`Failed to add pescadore ${app.c_lastname}:`, insertError);
+            } else {
+              addedCount++;
+              nextKey++; // Increment for next pescadore
+            }
+          }
+
+          result.count = addedCount;
+          result.message = `Added ${addedCount} pescadores to directory`;
           break;
         }
 
         case 3: {
-          // Step 3: Archive weekend data (always runs)
-          result.message = 'Weekend statistics saved to history';
-          // TODO: Actually archive data (backend logic)
+          // Step 3: Archive Weekend Data to weekend_history
+          
+          const genders = ['men', 'women'];
+          let archivedCount = 0;
+
+          for (const gender of genders) {
+            const rosterTable = gender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
+            const weekendIdentifier = gender === 'men' 
+              ? `Men's Weekend ${weekendNumber}` 
+              : `Women's Weekend ${weekendNumber}`;
+
+            // 1. Count team members from roster
+            const { data: rosterData, error: rosterError } = await supabase
+              .from(rosterTable)
+              .select('pescadore_key, role', { count: 'exact' })
+              .eq('org_id', orgId);
+
+            if (rosterError) throw new Error(`Unable to access ${gender} team roster`);
+
+            const teamMemberCount = rosterData?.length || 0;
+
+            // 2. Count candidates with attendance='yes' for this gender
+            const { count: candidateCount, error: candidateError } = await supabase
+              .from('cra_applications')
+              .select('*', { count: 'exact', head: true })
+              .eq('org_id', orgId)
+              .eq('gender', gender)
+              .eq('attendance', 'yes');
+
+            if (candidateError) throw new Error(`Unable to count ${gender} candidates`);
+
+            // 3. Find the Rector
+            const rector = rosterData?.find(r => r.role === 'Rector');
+            const rectorKey = rector ? String(rector.pescadore_key) : null;
+
+            // 4. Check if record already exists
+            const { data: existing, error: existingError } = await supabase
+              .from('weekend_history')
+              .select('id')
+              .eq('org_id', orgId)
+              .eq('weekend_number', weekendNumber)
+              .eq('gender', gender)
+              .maybeSingle();
+
+            if (existingError) throw new Error(`Unable to check ${gender} weekend history`);
+
+            if (existing) {
+              // UPDATE existing record
+              const { error: updateError } = await supabase
+                .from('weekend_history')
+                .update({
+                  team_member_count: teamMemberCount,
+                  candidate_count: candidateCount || 0,
+                  rector_pescadore_key: rectorKey
+                })
+                .eq('id', existing.id);
+
+              if (updateError) {
+                console.error(`Failed to update ${gender} weekend history:`, updateError);
+              } else {
+                archivedCount++;
+              }
+            } else {
+              // INSERT new record
+              const { error: insertError } = await supabase
+                .from('weekend_history')
+                .insert({
+                  org_id: orgId,
+                  weekend_identifier: weekendIdentifier,
+                  weekend_number: weekendNumber,
+                  gender: gender,
+                  team_member_count: teamMemberCount,
+                  candidate_count: candidateCount || 0,
+                  rector_pescadore_key: rectorKey,
+                  theme: null,
+                  verse: null,
+                  image: null,
+                  start_date: null,
+                  end_date: null,
+                  theme_song: null
+                });
+
+              if (insertError) {
+                console.error(`Failed to insert ${gender} weekend history:`, insertError);
+              } else {
+                archivedCount++;
+              }
+            }
+          }
+
+          result.count = archivedCount;
+          result.message = archivedCount === 2 
+            ? 'Weekend statistics saved for both men and women'
+            : `Weekend statistics saved for ${archivedCount} gender(s)`;
           break;
         }
 
         case 4: {
-          // Step 4: Check MCI data exists
-          const { count, error } = await supabase
+          // Step 4: Clear Meeting Check-In Data
+          const { data: deletedMeetings, error: meetingError } = await supabase
             .from('mci_checkin_data')
-            .select('*', { count: 'exact', head: true })
-            .eq('org_id', orgId);
+            .delete()
+            .eq('org_id', orgId)
+            .select();
 
-          if (error) throw new Error('Unable to access meeting attendance data');
+          if (meetingError) throw new Error('Unable to clear meeting attendance data');
 
+          const count = deletedMeetings?.length || 0;
+          
           if (count === 0) {
             result.skipped = true;
             result.message = 'No meeting attendance records found - skipping this step';
           } else {
             result.count = count;
-            result.message = `Clearing ${count} meeting attendance records`;
-            // TODO: Actually clear MCI data (backend logic)
+            result.message = `Cleared ${count} meeting attendance records`;
           }
           break;
         }
 
         case 5: {
-          // Step 5: Check candidate applications (same as step 2 check)
-          const { count, error } = await supabase
+          // Step 5: Clear Candidate Applications AND Email Lists
+          
+          // Delete candidate applications
+          const { data: deletedApps, error: appError } = await supabase
             .from('cra_applications')
-            .select('*', { count: 'exact', head: true })
-            .eq('org_id', orgId);
+            .delete()
+            .eq('org_id', orgId)
+            .select();
 
-          if (error) throw new Error('Unable to access candidate applications');
+          if (appError) throw new Error('Unable to clear candidate applications');
 
-          if (count === 0) {
+          // Delete email lists
+          const { data: deletedEmails, error: emailError } = await supabase
+            .from('cra_email_lists')
+            .delete()
+            .eq('org_id', orgId)
+            .select();
+
+          if (emailError) throw new Error('Unable to clear email distribution lists');
+
+          const appCount = deletedApps?.length || 0;
+          const emailCount = deletedEmails?.length || 0;
+          const totalCount = appCount + emailCount;
+
+          if (totalCount === 0) {
             result.skipped = true;
-            result.message = 'No candidate applications found - skipping this step';
+            result.message = 'No candidate applications or email lists found - skipping this step';
           } else {
-            result.count = count;
-            result.message = `Clearing ${count} candidate application records`;
-            // TODO: Actually clear applications (backend logic)
+            result.count = totalCount;
+            result.message = `Cleared ${appCount} applications and ${emailCount} email lists`;
           }
           break;
         }
 
         case 6: {
-          // Step 6: Check team roster data (same as step 1 check)
-          const { data: menRoster, error: menError } = await supabase
-            .from('men_team_rosters')
-            .select('*', { count: 'exact', head: true })
-            .eq('org_id', orgId);
+          // Step 6: Clear Team Rosters (men AND women)
           
-          const { data: womenRoster, error: womenError } = await supabase
+          // Delete men's roster
+          const { data: deletedMen, error: menError } = await supabase
+            .from('men_team_rosters')
+            .delete()
+            .eq('org_id', orgId)
+            .select();
+
+          if (menError) throw new Error('Unable to clear men\'s team roster');
+
+          // Delete women's roster
+          const { data: deletedWomen, error: womenError } = await supabase
             .from('women_team_rosters')
-            .select('*', { count: 'exact', head: true })
-            .eq('org_id', orgId);
+            .delete()
+            .eq('org_id', orgId)
+            .select();
 
-          if (menError || womenError) throw new Error('Unable to access team roster data');
+          if (womenError) throw new Error('Unable to clear women\'s team roster');
 
-          const totalCount = (menRoster?.length || 0) + (womenRoster?.length || 0);
+          const totalCount = (deletedMen?.length || 0) + (deletedWomen?.length || 0);
 
           if (totalCount === 0) {
             result.skipped = true;
             result.message = 'No team roster records found - skipping this step';
           } else {
             result.count = totalCount;
-            result.message = `Clearing ${totalCount} team roster records`;
-            // TODO: Actually clear roster data (backend logic)
+            result.message = `Cleared ${totalCount} team roster records`;
           }
           break;
         }
@@ -204,14 +517,59 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
     }
   }
 
+  // Fetch counts of what will be deleted and show warning
+  async function showDeletionWarning() {
+    try {
+      // Count meeting check-ins
+      const { count: meetingCount } = await supabase
+        .from('mci_checkin_data')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId);
+
+      // Count candidate applications
+      const { count: appCount } = await supabase
+        .from('cra_applications')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId);
+
+      // Count email lists
+      const { count: emailCount } = await supabase
+        .from('cra_email_lists')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId);
+
+      // Count roster records (men + women)
+      const { count: menCount } = await supabase
+        .from('men_team_rosters')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId);
+
+      const { count: womenCount } = await supabase
+        .from('women_team_rosters')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId);
+
+      setDeletionCounts({
+        meetings: meetingCount || 0,
+        applications: appCount || 0,
+        emailLists: emailCount || 0,
+        rosterRecords: (menCount || 0) + (womenCount || 0)
+      });
+
+      setShowWarning(true);
+    } catch (error) {
+      console.error('Error fetching deletion counts:', error);
+      window.showMainStatus?.('Unable to fetch deletion counts', true);
+    }
+  }
+
   // Execute all steps in sequence
   async function executeSteps() {
     setHasStarted(true);
 
-    // Calculate active weekend identifier
-    const activeWeekend = calculateActiveWeekend();
-    if (!activeWeekend) {
-      window.showMainStatus?.('No active weekend found', true);
+    // Use the weekend number passed from parent
+    if (!weekendNumber) {
+      window.showMainStatus?.('No weekend number provided', true);
       return;
     }
 
@@ -226,7 +584,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
       await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
 
       // Execute with real validation
-      const result = await executeStepWithValidation(step.id, activeWeekend);
+      const result = await executeStepWithValidation(step.id, weekendNumber);
 
       // Update stats
       if (result.count > 0) {
@@ -268,13 +626,6 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
     // All steps complete!
     setIsComplete(true);
     triggerConfetti();
-  }
-
-  // Helper to calculate active weekend (from parent component logic)
-  function calculateActiveWeekend() {
-    // This will be passed from parent or we can extract the logic
-    // For now, return a placeholder
-    return weekendNumber ? { num: weekendNumber } : null;
   }
 
   // Confetti effect
@@ -435,11 +786,125 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               </button>
               <button 
                 className="btn btn-primary"
-                onClick={executeSteps}
+                onClick={showDeletionWarning}
               >
                 Start Close Out
               </button>
             </>
+          )}
+
+          {/* Warning Confirmation Step */}
+          {showWarning && (
+            <div style={{
+              padding: '32px 24px',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginBottom: '24px'
+              }}>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor" 
+                  style={{ 
+                    width: '64px', 
+                    height: '64px', 
+                    color: 'var(--accentC)',
+                    strokeWidth: '2px'
+                  }}
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" 
+                  />
+                </svg>
+              </div>
+
+              <h3 style={{
+                fontSize: '1.3rem',
+                fontWeight: 700,
+                marginBottom: '16px',
+                color: 'var(--ink)'
+              }}>
+                Confirm Weekend Close Out
+              </h3>
+
+              <p style={{
+                fontSize: '1rem',
+                color: 'var(--muted)',
+                marginBottom: '24px',
+                lineHeight: '1.6'
+              }}>
+                The following data will be <strong>permanently deleted</strong>:
+              </p>
+
+              <div style={{
+                background: 'var(--panel-header)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '24px',
+                textAlign: 'left'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--muted)' }}>Meeting check-in records:</span>
+                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.meetings}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--muted)' }}>Candidate applications:</span>
+                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.applications}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--muted)' }}>Email distribution lists:</span>
+                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.emailLists}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--muted)' }}>Team roster assignments:</span>
+                  <strong style={{ color: 'var(--ink)' }}>{deletionCounts.rosterRecords}</strong>
+                </div>
+              </div>
+
+              <div style={{
+                background: 'rgba(255, 193, 7, 0.1)',
+                border: '1px solid var(--accentC)',
+                borderRadius: '8px',
+                padding: '16px',
+                marginBottom: '24px'
+              }}>
+                <p style={{
+                  margin: 0,
+                  fontSize: '0.95rem',
+                  color: 'var(--ink)',
+                  fontWeight: 600
+                }}>
+                  ⚠️ This action cannot be undone!
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button 
+                  className="btn"
+                  onClick={() => setShowWarning(false)}
+                  style={{ minWidth: '120px' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn btn-danger"
+                  onClick={() => {
+                    setShowWarning(false);
+                    executeSteps();
+                  }}
+                  style={{ minWidth: '120px' }}
+                >
+                  Yes, Proceed
+                </button>
+              </div>
+            </div>
           )}
           
           {hasStarted && !isComplete && (
