@@ -271,6 +271,7 @@ export default function TeamList() {
   const [nextWeekendStartDate, setNextWeekendStartDate] = useState('');
   const [nextWeekendEndDate, setNextWeekendEndDate] = useState('');
   const [nextWeekendImage, setNextWeekendImage] = useState(null);
+  const [nextWeekendNumber, setNextWeekendNumber] = useState('1'); // For first weekend override
   const [isCreatingNextWeekend, setIsCreatingNextWeekend] = useState(false);
 
   const ROLE_CONFIG = {
@@ -890,8 +891,8 @@ export default function TeamList() {
     let nextWeekendNum, nextWeekendId, roverToPromote;
     
     if (isFirstWeekend) {
-      // Creating first weekend - start at #1
-      nextWeekendNum = 1;
+      // Creating first weekend - use custom number or default to 1
+      nextWeekendNum = parseInt(nextWeekendNumber, 10) || 1;
       const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
       nextWeekendId = `${prefix}${nextWeekendNum}`;
       roverToPromote = null; // No rover to promote on first weekend
@@ -998,6 +999,7 @@ export default function TeamList() {
       setNextWeekendStartDate('');
       setNextWeekendEndDate('');
       setNextWeekendImage(null);
+      setNextWeekendNumber('1');
       
       // Reload the team to show the new weekend
       await loadLatestTeam();
@@ -1655,12 +1657,13 @@ export default function TeamList() {
                 </div>
                 {(() => {
                   if (!weekendIdentifier) {
-                    // First weekend creation
+                    // First weekend creation - show preview with custom number
                     const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
-                    const firstWeekendId = `${prefix}1`;
+                    const previewNum = parseInt(nextWeekendNumber, 10) || 1;
+                    const firstWeekendId = `${prefix}${previewNum}`;
                     return (
                       <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-                        Creating your first weekend: <strong>{firstWeekendId}</strong>
+                        Creating: <strong>{firstWeekendId}</strong>
                       </div>
                     );
                   }
@@ -1701,6 +1704,25 @@ export default function TeamList() {
             }}>
               {/* Left Column */}
               <div>
+                {/* Weekend Number field - ONLY shown when creating first weekend */}
+                {!weekendIdentifier && (
+                  <div className="field">
+                    <label className="label">Weekend Number *</label>
+                    <input
+                      type="number"
+                      className="input"
+                      placeholder="e.g., 1 or 150"
+                      value={nextWeekendNumber}
+                      onChange={(e) => setNextWeekendNumber(e.target.value)}
+                      min="1"
+                      style={{ width: '150px' }}
+                    />
+                    <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
+                      This will create "{currentGender.charAt(0).toUpperCase() + currentGender.slice(1)}'s {parseInt(nextWeekendNumber, 10) || 1}"
+                    </div>
+                  </div>
+                )}
+                
                 <div className="field">
                   <label className="label">Weekend Theme *</label>
                   <input
@@ -1869,6 +1891,7 @@ export default function TeamList() {
                   setNextWeekendStartDate('');
                   setNextWeekendEndDate('');
                   setNextWeekendImage(null);
+                  setNextWeekendNumber('1');
                 }}
               >
                 Cancel
@@ -1876,7 +1899,12 @@ export default function TeamList() {
               <button 
                 className="btn btn-primary"
                 onClick={handleCreateNextWeekend}
-                disabled={!nextWeekendTheme.trim() || !nextWeekendVerse.trim() || isCreatingNextWeekend}
+                disabled={
+                  !nextWeekendTheme.trim() || 
+                  !nextWeekendVerse.trim() || 
+                  (!weekendIdentifier && !nextWeekendNumber.trim()) ||
+                  isCreatingNextWeekend
+                }
                 style={{
                   backgroundColor: '#28a745',
                   borderColor: '#28a745'
