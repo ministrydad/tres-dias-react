@@ -1,6 +1,6 @@
 // src/modules/Admin/components/ColumnMapper.jsx
 import { useState, useEffect } from 'react';
-import { UserGroupIcon, LightBulbIcon } from '@heroicons/react/24/outline';
+import { HiUserGroup, HiLightBulb } from 'react-icons/hi2';
 
 export default function ColumnMapper({ uploadedData, selectedGender, onMappingComplete, onBack, onCancel }) {
   const [mappings, setMappings] = useState({});
@@ -616,7 +616,7 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
             boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
           }}>
             <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <UserGroupIcon style={{ width: '32px', height: '32px', color: 'var(--accentB)' }} />
+              <HiUserGroup style={{ width: '32px', height: '32px', color: 'var(--accentB)' }} />
               Gender Column Detected!
             </h3>
             
@@ -638,7 +638,7 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
               alignItems: 'flex-start',
               gap: '12px'
             }}>
-              <LightBulbIcon style={{ width: '20px', height: '20px', color: 'var(--accentB)', flexShrink: 0, marginTop: '2px' }} />
+              <HiLightBulb style={{ width: '20px', height: '20px', color: 'var(--accentB)', flexShrink: 0, marginTop: '2px' }} />
               <div>
                 <strong>Tip:</strong> If you choose "Yes", we'll automatically separate men and women into their respective directories based on the gender column values.
               </div>
