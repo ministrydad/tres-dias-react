@@ -6,7 +6,9 @@ import { supabase } from '../../../services/supabase';
 export default function ImportProgress({ 
   uploadedData, 
   mappedColumns, 
-  selectedGender, 
+  selectedGender,
+  shouldSplitByGender,
+  genderColumnName,
   dryRun,
   onComplete, 
   onBack, 
@@ -22,6 +24,10 @@ export default function ImportProgress({
   const [errors, setErrors] = useState([]);
   const [complete, setComplete] = useState(false);
   const [generatedKeys, setGeneratedKeys] = useState([]);
+  
+  // Gender split stats
+  const [menImported, setMenImported] = useState(0);
+  const [womenImported, setWomenImported] = useState(0);
 
   // Filter mapped columns only
   const activeMappings = Object.entries(mappedColumns).filter(([source, target]) => target !== null);
@@ -42,12 +48,20 @@ export default function ImportProgress({
       await performDryRun();
     } else {
       // Real import - actually insert data
-      await performRealImport();
+      if (shouldSplitByGender) {
+        await performSplitImport();
+      } else {
+        await performRealImport();
+      }
     }
   };
 
   const performDryRun = async () => {
     console.log('🧪 DRY RUN MODE - No data will be imported');
+    
+    if (shouldSplitByGender) {
+      console.log('📊 Gender split mode enabled');
+    }
     
     for (let i = 0; i < uploadedData.rows.length; i++) {
       const row = uploadedData.rows[i];
@@ -61,8 +75,20 @@ export default function ImportProgress({
         mappedRow[targetColumn] = row[sourceColumn] || null;
       });
       
-      // Log what would be inserted
-      console.log(`Row ${i + 1}:`, mappedRow);
+      // Determine gender if splitting
+      if (shouldSplitByGender && genderColumnName) {
+        const genderValue = row[genderColumnName];
+        const gender = determineGender(genderValue);
+        console.log(`Row ${i + 1} [${gender}]:`, mappedRow);
+        
+        if (gender === 'men') {
+          setMenImported(prev => prev + 1);
+        } else {
+          setWomenImported(prev => prev + 1);
+        }
+      } else {
+        console.log(`Row ${i + 1}:`, mappedRow);
+      }
       
       // Update progress
       setCurrentRow(i + 1);
@@ -72,18 +98,200 @@ export default function ImportProgress({
     
     setComplete(true);
     setImporting(false);
-    window.showMainStatus(`✅ Dry run complete! ${uploadedData.rows.length} rows validated (not imported)`, false);
+    
+    if (shouldSplitByGender) {
+      window.showMainStatus(`✅ Dry run complete! ${menImported} men, ${womenImported} women validated (not imported)`, false);
+    } else {
+      window.showMainStatus(`✅ Dry run complete! ${uploadedData.rows.length} rows validated (not imported)`, false);
+    }
   };
 
+  // Helper function to determine gender from value
+  const determineGender = (genderValue) => {
+    const gender = (genderValue || '').toLowerCase().trim();
+    
+    if (gender === 'm' || gender === 'male' || gender === 'men' || gender === 'man') {
+      return 'men';
+    } else if (gender === 'f' || gender === 'female' || gender === 'women' || gender === 'woman') {
+      return 'women';
+    } else {
+      // Unknown - default to men
+      console.warn(`Unknown gender value: "${genderValue}" - defaulting to men`);
+      return 'men';
+    }
+  };
+
+  // Split data by gender and import to both tables
+  const performSplitImport = async () => {
+    console.log('⚡ SPLIT IMPORT MODE - Importing to both men_raw and women_raw');
+    
+    const batchSize = 50;
+    let menGeneratedKeys = [];
+    let womenGeneratedKeys = [];
+    
+    try {
+      // Step 1: Get highest existing PescadoreKeys for both tables
+      const { data: menData, error: menKeyError } = await supabase
+        .from('men_raw')
+        .select('PescadoreKey')
+        .eq('org_id', orgId)
+        .order('PescadoreKey', { ascending: false })
+        .limit(1);
+      
+      const { data: womenData, error: womenKeyError } = await supabase
+        .from('women_raw')
+        .select('PescadoreKey')
+        .eq('org_id', orgId)
+        .order('PescadoreKey', { ascending: false })
+        .limit(1);
+      
+      if (menKeyError) throw menKeyError;
+      if (womenKeyError) throw womenKeyError;
+      
+      let nextMenKey = menData?.[0]?.PescadoreKey ? parseInt(menData[0].PescadoreKey) + 1 : 1;
+      let nextWomenKey = womenData?.[0]?.PescadoreKey ? parseInt(womenData[0].PescadoreKey) + 1 : 1;
+      
+      console.log(`Starting Men's PescadoreKey at: ${nextMenKey}`);
+      console.log(`Starting Women's PescadoreKey at: ${nextWomenKey}`);
+      
+      // Step 2: Split rows by gender
+      const menRows = [];
+      const womenRows = [];
+      
+      uploadedData.rows.forEach((row, index) => {
+        const genderValue = row[genderColumnName];
+        const gender = determineGender(genderValue);
+        
+        if (gender === 'men') {
+          menRows.push({ originalRow: row, originalIndex: index });
+        } else {
+          womenRows.push({ originalRow: row, originalIndex: index });
+        }
+      });
+      
+      console.log(`Split: ${menRows.length} men, ${womenRows.length} women`);
+      
+      // Step 3: Import men's data
+      if (menRows.length > 0) {
+        await importToTable('men_raw', menRows, nextMenKey, menGeneratedKeys, 'men');
+      }
+      
+      // Step 4: Import women's data
+      if (womenRows.length > 0) {
+        await importToTable('women_raw', womenRows, nextWomenKey, womenGeneratedKeys, 'women');
+      }
+      
+      setGeneratedKeys([...menGeneratedKeys, ...womenGeneratedKeys]);
+      setComplete(true);
+      setImporting(false);
+      
+      if (errorCount === 0) {
+        window.showMainStatus(`✅ Split import complete! ${menImported} men, ${womenImported} women imported`, false);
+      } else {
+        window.showMainStatus(`⚠️ Import complete with errors. ${successCount} succeeded, ${errorCount} failed`, true);
+      }
+      
+    } catch (error) {
+      console.error('Split import failed:', error);
+      setErrors(prev => [...prev, { rows: 'All', message: error.message }]);
+      setComplete(true);
+      setImporting(false);
+      window.showMainStatus(`❌ Import failed: ${error.message}`, true);
+    }
+  };
+
+  // Helper function to import to a specific table
+  const importToTable = async (tableName, rows, startingKey, generatedKeysArray, genderLabel) => {
+    const batchSize = 50;
+    let nextKey = startingKey;
+    
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = rows.slice(i, i + batchSize);
+      const mappedBatch = [];
+      
+      batch.forEach(({ originalRow, originalIndex }, batchIndex) => {
+        const mappedRow = {
+          org_id: orgId
+        };
+        
+        activeMappings.forEach(([sourceColumn, targetColumn]) => {
+          // Skip gender column when inserting
+          if (sourceColumn === genderColumnName) {
+            return;
+          }
+          
+          let value = originalRow[sourceColumn];
+          
+          if (value === '' || value === undefined) {
+            value = null;
+          }
+          
+          if (targetColumn === 'PescadoreKey') {
+            if (!value || value === null) {
+              value = nextKey;
+              generatedKeysArray.push({ 
+                row: originalIndex + 1, 
+                key: nextKey,
+                gender: genderLabel 
+              });
+              nextKey++;
+            }
+          }
+          
+          mappedRow[targetColumn] = value;
+        });
+        
+        if (!mappedRow.PescadoreKey) {
+          mappedRow.PescadoreKey = nextKey;
+          generatedKeysArray.push({ 
+            row: originalIndex + 1, 
+            key: nextKey,
+            gender: genderLabel 
+          });
+          nextKey++;
+        }
+        
+        mappedBatch.push(mappedRow);
+      });
+      
+      const { data, error } = await supabase
+        .from(tableName)
+        .insert(mappedBatch);
+      
+      if (error) {
+        console.error(`${tableName} batch insert error:`, error);
+        setErrors(prev => [...prev, { 
+          rows: `${genderLabel} ${i + 1}-${i + batch.length}`, 
+          message: error.message 
+        }]);
+        setErrorCount(prev => prev + batch.length);
+      } else {
+        setSuccessCount(prev => prev + batch.length);
+        
+        if (genderLabel === 'men') {
+          setMenImported(prev => prev + batch.length);
+        } else {
+          setWomenImported(prev => prev + batch.length);
+        }
+      }
+      
+      const totalProcessed = currentRow + batch.length;
+      setCurrentRow(totalProcessed);
+      setProgress((totalProcessed / totalRows) * 100);
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  };
+
+  // Regular import (no gender split)
   const performRealImport = async () => {
     console.log('⚡ LIVE IMPORT MODE - Inserting data to database');
     
     const targetTable = selectedGender === 'men' ? 'men_raw' : 'women_raw';
-    const batchSize = 50; // Insert 50 rows at a time
+    const batchSize = 50;
     let newGeneratedKeys = [];
     
     try {
-      // Step 1: Get highest existing PescadoreKey for this org
       const { data: existingData, error: keyError } = await supabase
         .from(targetTable)
         .select('PescadoreKey')
@@ -96,30 +304,24 @@ export default function ImportProgress({
       let nextKey = existingData?.[0]?.PescadoreKey ? parseInt(existingData[0].PescadoreKey) + 1 : 1;
       console.log(`Starting PescadoreKey at: ${nextKey}`);
       
-      // Step 2: Process rows in batches
       for (let i = 0; i < uploadedData.rows.length; i += batchSize) {
         const batch = uploadedData.rows.slice(i, i + batchSize);
         const mappedBatch = [];
         
-        // Build mapped rows for this batch
         batch.forEach((row, batchIndex) => {
           const mappedRow = {
-            org_id: orgId // CRITICAL: Add org_id to every row
+            org_id: orgId
           };
           
-          // Map each column
           activeMappings.forEach(([sourceColumn, targetColumn]) => {
             let value = row[sourceColumn];
             
-            // Handle empty values
             if (value === '' || value === undefined) {
               value = null;
             }
             
-            // Special handling for PescadoreKey
             if (targetColumn === 'PescadoreKey') {
               if (!value || value === null) {
-                // Auto-generate if missing
                 value = nextKey;
                 newGeneratedKeys.push({ row: i + batchIndex + 1, key: nextKey });
                 nextKey++;
@@ -129,7 +331,6 @@ export default function ImportProgress({
             mappedRow[targetColumn] = value;
           });
           
-          // Ensure PescadoreKey exists
           if (!mappedRow.PescadoreKey) {
             mappedRow.PescadoreKey = nextKey;
             newGeneratedKeys.push({ row: i + batch.indexOf(row) + 1, key: nextKey });
@@ -139,7 +340,6 @@ export default function ImportProgress({
           mappedBatch.push(mappedRow);
         });
         
-        // Step 3: Insert batch
         const { data, error } = await supabase
           .from(targetTable)
           .insert(mappedBatch);
@@ -155,12 +355,10 @@ export default function ImportProgress({
           setSuccessCount(prev => prev + batch.length);
         }
         
-        // Update progress
         const processedRows = Math.min(i + batchSize, uploadedData.rows.length);
         setCurrentRow(processedRows);
         setProgress((processedRows / uploadedData.rows.length) * 100);
         
-        // Small delay between batches to show progress
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
@@ -203,8 +401,12 @@ export default function ImportProgress({
         </div>
         <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
           {dryRun 
-            ? 'Simulating import - no data will be saved to database'
-            : `Importing ${totalRows} rows to ${selectedGender} directory`
+            ? shouldSplitByGender 
+              ? 'Simulating gender split import - no data will be saved'
+              : 'Simulating import - no data will be saved to database'
+            : shouldSplitByGender
+              ? `Importing ${totalRows} rows to both men's and women's directories`
+              : `Importing ${totalRows} rows to ${selectedGender} directory`
           }
         </div>
       </div>
@@ -253,24 +455,58 @@ export default function ImportProgress({
       {/* Statistics */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+        gridTemplateColumns: shouldSplitByGender ? 'repeat(auto-fit, minmax(120px, 1fr))' : 'repeat(auto-fit, minmax(150px, 1fr))',
         gap: '16px',
         marginBottom: '24px'
       }}>
-        <div style={{
-          padding: '16px',
-          backgroundColor: 'var(--bg)',
-          borderRadius: '8px',
-          border: '1px solid var(--border)',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accentA)' }}>
-            {successCount}
+        {shouldSplitByGender ? (
+          <>
+            <div style={{
+              padding: '16px',
+              backgroundColor: 'var(--bg)',
+              borderRadius: '8px',
+              border: '1px solid var(--border)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accentB)' }}>
+                {menImported}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+                Men {dryRun ? 'Validated' : 'Imported'}
+              </div>
+            </div>
+
+            <div style={{
+              padding: '16px',
+              backgroundColor: 'var(--bg)',
+              borderRadius: '8px',
+              border: '1px solid var(--border)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#e91e63' }}>
+                {womenImported}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+                Women {dryRun ? 'Validated' : 'Imported'}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div style={{
+            padding: '16px',
+            backgroundColor: 'var(--bg)',
+            borderRadius: '8px',
+            border: '1px solid var(--border)',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accentA)' }}>
+              {successCount}
+            </div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+              {dryRun ? 'Validated' : 'Imported'}
+            </div>
           </div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
-            {dryRun ? 'Validated' : 'Imported'}
-          </div>
-        </div>
+        )}
 
         {errorCount > 0 && (
           <div style={{
@@ -324,7 +560,9 @@ export default function ImportProgress({
             {generatedKeys.length <= 5 && (
               <div style={{ marginTop: '8px', fontFamily: 'monospace', fontSize: '0.8rem' }}>
                 {generatedKeys.map(gk => (
-                  <div key={gk.row}>Row {gk.row}: Key {gk.key}</div>
+                  <div key={`${gk.row}-${gk.key}`}>
+                    Row {gk.row}{gk.gender ? ` (${gk.gender})` : ''}: Key {gk.key}
+                  </div>
                 ))}
               </div>
             )}
@@ -397,10 +635,9 @@ export default function ImportProgress({
               <button 
                 className="btn btn-primary" 
                 onClick={() => {
-                  // Navigate to directory to see imported data
                   window.showMainStatus('Redirecting to Directory...', false);
                   setTimeout(() => {
-                    window.location.href = '#directory'; // Or use your navigation method
+                    window.location.href = '#directory';
                   }, 1000);
                 }}
               >

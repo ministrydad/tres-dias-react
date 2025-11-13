@@ -1,7 +1,7 @@
 // src/modules/Admin/components/DataPreview.jsx
 import { useState, useMemo } from 'react';
 
-export default function DataPreview({ uploadedData, mappedColumns, selectedGender, onNext, onBack, onCancel }) {
+export default function DataPreview({ uploadedData, mappedColumns, selectedGender, shouldSplitByGender, genderColumnName, onNext, onBack, onCancel }) {
   const [dryRun, setDryRun] = useState(true);
   const [editedData, setEditedData] = useState({}); // Track edited cells: { rowIndex: { columnName: newValue } }
   const [editingCell, setEditingCell] = useState(null); // Track which cell is being edited: { rowIndex, column }
@@ -26,14 +26,51 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
         mappedRow[targetColumn] = editedValue !== undefined ? editedValue : (row[sourceColumn] || '');
       });
       
+      // Add gender value if splitting
+      if (shouldSplitByGender && genderColumnName) {
+        mappedRow._gender = row[genderColumnName];
+      }
+      
       return mappedRow;
     });
-  }, [uploadedData, activeMappings, editedData]);
+  }, [uploadedData, activeMappings, editedData, shouldSplitByGender, genderColumnName]);
 
-  // Get columns to display (target columns only)
+  // Split rows by gender if needed
+  const { menRows, womenRows } = useMemo(() => {
+    if (!shouldSplitByGender) {
+      return { menRows: previewRows, womenRows: [] };
+    }
+
+    const men = [];
+    const women = [];
+
+    previewRows.forEach(row => {
+      const gender = (row._gender || '').toLowerCase().trim();
+      
+      // Determine if male or female based on common values
+      if (gender === 'm' || gender === 'male' || gender === 'men' || gender === 'man') {
+        men.push(row);
+      } else if (gender === 'f' || gender === 'female' || gender === 'women' || gender === 'woman') {
+        women.push(row);
+      } else {
+        // Unknown gender - show warning but include in men by default
+        console.warn(`Unknown gender value: "${gender}" for row ${row._originalIndex + 1}`);
+        men.push(row);
+      }
+    });
+
+    return { menRows: men, womenRows: women };
+  }, [previewRows, shouldSplitByGender]);
+
+  // Get columns to display (target columns only, exclude gender column if splitting)
   const displayColumns = useMemo(() => {
-    return activeMappings.map(([source, target]) => target);
-  }, [activeMappings]);
+    const cols = activeMappings.map(([source, target]) => target);
+    // Don't display the gender column in preview if we're splitting by it
+    if (shouldSplitByGender && genderColumnName) {
+      return cols.filter(col => col !== genderColumnName);
+    }
+    return cols;
+  }, [activeMappings, shouldSplitByGender, genderColumnName]);
 
   // Check if column is required
   const isRequiredColumn = (column) => {
@@ -61,15 +98,25 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
       return warningList; // Can't proceed without columns mapped
     }
 
+    // If splitting by gender, show stats
+    if (shouldSplitByGender) {
+      warningList.push({
+        type: 'info',
+        message: `Gender split detected: ${menRows.length} men, ${womenRows.length} women (${previewRows.length} total rows)`
+      });
+    }
+
     // Check individual rows for missing required values
     let rowsWithErrors = [];
-    previewRows.forEach((row, index) => {
+    const rowsToCheck = shouldSplitByGender ? [...menRows, ...womenRows] : previewRows;
+    
+    rowsToCheck.forEach((row) => {
       const firstName = row['First'];
       const lastName = row['Last'];
       
       if (!firstName || firstName.trim() === '' || !lastName || lastName.trim() === '') {
         rowsWithErrors.push({
-          rowNumber: index + 1,
+          rowNumber: row._originalIndex + 1,
           missing: (!firstName || firstName.trim() === '') && (!lastName || lastName.trim() === '') 
             ? 'First and Last' 
             : (!firstName || firstName.trim() === '') 
@@ -93,7 +140,7 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
     let missingChurchCount = 0;
     let missingPescadoreKeyCount = 0;
 
-    previewRows.forEach(row => {
+    rowsToCheck.forEach(row => {
       if (!row['Email'] || row['Email'].trim() === '') missingEmailCount++;
       if (!row['Phone1'] || row['Phone1'].trim() === '') missingPhoneCount++;
       if (!row['Church'] || row['Church'].trim() === '') missingChurchCount++;
@@ -129,7 +176,7 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
     }
 
     return warningList;
-  }, [uploadedData, previewRows, displayColumns]);
+  }, [uploadedData, previewRows, displayColumns, shouldSplitByGender, menRows, womenRows]);
 
   // Block proceed if there are errors
   const hasErrors = warnings.some(w => w.type === 'error');
@@ -191,21 +238,216 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
     return previewRows.filter((row, index) => rowHasError(index)).length;
   }, [previewRows, warnings]);
 
-  // Filter and paginate rows for display
-  const displayedRows = useMemo(() => {
-    if (showOnlyErrors) {
-      // Show only rows with errors (no pagination)
-      return previewRows.filter((row, index) => rowHasError(index));
-    }
-    // Show first N rows (paginated)
-    return previewRows.slice(0, rowsToShow);
-  }, [previewRows, showOnlyErrors, rowsToShow, warnings]);
+  // Render preview table
+  const renderPreviewTable = (rows, title) => {
+    // Filter and paginate rows for display
+    const displayedRows = showOnlyErrors 
+      ? rows.filter((row) => rowHasError(row._originalIndex))
+      : rows.slice(0, rowsToShow);
+
+    return (
+      <div style={{ marginBottom: shouldSplitByGender ? '32px' : '24px' }}>
+        {shouldSplitByGender && (
+          <h3 style={{ 
+            fontSize: '1.1rem', 
+            fontWeight: 600, 
+            marginBottom: '12px',
+            color: 'var(--ink)'
+          }}>
+            {title} ({rows.length} rows)
+          </h3>
+        )}
+        
+        <div style={{
+          border: '1px solid var(--border)',
+          borderRadius: '8px',
+          overflow: 'auto',
+          maxHeight: '500px'
+        }}>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            fontSize: '0.85rem'
+          }}>
+            <thead>
+              <tr style={{ backgroundColor: 'var(--bg)', position: 'sticky', top: 0, zIndex: 1 }}>
+                <th style={{
+                  padding: '12px',
+                  textAlign: 'left',
+                  fontWeight: 600,
+                  color: 'var(--muted)',
+                  borderBottom: '1px solid var(--border)',
+                  whiteSpace: 'nowrap',
+                  fontSize: '0.75rem'
+                }}>
+                  #
+                </th>
+                {displayColumns.map(col => (
+                  <th
+                    key={col}
+                    style={{
+                      padding: '12px',
+                      textAlign: 'left',
+                      fontWeight: 600,
+                      color: isRequiredColumn(col) ? 'var(--accentD)' : 'var(--muted)',
+                      borderBottom: '1px solid var(--border)',
+                      whiteSpace: 'nowrap',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    {col} {isRequiredColumn(col) && '*'}
+                  </th>
+                ))}
+                <th style={{
+                  padding: '12px',
+                  textAlign: 'center',
+                  fontWeight: 600,
+                  color: 'var(--muted)',
+                  borderBottom: '1px solid var(--border)',
+                  whiteSpace: 'nowrap',
+                  fontSize: '0.75rem'
+                }}>
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayedRows.map((row, displayIndex) => {
+                const rowIndex = row._originalIndex;
+                return (
+                  <tr
+                    key={rowIndex}
+                    style={{
+                      backgroundColor: rowHasError(rowIndex) ? 'rgba(220, 53, 69, 0.05)' : (displayIndex % 2 === 0 ? '#fff' : 'var(--bg)')
+                    }}
+                  >
+                    <td style={{
+                      padding: '12px',
+                      borderBottom: '1px solid var(--border)',
+                      color: 'var(--muted)',
+                      fontWeight: 600
+                    }}>
+                      {rowIndex + 1}
+                    </td>
+                    {displayColumns.map(col => {
+                      const value = row[col];
+                      const isEmpty = isCellEmpty(value);
+                      const isRequired = isRequiredColumn(col);
+                      const hasError = isRequired && isEmpty;
+                      const isEditing = editingCell?.rowIndex === rowIndex && editingCell?.column === col;
+
+                      return (
+                        <td
+                          key={col}
+                          style={{
+                            padding: '8px',
+                            borderBottom: '1px solid var(--border)',
+                            color: isEmpty ? 'var(--muted)' : 'var(--ink)',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '200px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            border: hasError ? '2px solid var(--accentD)' : '1px solid transparent',
+                            cursor: hasError || (isRequired && !isEditing) ? 'pointer' : 'default',
+                            position: 'relative'
+                          }}
+                          onClick={() => {
+                            if (hasError || isRequired) {
+                              setEditingCell({ rowIndex, column: col });
+                            }
+                          }}
+                        >
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              autoFocus
+                              defaultValue={value}
+                              onBlur={(e) => {
+                                handleCellEdit(rowIndex, col, e.target.value);
+                                setEditingCell(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleCellEdit(rowIndex, col, e.target.value);
+                                  setEditingCell(null);
+                                }
+                                if (e.key === 'Escape') {
+                                  setEditingCell(null);
+                                }
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '4px',
+                                border: '1px solid var(--accentB)',
+                                borderRadius: '4px',
+                                fontSize: '0.85rem'
+                              }}
+                            />
+                          ) : isEmpty ? (
+                            <span style={{ 
+                              fontStyle: 'italic',
+                              color: hasError ? 'var(--accentD)' : 'var(--muted)'
+                            }}>
+                              {hasError ? '[Click to edit]' : '(empty)'}
+                            </span>
+                          ) : (
+                            value
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td style={{
+                      padding: '12px',
+                      borderBottom: '1px solid var(--border)',
+                      textAlign: 'center'
+                    }}>
+                      {rowHasError(rowIndex) ? (
+                        <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+                      ) : (
+                        <span style={{ fontSize: '1.2rem' }}>✓</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Table Footer */}
+        <div style={{ 
+          fontSize: '0.85rem', 
+          color: 'var(--muted)', 
+          marginTop: '12px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            Showing <strong>{Math.min(rowsToShow, rows.length)}</strong> of <strong>{rows.length}</strong> rows
+          </div>
+          
+          {!showOnlyErrors && rowsToShow < rows.length && (
+            <button
+              className="btn"
+              onClick={() => setRowsToShow(rowsToShow + 50)}
+              style={{ fontSize: '0.85rem' }}
+            >
+              Load Next 50 Rows
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const stats = {
     total: previewRows.length,
     mapped: activeMappings.length,
     warnings: warnings.length,
-    errors: errorCount
+    errors: errorCount,
+    men: menRows.length,
+    women: womenRows.length
   };
 
   return (
@@ -260,7 +502,7 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
       {/* Summary Statistics */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: shouldSplitByGender ? 'repeat(auto-fit, minmax(150px, 1fr))' : 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: '16px',
         marginBottom: '24px'
       }}>
@@ -278,6 +520,38 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
           </div>
         </div>
 
+        {shouldSplitByGender && (
+          <>
+            <div style={{
+              padding: '16px',
+              backgroundColor: 'var(--bg)',
+              borderRadius: '8px',
+              border: '1px solid var(--border)'
+            }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '4px' }}>
+                Men
+              </div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accentB)' }}>
+                {stats.men}
+              </div>
+            </div>
+
+            <div style={{
+              padding: '16px',
+              backgroundColor: 'var(--bg)',
+              borderRadius: '8px',
+              border: '1px solid var(--border)'
+            }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '4px' }}>
+                Women
+              </div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#e91e63' }}>
+                {stats.women}
+              </div>
+            </div>
+          </>
+        )}
+
         <div style={{
           padding: '16px',
           backgroundColor: 'var(--bg)',
@@ -289,20 +563,6 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
           </div>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' }}>
             {stats.mapped}
-          </div>
-        </div>
-
-        <div style={{
-          padding: '16px',
-          backgroundColor: 'var(--bg)',
-          borderRadius: '8px',
-          border: '1px solid var(--border)'
-        }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '4px' }}>
-            Target Directory
-          </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)', textTransform: 'capitalize' }}>
-            {selectedGender}
           </div>
         </div>
 
@@ -360,248 +620,15 @@ export default function DataPreview({ uploadedData, mappedColumns, selectedGende
         </div>
       )}
 
-      {/* Preview Table */}
-      <div style={{ marginBottom: '24px' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '12px' 
-        }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>
-            Preview {showOnlyErrors ? `(${errorCount} ${errorCount === 1 ? 'Error' : 'Errors'})` : `(First ${Math.min(rowsToShow, previewRows.length)} of ${previewRows.length} Rows)`}
-            {hasErrors && !showOnlyErrors && <span style={{ color: 'var(--accentD)' }}> - Click red cells to edit</span>}
-          </h3>
-          
-          {/* Error Filter Checkbox */}
-          {errorCount > 0 && (
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-              padding: '8px 12px',
-              backgroundColor: showOnlyErrors ? 'rgba(220, 53, 69, 0.1)' : 'var(--bg)',
-              border: `1px solid ${showOnlyErrors ? 'var(--accentD)' : 'var(--border)'}`,
-              borderRadius: '6px',
-              transition: 'all 0.2s'
-            }}>
-              <input
-                type="checkbox"
-                checked={showOnlyErrors}
-                onChange={(e) => setShowOnlyErrors(e.target.checked)}
-                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-              />
-              <span style={{ fontWeight: 600, color: showOnlyErrors ? 'var(--accentD)' : 'var(--ink)' }}>
-                Show only rows with errors ({errorCount})
-              </span>
-            </label>
-          )}
-        </div>
-        
-        <div style={{
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          overflow: 'auto',
-          maxHeight: '500px'
-        }}>
-          <table style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            fontSize: '0.85rem'
-          }}>
-            <thead>
-              <tr style={{ backgroundColor: 'var(--bg)', position: 'sticky', top: 0, zIndex: 1 }}>
-                <th style={{
-                  padding: '12px',
-                  textAlign: 'left',
-                  fontWeight: 600,
-                  color: 'var(--muted)',
-                  borderBottom: '1px solid var(--border)',
-                  whiteSpace: 'nowrap',
-                  fontSize: '0.75rem'
-                }}>
-                  #
-                </th>
-                {displayColumns.map(col => (
-                  <th
-                    key={col}
-                    style={{
-                      padding: '12px',
-                      textAlign: 'left',
-                      fontWeight: 600,
-                      color: isRequiredColumn(col) ? 'var(--accentD)' : 'var(--muted)',
-                      borderBottom: '1px solid var(--border)',
-                      whiteSpace: 'nowrap',
-                      fontSize: '0.75rem'
-                    }}
-                  >
-                    {col} {isRequiredColumn(col) && '*'}
-                  </th>
-                ))}
-                <th style={{
-                  padding: '12px',
-                  textAlign: 'center',
-                  fontWeight: 600,
-                  color: 'var(--muted)',
-                  borderBottom: '1px solid var(--border)',
-                  whiteSpace: 'nowrap',
-                  fontSize: '0.75rem'
-                }}>
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayedRows.map((row, displayIndex) => {
-                const rowIndex = row._originalIndex; // Get original row index
-                return (
-                  <tr
-                    key={rowIndex}
-                    style={{
-                      backgroundColor: rowHasError(rowIndex) ? 'rgba(220, 53, 69, 0.05)' : (displayIndex % 2 === 0 ? '#fff' : 'var(--bg)')
-                    }}
-                  >
-                  <td style={{
-                    padding: '12px',
-                    borderBottom: '1px solid var(--border)',
-                    color: 'var(--muted)',
-                    fontWeight: 600
-                  }}>
-                    {rowIndex + 1}
-                  </td>
-                  {displayColumns.map(col => {
-                    const value = row[col];
-                    const isEmpty = isCellEmpty(value);
-                    const isRequired = isRequiredColumn(col);
-                    const hasError = isRequired && isEmpty;
-                    const isEditing = editingCell?.rowIndex === rowIndex && editingCell?.column === col;
-
-                    return (
-                      <td
-                        key={col}
-                        style={{
-                          padding: '8px',
-                          borderBottom: '1px solid var(--border)',
-                          color: isEmpty ? 'var(--muted)' : 'var(--ink)',
-                          whiteSpace: 'nowrap',
-                          maxWidth: '200px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          border: hasError ? '2px solid var(--accentD)' : '1px solid transparent',
-                          cursor: hasError || (isRequired && !isEditing) ? 'pointer' : 'default',
-                          position: 'relative'
-                        }}
-                        onClick={() => {
-                          if (hasError || isRequired) {
-                            setEditingCell({ rowIndex, column: col });
-                          }
-                        }}
-                      >
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            autoFocus
-                            defaultValue={value}
-                            onBlur={(e) => {
-                              handleCellEdit(rowIndex, col, e.target.value);
-                              setEditingCell(null);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleCellEdit(rowIndex, col, e.target.value);
-                                setEditingCell(null);
-                              }
-                              if (e.key === 'Escape') {
-                                setEditingCell(null);
-                              }
-                            }}
-                            style={{
-                              width: '100%',
-                              padding: '4px',
-                              border: '1px solid var(--accentB)',
-                              borderRadius: '4px',
-                              fontSize: '0.85rem'
-                            }}
-                          />
-                        ) : isEmpty ? (
-                          <span style={{ 
-                            fontStyle: 'italic',
-                            color: hasError ? 'var(--accentD)' : 'var(--muted)'
-                          }}>
-                            {hasError ? '[Click to edit]' : '(empty)'}
-                          </span>
-                        ) : (
-                          value
-                        )}
-                      </td>
-                    );
-                  })}
-                  <td style={{
-                    padding: '12px',
-                    borderBottom: '1px solid var(--border)',
-                    textAlign: 'center'
-                  }}>
-                    {rowHasError(rowIndex) ? (
-                      <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-                    ) : (
-                      <span style={{ fontSize: '1.2rem' }}>✓</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Table Footer with Pagination */}
-        <div style={{ 
-          fontSize: '0.85rem', 
-          color: 'var(--muted)', 
-          marginTop: '12px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div>
-            {showOnlyErrors ? (
-              <span>
-                Showing <strong style={{ color: 'var(--accentD)' }}>{errorCount}</strong> of {previewRows.length} total rows (rows with errors only)
-              </span>
-            ) : (
-              <span>
-                Showing <strong>{Math.min(rowsToShow, previewRows.length)}</strong> of <strong>{previewRows.length}</strong> total rows
-                {errorCount > 0 && <span style={{ color: 'var(--accentD)' }}> • {errorCount} with errors</span>}
-              </span>
-            )}
-            {isRequiredColumn && <span style={{ color: 'var(--accentD)' }}> • * = Required field</span>}
-          </div>
-          
-          {/* Load More Button */}
-          {!showOnlyErrors && rowsToShow < previewRows.length && (
-            <button
-              className="btn"
-              onClick={() => setRowsToShow(rowsToShow + 50)}
-              style={{ fontSize: '0.85rem' }}
-            >
-              Load Next 50 Rows
-            </button>
-          )}
-          
-          {/* Show All Button (only if more than 100 rows remaining) */}
-          {!showOnlyErrors && rowsToShow < previewRows.length && (previewRows.length - rowsToShow) > 100 && (
-            <button
-              className="btn"
-              onClick={() => setRowsToShow(previewRows.length)}
-              style={{ fontSize: '0.85rem', marginLeft: '8px' }}
-            >
-              Show All {previewRows.length} Rows
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Preview Tables */}
+      {shouldSplitByGender ? (
+        <>
+          {renderPreviewTable(menRows, "Men's Directory")}
+          {renderPreviewTable(womenRows, "Women's Directory")}
+        </>
+      ) : (
+        renderPreviewTable(previewRows, "Preview")
+      )}
 
       {/* Action Buttons */}
       <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>

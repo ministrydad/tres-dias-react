@@ -13,6 +13,10 @@ export default function DataImport() {
   const [selectedGender, setSelectedGender] = useState('men');
   const [mappedColumns, setMappedColumns] = useState(null);
   const [dryRun, setDryRun] = useState(true);
+  
+  // NEW: Gender split handling
+  const [shouldSplitByGender, setShouldSplitByGender] = useState(false);
+  const [genderColumnName, setGenderColumnName] = useState(null);
 
   // Access control - only admins or super admins or owners
   if (!isSuperAdmin && !permissions?.['data-import'] && user?.role !== 'owner') {
@@ -37,25 +41,30 @@ export default function DataImport() {
     setCurrentStep(2); // Move to column mapping
   };
 
-  // Step 2: Column Mapping - callback when mapping is complete
-  const handleMappingComplete = (mappings) => {
+  // Step 2: Column Mapping - callback when mapping is complete (NOW WITH 3 PARAMETERS)
+  const handleMappingComplete = (mappings, shouldSplit, genderCol) => {
     console.log('✅ Mappings completed:', mappings);
+    console.log('📊 Split by gender:', shouldSplit);
+    console.log('👥 Gender column:', genderCol);
+    
     setMappedColumns(mappings);
+    setShouldSplitByGender(shouldSplit);
+    setGenderColumnName(genderCol);
     setCurrentStep(3); // Move to preview
   };
 
   // Step 3: Preview - callback when ready to import
   const handlePreviewNext = (dryRunMode, mergedData) => {
-  console.log('📋 Preview complete, dry run:', dryRunMode);
-  setDryRun(dryRunMode);
-  
-  // Update uploadedData with edited values if provided
-  if (mergedData) {
-    setUploadedData(mergedData);
-  }
-  
-  setCurrentStep(4);
-};
+    console.log('📋 Preview complete, dry run:', dryRunMode);
+    setDryRun(dryRunMode);
+    
+    // Update uploadedData with edited values if provided
+    if (mergedData) {
+      setUploadedData(mergedData);
+    }
+    
+    setCurrentStep(4);
+  };
 
   // Step 4: Import - callback when import is complete
   const handleImportComplete = () => {
@@ -77,6 +86,8 @@ export default function DataImport() {
     setSelectedGender('men');
     setMappedColumns(null);
     setDryRun(true);
+    setShouldSplitByGender(false);
+    setGenderColumnName(null);
     window.showMainStatus('Import cancelled', false);
   };
 
@@ -180,6 +191,8 @@ export default function DataImport() {
             uploadedData={uploadedData}
             mappedColumns={mappedColumns}
             selectedGender={selectedGender}
+            shouldSplitByGender={shouldSplitByGender}
+            genderColumnName={genderColumnName}
             onNext={handlePreviewNext}
             onBack={handleBack}
             onCancel={handleCancel}
@@ -191,6 +204,8 @@ export default function DataImport() {
             uploadedData={uploadedData}
             mappedColumns={mappedColumns}
             selectedGender={selectedGender}
+            shouldSplitByGender={shouldSplitByGender}
+            genderColumnName={genderColumnName}
             dryRun={dryRun}
             onComplete={handleImportComplete}
             onBack={handleBack}

@@ -1,9 +1,14 @@
 // src/modules/Admin/components/ColumnMapper.jsx
 import { useState, useEffect } from 'react';
+import { UserGroupIcon, LightBulbIcon } from '@heroicons/react/24/outline';
 
 export default function ColumnMapper({ uploadedData, selectedGender, onMappingComplete, onBack, onCancel }) {
   const [mappings, setMappings] = useState({});
   const [showAllColumns, setShowAllColumns] = useState(false);
+  
+  // Gender detection and modal
+  const [showGenderModal, setShowGenderModal] = useState(false);
+  const [genderColumnDetected, setGenderColumnDetected] = useState(null);
 
   // Target database columns based on gender
   const getTargetColumns = () => {
@@ -362,7 +367,19 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
     return { total, mapped, unmapped };
   };
 
-  // Handle next step
+  // Detect gender column
+  const detectGenderColumn = () => {
+    // Check if any source column looks like a gender column
+    const genderMapping = Object.entries(mappings).find(([source, target]) => {
+      const sourceLower = source.toLowerCase();
+      return sourceLower.includes('gender') || sourceLower.includes('sex') || 
+             sourceLower === 'm/f' || sourceLower === 'male/female';
+    });
+    
+    return genderMapping ? genderMapping[0] : null; // Return source column name
+  };
+
+  // Handle next step with gender detection
   const handleNext = () => {
     const stats = getMappingStats();
     
@@ -371,8 +388,21 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
       return;
     }
     
-    // Pass mappings back to parent
-    onMappingComplete(mappings);
+    // Check for gender column
+    const genderCol = detectGenderColumn();
+    if (genderCol) {
+      setGenderColumnDetected(genderCol);
+      setShowGenderModal(true);
+    } else {
+      // No gender column, proceed normally
+      onMappingComplete(mappings, false, null);
+    }
+  };
+
+  // Handle gender split decision
+  const handleGenderSplit = (shouldSplit) => {
+    setShowGenderModal(false);
+    onMappingComplete(mappings, shouldSplit, genderColumnDetected);
   };
 
   const stats = getMappingStats();
@@ -561,6 +591,76 @@ export default function ColumnMapper({ uploadedData, selectedGender, onMappingCo
               : `Show All Columns (${Object.keys(mappings).length - 10} more)`
             }
           </button>
+        </div>
+      )}
+
+      {/* Gender Detection Modal */}
+      {showGenderModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: '#fff',
+            borderRadius: '12px',
+            padding: '32px',
+            maxWidth: '500px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          }}>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '16px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <UserGroupIcon style={{ width: '32px', height: '32px', color: 'var(--accentB)' }} />
+              Gender Column Detected!
+            </h3>
+            
+            <p style={{ fontSize: '1rem', marginBottom: '24px', color: 'var(--ink)', lineHeight: '1.6' }}>
+              We detected a gender column (<strong>{genderColumnDetected}</strong>) in your file.
+              <br /><br />
+              Would you like us to automatically split this data into both Men's and Women's directories?
+            </p>
+
+            <div style={{
+              padding: '16px',
+              backgroundColor: 'rgba(0, 163, 255, 0.1)',
+              borderRadius: '8px',
+              border: '1px solid var(--accentB)',
+              marginBottom: '24px',
+              fontSize: '0.9rem',
+              color: 'var(--ink)',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px'
+            }}>
+              <LightBulbIcon style={{ width: '20px', height: '20px', color: 'var(--accentB)', flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <strong>Tip:</strong> If you choose "Yes", we'll automatically separate men and women into their respective directories based on the gender column values.
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                className="btn"
+                onClick={() => handleGenderSplit(false)}
+                style={{ flex: 1 }}
+              >
+                No, Import to Single Directory
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => handleGenderSplit(true)}
+                style={{ flex: 1 }}
+              >
+                Yes, Split Automatically
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
