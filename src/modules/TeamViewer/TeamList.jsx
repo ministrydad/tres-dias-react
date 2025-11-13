@@ -273,6 +273,10 @@ export default function TeamList() {
   const [nextWeekendImage, setNextWeekendImage] = useState(null);
   const [nextWeekendNumber, setNextWeekendNumber] = useState('1'); // For first weekend override
   const [isCreatingNextWeekend, setIsCreatingNextWeekend] = useState(false);
+  
+  // Weekend Info display state
+  const [weekendInfo, setWeekendInfo] = useState(null);
+  const [loadingWeekendInfo, setLoadingWeekendInfo] = useState(false);
 
   const ROLE_CONFIG = {
     team: [
@@ -370,6 +374,34 @@ export default function TeamList() {
       loadLatestTeam();
     }
   }, [currentGender, pescadoresLoading, orgId, allPescadores]);
+
+  // Load weekend information from weekend_history table
+  useEffect(() => {
+    if (weekendIdentifier && orgId) {
+      loadWeekendInfo();
+    }
+  }, [weekendIdentifier, orgId, currentGender]);
+
+  const loadWeekendInfo = async () => {
+    setLoadingWeekendInfo(true);
+    try {
+      const { data, error } = await supabase
+        .from('weekend_history')
+        .select('*')
+        .eq('weekend_identifier', weekendIdentifier)
+        .eq('org_id', orgId)
+        .eq('gender', currentGender)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+      setWeekendInfo(data);
+    } catch (error) {
+      console.error('Error loading weekend info:', error);
+      setWeekendInfo(null);
+    } finally {
+      setLoadingWeekendInfo(false);
+    }
+  };
 
   const loadLatestTeam = async () => {
     const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
@@ -1010,6 +1042,70 @@ export default function TeamList() {
     } finally {
       setIsCreatingNextWeekend(false);
     }
+  };
+
+  const renderWeekendInfoCard = () => {
+    if (!weekendIdentifier || loadingWeekendInfo || !weekendInfo) return null;
+
+    return (
+      <div className="card pad" style={{ marginBottom: '20px' }}>
+        <div className="small-card-header">Weekend Information</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', alignItems: 'start' }}>
+          {/* Left Column - Weekend Details */}
+          <div>
+            {weekendInfo.theme && (
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Theme</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--ink)' }}>{weekendInfo.theme}</div>
+              </div>
+            )}
+            
+            {weekendInfo.verse && (
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Scripture</div>
+                <div style={{ fontSize: '0.95rem', color: 'var(--ink)' }}>{weekendInfo.verse}</div>
+              </div>
+            )}
+            
+            {weekendInfo.theme_song && (
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Theme Song</div>
+                <div style={{ fontSize: '0.95rem', color: 'var(--ink)' }}>{weekendInfo.theme_song}</div>
+              </div>
+            )}
+            
+            {weekendInfo.start_date && weekendInfo.end_date && (
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Dates</div>
+                <div style={{ fontSize: '0.95rem', color: 'var(--ink)' }}>
+                  {new Date(weekendInfo.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - {new Date(weekendInfo.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Image */}
+          {weekendInfo.image && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <img 
+                src={weekendInfo.image} 
+                alt="Weekend Theme" 
+                style={{ 
+                  maxWidth: '100%',
+                  maxHeight: '200px',
+                  borderRadius: '8px',
+                  border: '2px solid var(--border)',
+                  cursor: 'pointer',
+                  objectFit: 'contain'
+                }}
+                onClick={() => window.open(weekendInfo.image, '_blank')}
+                title="Click to view full size"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const renderRectorSection = () => {
@@ -1935,6 +2031,7 @@ export default function TeamList() {
               </div>
             ) : (
               <>
+                {renderWeekendInfoCard()}
                 {renderRectorSection()}
                 {renderLeadershipSection()}
                 {renderProfessorSection()}
