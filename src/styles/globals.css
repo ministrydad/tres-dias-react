@@ -1107,7 +1107,6 @@ body.light-theme .toggle .opt.active {
 }
 
 .auth-status-bar {
-    background-color: var(--accentD);
     color: white;
     padding: 12px;
     border-radius: 8px;
@@ -1126,6 +1125,13 @@ body.light-theme .toggle .opt.active {
     transform: translateY(0);
 }
 
+.auth-status-bar.error {
+    background-color: var(--accentD); /* Red for errors */
+}
+
+.auth-status-bar.success {
+    background-color: var(--accentA); /* Green for success */
+}
 @media (max-width: 768px) {
     .auth-card {
         grid-template-columns: 1fr;
