@@ -382,6 +382,28 @@ export default function TeamList() {
     }
   }, [weekendIdentifier, orgId, currentGender]);
 
+  // Pre-fill form when opening in edit mode
+  useEffect(() => {
+    if (showSetupNextWeekend && weekendIdentifier && weekendInfo) {
+      // Edit mode - pre-fill with existing data
+      setNextWeekendTheme(weekendInfo.theme || '');
+      setNextWeekendVerse(weekendInfo.verse || '');
+      setNextWeekendThemeSong(weekendInfo.theme_song || '');
+      setNextWeekendStartDate(weekendInfo.start_date || '');
+      setNextWeekendEndDate(weekendInfo.end_date || '');
+      // Note: Image is already uploaded, we'll show it as existing
+    } else if (showSetupNextWeekend && !weekendIdentifier) {
+      // Create mode - ensure form is empty
+      setNextWeekendTheme('');
+      setNextWeekendVerse('');
+      setNextWeekendThemeSong('');
+      setNextWeekendStartDate('');
+      setNextWeekendEndDate('');
+      setNextWeekendImage(null);
+      setNextWeekendNumber('1');
+    }
+  }, [showSetupNextWeekend, weekendIdentifier, weekendInfo]);
+
   const loadWeekendInfo = async () => {
     setLoadingWeekendInfo(true);
     try {
@@ -916,38 +938,35 @@ export default function TeamList() {
   };
 
   const handleCreateNextWeekend = async () => {
-    // Determine if this is the first weekend or a subsequent one
-    const isFirstWeekend = !weekendIdentifier;
+    const isEditMode = weekendIdentifier && weekendInfo; // Editing existing weekend
+    const isFirstWeekend = !weekendIdentifier; // Creating first weekend from scratch
     
-    // Calculate next weekend details
+    // Calculate weekend details
     let nextWeekendNum, nextWeekendId, roverToPromote;
     
-    if (isFirstWeekend) {
+    if (isEditMode) {
+      // Edit mode - use existing weekend identifier
+      nextWeekendId = weekendIdentifier;
+      nextWeekendNum = parseInt(weekendIdentifier.match(/\d+/)?.[0] || '0', 10);
+      roverToPromote = null; // No roster changes when editing
+    } else if (isFirstWeekend) {
       // Creating first weekend - use custom number or default to 1
       nextWeekendNum = parseInt(nextWeekendNumber, 10) || 1;
       const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
       nextWeekendId = `${prefix}${nextWeekendNum}`;
       roverToPromote = null; // No rover to promote on first weekend
     } else {
-      // Creating next weekend - find Rover and increment
-      roverToPromote = teamRoster.find(m => m.role === 'Rover');
-      
-      if (!roverToPromote) {
-        window.showMainStatus?.('No Rover assigned to current team. Please assign a Rover first.', true);
-        return;
-      }
-      
-      const currentWeekendNum = parseInt(weekendIdentifier.match(/\d+/)?.[0] || '0', 10);
-      nextWeekendNum = currentWeekendNum + 1;
-      nextWeekendId = weekendIdentifier.replace(/\d+$/, nextWeekendNum.toString());
+      // This shouldn't happen, but keep for safety
+      window.showMainStatus?.('Unable to determine weekend mode', true);
+      return;
     }
 
     setIsCreatingNextWeekend(true);
 
     try {
-      let imageUrl = '';
+      let imageUrl = weekendInfo?.image || ''; // Keep existing image URL if no new upload
 
-      // Step 1: Upload image to Supabase Storage (if provided)
+      // Step 1: Upload image to Supabase Storage (if new image provided)
       if (nextWeekendImage) {
         const fileExt = nextWeekendImage.name.split('.').pop();
         const fileName = `${orgId}/${nextWeekendId.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExt}`;
@@ -972,51 +991,52 @@ export default function TeamList() {
         imageUrl = publicUrl;
       }
 
-      // Step 2: Insert into weekend_history
-      const { error: historyError } = await supabase
-        .from('weekend_history')
-        .insert({
-          org_id: orgId,
-          weekend_identifier: nextWeekendId,
-          weekend_number: nextWeekendNum,
-          gender: currentGender,
-          theme: nextWeekendTheme.trim(),
-          theme_song: nextWeekendThemeSong.trim(),
-          verse: nextWeekendVerse.trim(),
-          start_date: nextWeekendStartDate || null,
-          end_date: nextWeekendEndDate || null,
-          image: imageUrl
-        });
+      // Step 2: Insert or Update weekend_history
+      if (isEditMode) {
+        // UPDATE existing record
+        const { error: historyError } = await supabase
+          .from('weekend_history')
+          .update({
+            theme: nextWeekendTheme.trim(),
+            theme_song: nextWeekendThemeSong.trim(),
+            verse: nextWeekendVerse.trim(),
+            start_date: nextWeekendStartDate || null,
+            end_date: nextWeekendEndDate || null,
+            image: imageUrl
+          })
+          .eq('weekend_identifier', weekendIdentifier)
+          .eq('org_id', orgId)
+          .eq('gender', currentGender);
 
-      if (historyError) {
-        console.error('Weekend history insert error:', historyError);
-        throw new Error(`Failed to create weekend history: ${historyError.message}`);
-      }
+        if (historyError) {
+          console.error('Weekend history update error:', historyError);
+          throw new Error(`Failed to update weekend history: ${historyError.message}`);
+        }
 
-      // Step 3: If there's a Rover, promote to Rector in next weekend roster
-      if (roverToPromote) {
-        const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
-        
-        const { error: rosterError } = await supabase
-          .from(rosterTable)
+        window.showMainStatus?.(`✅ ${weekendIdentifier} updated successfully!`, false);
+      } else {
+        // INSERT new record
+        const { error: historyError } = await supabase
+          .from('weekend_history')
           .insert({
+            org_id: orgId,
             weekend_identifier: nextWeekendId,
-            role: 'Rector',
-            pescadore_key: roverToPromote.id,
-            org_id: orgId
+            weekend_number: nextWeekendNum,
+            gender: currentGender,
+            theme: nextWeekendTheme.trim(),
+            theme_song: nextWeekendThemeSong.trim(),
+            verse: nextWeekendVerse.trim(),
+            start_date: nextWeekendStartDate || null,
+            end_date: nextWeekendEndDate || null,
+            image: imageUrl
           });
 
-        if (rosterError) {
-          console.error('Roster insert error:', rosterError);
-          throw new Error(`Failed to assign Rector for next weekend: ${rosterError.message}`);
+        if (historyError) {
+          console.error('Weekend history insert error:', historyError);
+          throw new Error(`Failed to create weekend history: ${historyError.message}`);
         }
-        
-        window.showMainStatus?.(
-          `✅ ${nextWeekendId} created! ${roverToPromote.name} is now Rector.`,
-          false
-        );
-      } else {
-        // First weekend - no roster yet
+
+        // Step 3: If creating first weekend (no roster yet)
         window.showMainStatus?.(
           `✅ ${nextWeekendId} created! You can now build your team.`,
           false
@@ -1033,11 +1053,12 @@ export default function TeamList() {
       setNextWeekendImage(null);
       setNextWeekendNumber('1');
       
-      // Reload the team to show the new weekend
+      // Reload the team to show the new/updated weekend
       await loadLatestTeam();
+      await loadWeekendInfo(); // Reload weekend info to show updated data
 
     } catch (error) {
-      console.error('Error creating weekend:', error);
+      console.error('Error with weekend:', error);
       window.showMainStatus?.(`Error: ${error.message}`, true);
     } finally {
       setIsCreatingNextWeekend(false);
@@ -1662,10 +1683,10 @@ export default function TeamList() {
             <button 
               className="btn btn-primary" 
               onClick={() => setShowSetupNextWeekend(!showSetupNextWeekend)}
-              title='Setup theme, verse, and image for next weekend'
+              title={weekendIdentifier ? 'Edit weekend theme, verse, dates, and image' : 'Setup theme, verse, and image for first weekend'}
             >
               <HiCalendarDays size={16} style={{ marginRight: '6px' }} />
-              {showSetupNextWeekend ? 'Hide Setup' : (weekendIdentifier ? 'Setup Next Weekend' : 'Create First Weekend')}
+              {showSetupNextWeekend ? 'Hide Setup' : (weekendIdentifier ? 'Edit Weekend Data' : 'Create First Weekend')}
             </button>
             <button 
               className="btn btn-primary" 
@@ -1749,7 +1770,7 @@ export default function TeamList() {
                   color: 'var(--ink)',
                   marginBottom: '8px'
                 }}>
-                  Setup Next Weekend
+                  {weekendIdentifier ? `Edit Weekend Data` : `Setup First Weekend`}
                 </div>
                 {(() => {
                   if (!weekendIdentifier) {
@@ -1762,25 +1783,14 @@ export default function TeamList() {
                         Creating: <strong>{firstWeekendId}</strong>
                       </div>
                     );
+                  } else {
+                    // Edit mode - show which weekend is being edited
+                    return (
+                      <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+                        Editing: <strong>{weekendIdentifier}</strong>
+                      </div>
+                    );
                   }
-                  
-                  // Subsequent weekend with Rover promotion
-                  const rover = teamRoster.find(m => m.role === 'Rover');
-                  const currentWeekendNum = parseInt(weekendIdentifier.match(/\d+/)?.[0] || '0', 10);
-                  const nextWeekendNum = currentWeekendNum + 1;
-                  const nextWeekendId = weekendIdentifier.replace(/\d+$/, nextWeekendNum.toString());
-                  
-                  return (
-                    <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-                      {rover ? (
-                        <>
-                          <strong>{rover.name}</strong> (current Rover) will become <strong>Rector</strong> for <strong>{nextWeekendId}</strong>
-                        </>
-                      ) : (
-                        <span style={{ color: '#dc3545' }}>⚠️ No Rover assigned to current team</span>
-                      )}
-                    </div>
-                  );
                 })()}
               </div>
               <button 
@@ -1800,9 +1810,9 @@ export default function TeamList() {
             }}>
               {/* Left Column */}
               <div>
-                {/* Weekend Number field - ONLY shown when creating first weekend */}
+                {/* Weekend Number field - ONLY shown when creating first weekend - FULL WIDTH */}
                 {!weekendIdentifier && (
-                  <div className="field">
+                  <div className="field" style={{ marginBottom: '20px' }}>
                     <label className="label">Weekend Number *</label>
                     <input
                       type="number"
@@ -1819,66 +1829,69 @@ export default function TeamList() {
                   </div>
                 )}
                 
-                <div className="field">
-                  <label className="label">Weekend Theme *</label>
-                  <input
-                    type="text"
-                    className="input"
-                    placeholder="e.g., Stand Firm"
-                    value={nextWeekendTheme}
-                    onChange={(e) => setNextWeekendTheme(e.target.value)}
-                  />
-                </div>
-                
-                <div className="field">
-                  <label className="label">Scripture Verse *</label>
-                  <input
-                    type="text"
-                    className="input"
-                    placeholder="e.g., John 3:16"
-                    value={nextWeekendVerse}
-                    onChange={(e) => setNextWeekendVerse(e.target.value)}
-                  />
-                </div>
-
-                <div className="field">
-                  <label className="label">Theme Song</label>
-                  <input
-                    type="text"
-                    className="input"
-                    placeholder="e.g., Amazing Grace"
-                    value={nextWeekendThemeSong}
-                    onChange={(e) => setNextWeekendThemeSong(e.target.value)}
-                  />
-                </div>
-
-                <div className="field">
-                  <label className="label">Start Date</label>
-                  <DatePicker
-                    value={nextWeekendStartDate}
-                    onChange={(dateValue) => {
-                      setNextWeekendStartDate(dateValue);
-                      // Auto-calculate end date (4 days after start)
-                      if (dateValue) {
-                        const start = new Date(dateValue);
-                        start.setDate(start.getDate() + 4);
-                        setNextWeekendEndDate(start.toISOString().split('T')[0]);
-                      }
-                    }}
-                    placeholder="Select start date"
-                  />
-                  <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
-                    End date will auto-calculate to 4 days later
+                {/* 2-Column Grid for Text Fields */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="field">
+                    <label className="label">Weekend Theme *</label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="e.g., Stand Firm"
+                      value={nextWeekendTheme}
+                      onChange={(e) => setNextWeekendTheme(e.target.value)}
+                    />
                   </div>
-                </div>
+                  
+                  <div className="field">
+                    <label className="label">Scripture Verse *</label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="e.g., John 3:16"
+                      value={nextWeekendVerse}
+                      onChange={(e) => setNextWeekendVerse(e.target.value)}
+                    />
+                  </div>
 
-                <div className="field">
-                  <label className="label">End Date</label>
-                  <DatePicker
-                    value={nextWeekendEndDate}
-                    onChange={(dateValue) => setNextWeekendEndDate(dateValue)}
-                    placeholder="Select end date"
-                  />
+                  <div className="field">
+                    <label className="label">Theme Song</label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="e.g., Amazing Grace"
+                      value={nextWeekendThemeSong}
+                      onChange={(e) => setNextWeekendThemeSong(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label className="label">Start Date</label>
+                    <DatePicker
+                      value={nextWeekendStartDate}
+                      onChange={(dateValue) => {
+                        setNextWeekendStartDate(dateValue);
+                        // Auto-calculate end date (4 days after start)
+                        if (dateValue) {
+                          const start = new Date(dateValue);
+                          start.setDate(start.getDate() + 4);
+                          setNextWeekendEndDate(start.toISOString().split('T')[0]);
+                        }
+                      }}
+                      placeholder="Select start date"
+                    />
+                    <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
+                      Auto-fills end date (+4 days)
+                    </div>
+                  </div>
+
+                  <div className="field" style={{ gridColumn: 'span 1' }}>
+                    <label className="label">End Date</label>
+                    <DatePicker
+                      value={nextWeekendEndDate}
+                      onChange={(dateValue) => setNextWeekendEndDate(dateValue)}
+                      placeholder="Select end date"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1929,7 +1942,7 @@ export default function TeamList() {
                       }}
                       style={{ display: 'none' }}
                     />
-                    {!nextWeekendImage ? (
+                    {!nextWeekendImage && !weekendInfo?.image ? (
                       <>
                         <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📷</div>
                         <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '4px', color: 'var(--ink)' }}>
@@ -1939,14 +1952,14 @@ export default function TeamList() {
                           JPG, PNG, or WebP • Max 5MB
                         </div>
                       </>
-                    ) : (
+                    ) : nextWeekendImage ? (
                       <>
                         <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✓</div>
                         <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--accentA)' }}>
                           {nextWeekendImage.name}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
-                          {(nextWeekendImage.size / 1024).toFixed(1)} KB
+                          {(nextWeekendImage.size / 1024).toFixed(1)} KB (New Upload)
                         </div>
                         <button
                           className="btn btn-small"
@@ -1961,10 +1974,29 @@ export default function TeamList() {
                             fontSize: '0.75rem'
                           }}
                         >
-                          Remove
+                          Remove New Image
                         </button>
                       </>
-                    )}
+                    ) : weekendInfo?.image ? (
+                      <>
+                        <img 
+                          src={weekendInfo.image} 
+                          alt="Current" 
+                          style={{ 
+                            maxWidth: '150px',
+                            maxHeight: '150px',
+                            borderRadius: '4px',
+                            marginBottom: '8px'
+                          }}
+                        />
+                        <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--ink)' }}>
+                          Current Image
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '4px' }}>
+                          Click to upload a new image
+                        </div>
+                      </>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -2006,7 +2038,10 @@ export default function TeamList() {
                   borderColor: '#28a745'
                 }}
               >
-                {isCreatingNextWeekend ? 'Creating...' : (weekendIdentifier ? 'Create Next Weekend' : 'Create First Weekend')}
+                {isCreatingNextWeekend 
+                  ? (weekendIdentifier ? 'Saving...' : 'Creating...') 
+                  : (weekendIdentifier ? 'Save Changes' : 'Create First Weekend')
+                }
               </button>
             </div>
           </div>
