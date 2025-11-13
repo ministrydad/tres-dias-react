@@ -701,15 +701,19 @@ export default function SecretariatDashboard() {
               <div className="section-title" style={{ borderBottom: 'none', marginBottom: 0, paddingBottom: 0 }}>
                 Weekend History
               </div>
-              {calculateActiveWeekend() && (
-                <button 
-                  className="btn btn-primary"
-                  onClick={() => setShowCloseOutModal(true)}
-                  style={{ fontSize: '0.9rem' }}
-                >
-                  Close Out Weekend
-                </button>
-              )}
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowCloseOutModal(true)}
+                disabled={!calculateActiveWeekend()}
+                style={{ 
+                  fontSize: '0.9rem',
+                  opacity: !calculateActiveWeekend() ? 0.5 : 1,
+                  cursor: !calculateActiveWeekend() ? 'not-allowed' : 'pointer'
+                }}
+                title={!calculateActiveWeekend() ? 'No active weekend to close out' : 'Close out the current active weekend'}
+              >
+                Close Out Weekend
+              </button>
             </div>
             <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: 0, marginBottom: '20px' }}>
               A historical record of past weekends. Click a row to expand and see details for the Men's and Women's weekends.
