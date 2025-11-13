@@ -178,17 +178,17 @@ export function AuthProvider({ children }) {
       
       console.log('🔧 Step 3: Setting user state...');
       
-     setUser({
-  ...authUser,
-  full_name: membership.profiles?.full_name,
-  display_name: membership.profiles?.display_name,
-  email: membership.profiles?.email || authUser.email,
-  role: membership.role,  // ← ADD THIS LINE
-  organization: {
-    id: membership.org_id,
-    name: orgData?.name || 'Team Tools Pro'
-  }
-});
+      setUser({
+        ...authUser,
+        full_name: membership.profiles?.full_name,
+        display_name: membership.profiles?.display_name,
+        email: membership.profiles?.email || authUser.email,
+        role: membership.role,
+        organization: {
+          id: membership.org_id,
+          name: orgData?.name || 'Team Tools Pro'
+        }
+      });
       
       console.log('✅ User initialization complete');
       setLoading(false);
@@ -220,35 +220,27 @@ export function AuthProvider({ children }) {
   };
 
   const signup = async (email, password, fullName, orgName) => {
+    console.log('🆕 Starting signup process via Edge Function...');
     isRefreshLogoutRef.current = false;
     isInitializedRef.current = false;
-    const { data: authData, error: authError } = await supabase.auth.signUp({ 
-      email, 
-      password 
+    
+    // Call the signup Edge Function
+    const { data, error } = await supabase.functions.invoke('signup', {
+      body: { email, password, fullName, orgName }
     });
-    if (authError) throw authError;
-
-    const user = authData.user;
-    if (!user) throw new Error('Sign up failed');
-
-    const { data: orgData, error: orgError } = await supabase
-      .from('organizations')
-      .insert({ name: orgName, created_by: user.id })
-      .select()
-      .single();
-    if (orgError) throw orgError;
-
-    await supabase.from('profiles').insert({ 
-      user_id: user.id, 
-      full_name: fullName, 
-      email: user.email 
-    });
-
-    await supabase.from('memberships').insert({ 
-      user_id: user.id, 
-      org_id: orgData.id, 
-      role: 'owner' 
-    });
+    
+    if (error) {
+      console.error('❌ Signup Edge Function error:', error);
+      throw new Error(error.message || 'Signup failed');
+    }
+    
+    if (data?.error) {
+      console.error('❌ Signup failed:', data.error);
+      throw new Error(data.error);
+    }
+    
+    console.log('✅ Signup successful:', data);
+    console.log('🎉 Account created! User can now log in.');
   };
 
   const logout = async () => {
