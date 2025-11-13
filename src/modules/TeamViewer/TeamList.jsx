@@ -455,11 +455,33 @@ export default function TeamList() {
       });
 
       if (latest.identifier) {
+        // Found a team roster - use it
         setWeekendIdentifier(latest.identifier);
         await loadTeamRoster(latest.identifier);
       } else {
-        setWeekendIdentifier('');
-        setTeamRoster([]);
+        // No team roster found - check weekend_history table instead
+        console.log('📋 No team roster found, checking weekend_history...');
+        const { data: weekendHistoryData, error: historyError } = await supabase
+          .from('weekend_history')
+          .select('weekend_identifier, weekend_number')
+          .eq('org_id', orgId)
+          .eq('gender', currentGender)
+          .order('weekend_number', { ascending: false })
+          .limit(1);
+
+        if (historyError) throw historyError;
+
+        if (weekendHistoryData && weekendHistoryData.length > 0) {
+          // Found a weekend in history - use it (even though there's no team yet)
+          console.log('✅ Found weekend in history:', weekendHistoryData[0].weekend_identifier);
+          setWeekendIdentifier(weekendHistoryData[0].weekend_identifier);
+          setTeamRoster([]); // Empty roster
+        } else {
+          // No weekend exists at all
+          console.log('⚠️ No weekend found in roster or history');
+          setWeekendIdentifier('');
+          setTeamRoster([]);
+        }
         setLoadingTeam(false);
       }
     } catch (error) {
