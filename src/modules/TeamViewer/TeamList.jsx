@@ -405,6 +405,7 @@ export default function TeamList() {
   }, [showSetupNextWeekend, weekendIdentifier, weekendInfo]);
 
   const loadWeekendInfo = async () => {
+    console.log('🔍 loadWeekendInfo called with:', { weekendIdentifier, orgId, currentGender });
     setLoadingWeekendInfo(true);
     try {
       const { data, error } = await supabase
@@ -415,10 +416,13 @@ export default function TeamList() {
         .eq('gender', currentGender)
         .single();
 
+      console.log('📊 Weekend history query result:', { data, error });
+
       if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
       setWeekendInfo(data);
+      console.log('✅ Weekend info set to:', data);
     } catch (error) {
-      console.error('Error loading weekend info:', error);
+      console.error('❌ Error loading weekend info:', error);
       setWeekendInfo(null);
     } finally {
       setLoadingWeekendInfo(false);
@@ -1066,6 +1070,13 @@ export default function TeamList() {
   };
 
   const renderWeekendInfoCard = () => {
+    console.log('🎨 renderWeekendInfoCard called:', { 
+      weekendIdentifier, 
+      loadingWeekendInfo, 
+      hasWeekendInfo: !!weekendInfo,
+      weekendInfo 
+    });
+    
     if (!weekendIdentifier || loadingWeekendInfo || !weekendInfo) return null;
 
     return (
