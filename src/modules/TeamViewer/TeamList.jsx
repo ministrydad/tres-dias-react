@@ -239,7 +239,12 @@ const TeamRosterPDFDocument = ({ weekendIdentifier, teamMembers, roleOrder }) =>
 export default function TeamList() {
   const { user, orgId } = useAuth();
  const { 
-  allPescadores, loading: pescadoresLoading,setActiveTeamIdentifier,setActiveTeamRoster 
+  allPescadores,
+  loading: pescadoresLoading,
+  activeTeamIdentifier,      
+  setActiveTeamIdentifier,
+  activeTeamRoster,          
+  setActiveTeamRoster 
 } = usePescadores();
 
 // 🔍 DEBUG - CHECK CONTEXT
