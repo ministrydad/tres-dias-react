@@ -553,6 +553,69 @@ const {
     performSearch();
   }, [allPescadores, currentGender, searchTerm, primaryFilter, excludePriorHeads, secondarySort]);
 
+
+
+// Auto-load latest weekend if none is active
+useEffect(() => {
+  const loadLatestWeekend = async () => {
+    if (!orgId || activeTeamIdentifier || loading) return; // Already have one, skip
+    
+    console.log('🔄 Directory: No active weekend, loading latest...');
+    
+    try {
+      const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
+      
+      const { data: teams, error } = await supabase
+        .from(rosterTable)
+        .select('weekend_identifier')
+        .eq('org_id', orgId);
+      
+      if (error) throw error;
+
+      const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
+      let latest = { number: 0, identifier: null };
+
+      (teams || []).forEach(team => {
+        const idStr = (team.weekend_identifier || '').trim();
+        if (idStr.startsWith(prefix)) {
+          const num = parseInt(idStr.match(/\d+/)?.[0] || '0', 10);
+          if (num > latest.number) {
+            latest = { number: num, identifier: idStr };
+          }
+        }
+      });
+
+      if (latest.identifier) {
+        console.log('✅ Directory auto-loaded:', latest.identifier);
+        setActiveTeamIdentifier(latest.identifier);
+        // Don't load roster yet - let openRoleSelector do that on-demand
+      } else {
+        // Check weekend_history as fallback
+        const { data: historyData, error: historyError } = await supabase
+          .from('weekend_history')
+          .select('weekend_identifier')
+          .eq('org_id', orgId)
+          .eq('gender', currentGender)
+          .order('weekend_number', { ascending: false })
+          .limit(1);
+        
+        if (historyError) throw historyError;
+        
+        if (historyData && historyData.length > 0) {
+          console.log('✅ Directory auto-loaded from history:', historyData[0].weekend_identifier);
+          setActiveTeamIdentifier(historyData[0].weekend_identifier);
+        }
+      }
+    } catch (error) {
+      console.error('Error auto-loading weekend in Directory:', error);
+    }
+  };
+  
+  loadLatestWeekend();
+}, [orgId, currentGender, activeTeamIdentifier, loading, setActiveTeamIdentifier]);
+
+
+
   // Load community name from app_settings
   useEffect(() => {
     const loadCommunityName = async () => {
