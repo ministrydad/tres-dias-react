@@ -2,6 +2,7 @@
 // Shared cache for men_raw and women_raw data
 // Prevents re-fetching on every navigation
 // UPDATED: Added timeout protection to prevent infinite loading
+// UPDATED: Added shared team state (activeTeamIdentifier, activeTeamRoster)
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
@@ -15,6 +16,10 @@ export function PescadoresProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [lastFetched, setLastFetched] = useState(null);
   const [error, setError] = useState(null);
+  
+  // Shared team state - used by TeamList and Directory
+  const [activeTeamIdentifier, setActiveTeamIdentifier] = useState('');
+  const [activeTeamRoster, setActiveTeamRoster] = useState([]);
 
   // Fetch data ONCE on mount or when orgId changes
   useEffect(() => {
@@ -190,7 +195,12 @@ export function PescadoresProvider({ children }) {
     lastFetched,
     refreshData,
     isStale,
-    updatePersonInCache
+    updatePersonInCache,
+    // Shared team state
+    activeTeamIdentifier,
+    setActiveTeamIdentifier,
+    activeTeamRoster,
+    setActiveTeamRoster
   };
 
   return (
