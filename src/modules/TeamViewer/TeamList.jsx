@@ -248,10 +248,18 @@ export default function TeamList() {
 } = usePescadores();
 
 // 🔍 DEBUG - CHECK CONTEXT
-  console.log('🔍 DIRECTORY MOUNTED - Context has:', {
+console.log('🔍 TEAMLIST MOUNTED - Context has:', {
+  activeTeamIdentifier,
+  rosterLength: activeTeamRoster?.length || 0
+});
+
+// Also log when it changes
+useEffect(() => {
+  console.log('🔍 TEAMLIST - Context updated:', {
     activeTeamIdentifier,
     rosterLength: activeTeamRoster?.length || 0
   });
+}, [activeTeamIdentifier, activeTeamRoster]);
 
   const [currentGender, setCurrentGender] = useState('men');
   const [weekendIdentifier, setWeekendIdentifier] = useState('');
