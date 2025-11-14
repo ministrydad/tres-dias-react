@@ -239,11 +239,15 @@ const TeamRosterPDFDocument = ({ weekendIdentifier, teamMembers, roleOrder }) =>
 export default function TeamList() {
   const { user, orgId } = useAuth();
  const { 
-  allPescadores, 
-  loading: pescadoresLoading,
-  setActiveTeamIdentifier,
-  setActiveTeamRoster 
+  allPescadores, loading: pescadoresLoading,setActiveTeamIdentifier,setActiveTeamRoster 
 } = usePescadores();
+
+// 🔍 DEBUG - CHECK CONTEXT
+  console.log('🔍 DIRECTORY MOUNTED - Context has:', {
+    activeTeamIdentifier,
+    rosterLength: activeTeamRoster?.length || 0
+  });
+
   const [currentGender, setCurrentGender] = useState('men');
   const [weekendIdentifier, setWeekendIdentifier] = useState('');
   const [teamRoster, setTeamRoster] = useState([]);
