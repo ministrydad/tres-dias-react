@@ -238,7 +238,12 @@ const TeamRosterPDFDocument = ({ weekendIdentifier, teamMembers, roleOrder }) =>
 
 export default function TeamList() {
   const { user, orgId } = useAuth();
-  const { allPescadores, loading: pescadoresLoading } = usePescadores();
+ const { 
+  allPescadores, 
+  loading: pescadoresLoading,
+  setActiveTeamIdentifier,
+  setActiveTeamRoster 
+} = usePescadores();
   const [currentGender, setCurrentGender] = useState('men');
   const [weekendIdentifier, setWeekendIdentifier] = useState('');
   const [teamRoster, setTeamRoster] = useState([]);
@@ -525,6 +530,12 @@ export default function TeamList() {
       }
 
       setTeamRoster(newRoster);
+      
+      // ✅ SAVE TO CONTEXT for Directory to access
+      setActiveTeamIdentifier(identifier);
+      setActiveTeamRoster(newRoster);
+      console.log('✅ Saved to context:', identifier, newRoster.length, 'members');
+      
     } catch (error) {
       console.error('Error loading team roster:', error);
       setTeamRoster([]);
@@ -532,7 +543,6 @@ export default function TeamList() {
       setLoadingTeam(false);
     }
   };
-
   const toggleRowExpansion = (personId) => {
     setExpandedRows(prev => {
       const newSet = new Set(prev);
