@@ -533,15 +533,6 @@ export default function Directory() {
   const [communityName, setCommunityName] = useState('');
   const controlsCardRef = useRef(null);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(-1);
-  
-  // Team management state
-  const [activeTeamIdentifier, setActiveTeamIdentifier] = useState('');
-  const [activeTeamRoster, setActiveTeamRoster] = useState([]);
-  const [loadingTeam, setLoadingTeam] = useState(false);
-  
-  // Role selector panel state
-  const [roleSelectorOpen, setRoleSelectorOpen] = useState(false);
-
   const primaryDropdownRef = useRef(null);
   const secondaryDropdownRef = useRef(null);
 
@@ -583,22 +574,6 @@ export default function Directory() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
-
-  useEffect(() => {
-  if (orgId && activeTeamIdentifier) {
-    // Check for 'women' FIRST (before 'men') to avoid substring match
-    const genderFromIdentifier = activeTeamIdentifier.toLowerCase().includes('women') 
-      ? 'women' 
-      : activeTeamIdentifier.toLowerCase().includes('men')
-      ? 'men'
-      : null;
-    
-    if (genderFromIdentifier && genderFromIdentifier !== currentGender) {
-      setActiveTeamIdentifier('');
-      setActiveTeamRoster([]);
-    }
-  }
-}, [currentGender, activeTeamIdentifier, orgId]);
 
  function performSearch() {
   let data = [...allPescadores[currentGender]];
@@ -918,105 +893,6 @@ export default function Directory() {
     return count;
   }
 
-  async function handleManageLatestWeekend() {
-    setLoadingTeam(true);
-    try {
-      const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
-      
-      const { data: teams, error } = await supabase
-        .from(rosterTable)
-        .select('weekend_identifier')
-        .eq('org_id', orgId);
-      
-      if (error) throw error;
-
-      const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
-      let latest = { number: 0, identifier: null };
-
-      (teams || []).forEach(team => {
-        const idStr = (team.weekend_identifier || '').trim();
-        if (idStr.startsWith(prefix)) {
-          const num = parseInt(idStr.match(/\d+/)?.[0] || '0', 10);
-          if (num > latest.number) {
-            latest = { number: num, identifier: idStr };
-          }
-        }
-      });
-
-      if (latest.identifier) {
-        const { data: roster, error: rosterError } = await supabase
-          .from(rosterTable)
-          .select('*')
-          .eq('weekend_identifier', latest.identifier)
-          .eq('org_id', orgId);
-        
-        if (rosterError) throw rosterError;
-
-        setActiveTeamIdentifier(latest.identifier);
-        setActiveTeamRoster(roster || []);
-        window.showMainStatus(`Loaded ${latest.identifier} - ${(roster || []).length} members`, false);
-      } else {
-        window.showMainStatus(`No ${currentGender}'s team found. Create one in Team List first.`, true);
-      }
-    } catch (error) {
-      console.error('Error loading latest team:', error);
-      window.showMainStatus(`Error loading team: ${error.message}`, true);
-    } finally {
-      setLoadingTeam(false);
-    }
-  }
-
-  async function assignRole(roleName) {
-    if (!activeTeamIdentifier) {
-      window.showMainStatus('Please load a team first using "Manage Latest Weekend"', true);
-      return;
-    }
-
-    if (!currentProfile) return;
-
-    const existing = activeTeamRoster.find(
-      m => m.pescadore_key === currentProfile.PescadoreKey && m.role === roleName
-    );
-    
-    if (existing) {
-      window.showMainStatus(
-        `${currentProfile.Preferred || currentProfile.First} is already assigned as ${roleName}`,
-        true
-      );
-      return;
-    }
-
-    try {
-      const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
-      
-      const { data, error } = await supabase
-        .from(rosterTable)
-        .insert({
-          weekend_identifier: activeTeamIdentifier,
-          role: roleName,
-          pescadore_key: currentProfile.PescadoreKey,
-          org_id: orgId
-        })
-        .select();
-      
-      if (error) throw error;
-
-      setActiveTeamRoster([...activeTeamRoster, data[0]]);
-      
-      window.showMainStatus(
-        `${currentProfile.Preferred || currentProfile.First} added as ${roleName}`,
-        false
-      );
-    } catch (error) {
-      console.error('Error assigning role:', error);
-      window.showMainStatus(`Error: ${error.message}`, true);
-    }
-  }
-
-  function getRoleCount(roleName) {
-    return activeTeamRoster.filter(m => m.role === roleName).length;
-  }
-
   function handleSearch() {
     performSearch();
   }
@@ -1048,21 +924,7 @@ export default function Directory() {
     }
   }
 
-  function openRoleSelector() {
-    console.log('openRoleSelector called, activeTeamIdentifier:', activeTeamIdentifier);
-    if (!activeTeamIdentifier) {
-      window.showMainStatus('Please load a team first using "Manage Latest Weekend"', true);
-      return;
-    }
-    console.log('Setting roleSelectorOpen to true');
-    setRoleSelectorOpen(true);
-  }
-
-  function closeRoleSelector() {
-    setRoleSelectorOpen(false);
-  }
-
-  function toggleDropdown(ref) {
+    function toggleDropdown(ref) {
     const dropdown = ref.current;
     if (!dropdown) return;
     
@@ -1375,26 +1237,7 @@ export default function Directory() {
                     >
                       {searchTerm.trim() || primaryFilter ? 'Generate PDF' : 'Show Print Options'}
                     </button>
-                    <button 
-                      className="view-team-button" 
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        gap: '8px',
-                        flex: '0.75 1 100px'
-                      }}
-                      onClick={handleManageLatestWeekend}
-                      disabled={loadingTeam}
-                    >
-                      {loadingTeam ? 'Loading...' : 'Manage Latest Weekend'}
-                      {activeTeamRoster.length > 0 && (
-                        <span className="team-count-badge" style={{ display: 'inline-block' }}>
-                          {activeTeamRoster.length}
-                        </span>
-                      )}
-                    </button>
-                  </div>
+                   </div>
                 </div>
               </div>
             </div>
@@ -1571,7 +1414,7 @@ export default function Directory() {
           <div className="card pad">
               <div className="directory-header">
                 <h2 className="directory-title" id="directoryTitle">
-                  {activeTeamIdentifier ? `Directory - ${activeTeamIdentifier}` : 'Directory'}
+                 Directory
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <span className="directory-count">
@@ -1738,20 +1581,15 @@ export default function Directory() {
 
         {currentView === 'profile' && currentProfile && (
           <ProfileView 
-            profile={currentProfile}
-            index={currentProfileIndex}
-            total={filteredPescadores.length}
-            onBack={showDirectory}
-            onNavigate={navigateProfile}
-            getRectorQualificationStatus={getRectorQualificationStatus}
-            activeTeamIdentifier={activeTeamIdentifier}
-            roleSelectorOpen={roleSelectorOpen}
-            onOpenRoleSelector={openRoleSelector}
-            onCloseRoleSelector={closeRoleSelector}
-            onAssignRole={assignRole}
-            getRoleCount={getRoleCount}
-            currentGender={currentGender}
-          />
+  profile={currentProfile}
+  index={currentProfileIndex}
+  total={filteredPescadores.length}
+  onBack={showDirectory}
+  onNavigate={navigateProfile}
+  getRectorQualificationStatus={getRectorQualificationStatus}
+  currentGender={currentGender}
+  onProfileUpdate={refreshData}
+/>
         )}
 
       </div>
@@ -1771,14 +1609,8 @@ function ProfileView({
   onBack, 
   onNavigate, 
   getRectorQualificationStatus,
-  activeTeamIdentifier,
-  roleSelectorOpen,
-  onOpenRoleSelector,
-  onCloseRoleSelector,
-  onAssignRole,
-  getRoleCount,
-  currentGender,      // ← ADDED: Need this for save
-  onProfileUpdate     // ← ADDED: Callback after save
+  currentGender,
+  onProfileUpdate
 }) {
   const { orgId } = useAuth();
   const { refreshData } = usePescadores();
@@ -2022,13 +1854,7 @@ function ProfileView({
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button className="print-button" onClick={() => window.print()}>Print Profile</button>
-          <button 
-            className="view-team-button" 
-            onClick={onOpenRoleSelector}
-          >
-            Add to Team
-          </button>
-        </div>
+          </div>
       </div>
 
       <div style={{ 
@@ -2036,13 +1862,7 @@ function ProfileView({
         gap: '16px',
         alignItems: 'flex-start'
       }}>
-        <div 
-          style={{ 
-            width: roleSelectorOpen ? '70%' : '100%',
-            transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            minWidth: 0
-          }}
-        >
+        <div style={{ width: '100%' }}>
           <div id="profileContainer" className="profile-container">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className={`card pad profile-main-info${isEditMode ? ' edit-mode' : ''}`} style={{ position: 'relative' }}>
@@ -2358,26 +2178,7 @@ function ProfileView({
 )}
         </div>
 
-        {roleSelectorOpen && (
-          <div 
-            className="card pad role-selector-slide-in"
-            style={{
-              width: '30%',
-              minWidth: 0,
-              height: 'fit-content',
-              position: 'sticky',
-              top: '16px'
-            }}
-          >
-            <RoleSelectorPanel 
-              onClose={onCloseRoleSelector}
-              onAssignRole={onAssignRole}
-              getRoleCount={getRoleCount}
-              activeTeamIdentifier={activeTeamIdentifier}
-            />
-          </div>
-        )}
-
+       
       {/* Password Modal */}
       {showPasswordModal && (
         <div className="password-modal" style={{
@@ -2454,195 +2255,6 @@ function ProfileView({
           </div>
         </div>
       )}
-      </div>
-    </div>
-  );
-}
-
-function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIdentifier }) {
-  const teamRowsNeeded = Math.ceil(ROLE_CONFIG.team.length / 4);
-  const profRowsNeeded = Math.ceil(ROLE_CONFIG.professor.length / 4);
-
-  return (
-    <div>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '16px',
-        paddingBottom: '12px',
-        borderBottom: '1px solid var(--border)'
-      }}>
-        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Assign Role</h3>
-        <button 
-          onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '24px',
-            cursor: 'pointer',
-            color: 'var(--muted)',
-            lineHeight: '1',
-            padding: '0',
-            width: '24px',
-            height: '24px'
-          }}
-        >
-          ×
-        </button>
-      </div>
-
-      {activeTeamIdentifier && (
-        <div style={{ 
-          fontSize: '0.85rem', 
-          color: 'var(--muted)', 
-          marginBottom: '16px',
-          padding: '8px',
-          background: 'var(--surface)',
-          borderRadius: '6px'
-        }}>
-          Adding to: <strong>{activeTeamIdentifier}</strong>
-        </div>
-      )}
-
-      <div style={{ marginBottom: '24px' }}>
-        <h4 style={{ 
-          margin: '0 0 12px 0', 
-          fontSize: '0.9rem', 
-          fontWeight: '600',
-          color: 'var(--ink)'
-        }}>
-          Team Roles
-        </h4>
-        <div 
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gridTemplateRows: `repeat(${teamRowsNeeded}, auto)`,
-            gridAutoFlow: 'column',
-            gap: '8px'
-          }}
-        >
-          {ROLE_CONFIG.team.map(role => {
-            const count = getRoleCount(role.name);
-            return (
-              <button
-                key={role.key}
-                onClick={() => onAssignRole(role.name)}
-                style={{
-                  padding: '8px 10px',
-                  fontSize: '0.75rem',
-                  border: '1px solid var(--border)',
-                  borderRadius: '6px',
-                  background: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '4px',
-                  transition: 'all 0.2s ease',
-                  textAlign: 'left'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--surface)';
-                  e.currentTarget.style.borderColor = 'var(--accentB)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'white';
-                  e.currentTarget.style.borderColor = 'var(--border)';
-                }}
-              >
-                <span style={{ flex: '1', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {role.name}
-                </span>
-                {count > 0 && (
-                  <span style={{
-                    background: '#2ea44f',
-                    color: 'white',
-                    borderRadius: '999px',
-                    padding: '2px 6px',
-                    fontSize: '0.7rem',
-                    fontWeight: '600',
-                    minWidth: '20px',
-                    textAlign: 'center'
-                  }}>
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div>
-        <h4 style={{ 
-          margin: '0 0 12px 0', 
-          fontSize: '0.9rem', 
-          fontWeight: '600',
-          color: 'var(--ink)'
-        }}>
-          Professor Roles
-        </h4>
-        <div 
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gridTemplateRows: `repeat(${profRowsNeeded}, auto)`,
-            gridAutoFlow: 'column',
-            gap: '8px'
-          }}
-        >
-          {ROLE_CONFIG.professor.map(role => {
-            const count = getRoleCount(role.name);
-            return (
-              <button
-                key={role.key}
-                onClick={() => onAssignRole(role.name)}
-                style={{
-                  padding: '8px 10px',
-                  fontSize: '0.75rem',
-                  border: '1px solid var(--border)',
-                  borderRadius: '6px',
-                  background: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '4px',
-                  transition: 'all 0.2s ease',
-                  textAlign: 'left'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--surface)';
-                  e.currentTarget.style.borderColor = 'var(--accentB)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'white';
-                  e.currentTarget.style.borderColor = 'var(--border)';
-                }}
-              >
-                <span style={{ flex: '1', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {role.name}
-                </span>
-                {count > 0 && (
-                  <span style={{
-                    background: '#2ea44f',
-                    color: 'white',
-                    borderRadius: '999px',
-                    padding: '2px 6px',
-                    fontSize: '0.7rem',
-                    fontWeight: '600',
-                    minWidth: '20px',
-                    textAlign: 'center'
-                  }}>
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
       </div>
     </div>
   );

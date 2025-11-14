@@ -1103,6 +1103,34 @@ export default function TeamList() {
 
     return (
       <div className="card pad" style={{ marginBottom: '20px' }}>
+        {/* Active Weekend Header - Prominent Display */}
+        <div style={{
+          backgroundColor: 'var(--accentB)',
+          color: 'white',
+          padding: '16px',
+          borderRadius: '6px',
+          marginBottom: '20px',
+          textAlign: 'center'
+        }}>
+          <div style={{ 
+            fontSize: '0.75rem', 
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+            opacity: 0.9,
+            marginBottom: '6px'
+          }}>
+            Active Weekend
+          </div>
+          <div style={{ 
+            fontSize: '1.8rem', 
+            fontWeight: 700,
+            letterSpacing: '0.5px'
+          }}>
+            {weekendIdentifier}
+          </div>
+        </div>
+
         <div className="small-card-header">Weekend Information</div>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', alignItems: 'start' }}>
           {/* Left Column - Weekend Details */}
