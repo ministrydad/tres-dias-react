@@ -505,7 +505,15 @@ const WeekendRosterPDFDocument = ({ teamMembers, candidates, weekendNumber }) =>
 export default function Directory() {
   const { orgId } = useAuth();
   
-  const { allPescadores, loading, refreshData } = usePescadores();
+const { 
+  allPescadores, 
+  loading, 
+  refreshData,
+  activeTeamIdentifier,
+  setActiveTeamIdentifier,
+  activeTeamRoster,
+  setActiveTeamRoster
+} = usePescadores();
   
   const [filteredPescadores, setFilteredPescadores] = useState([]);
   const [currentGender, setCurrentGender] = useState('men');
@@ -534,8 +542,6 @@ export default function Directory() {
   const controlsCardRef = useRef(null);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(-1);
   
- const [activeTeamIdentifier, setActiveTeamIdentifier] = useState('');
-  const [activeTeamRoster, setActiveTeamRoster] = useState([]);
   
   // Role selector panel state
   const [roleSelectorOpen, setRoleSelectorOpen] = useState(false);
@@ -584,7 +590,6 @@ export default function Directory() {
 
   useEffect(() => {
   if (orgId && activeTeamIdentifier) {
-    // Check for 'women' FIRST (before 'men') to avoid substring match
     const genderFromIdentifier = activeTeamIdentifier.toLowerCase().includes('women') 
       ? 'women' 
       : activeTeamIdentifier.toLowerCase().includes('men')
@@ -596,7 +601,7 @@ export default function Directory() {
       setActiveTeamRoster([]);
     }
   }
-}, [currentGender, activeTeamIdentifier, orgId]);
+}, [currentGender, activeTeamIdentifier, orgId, setActiveTeamIdentifier, setActiveTeamRoster]);
 
  function performSearch() {
   let data = [...allPescadores[currentGender]];
@@ -998,15 +1003,40 @@ export default function Directory() {
     }
   }
 
-  function openRoleSelector() {
-    console.log('openRoleSelector called, activeTeamIdentifier:', activeTeamIdentifier);
-    if (!activeTeamIdentifier) {
-      window.showMainStatus('Please load a team first using "Manage Latest Weekend"', true);
+ async function openRoleSelector() {
+  console.log('openRoleSelector called, activeTeamIdentifier:', activeTeamIdentifier);
+  
+  if (!activeTeamIdentifier) {
+    window.showMainStatus('No active weekend loaded. Please go to Team List and load a weekend first.', true);
+    return;
+  }
+  
+  // Auto-load the roster if not already loaded
+  if (activeTeamRoster.length === 0) {
+    console.log('Auto-loading roster for:', activeTeamIdentifier);
+    try {
+      const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
+      
+      const { data, error } = await supabase
+        .from(rosterTable)
+        .select('*')
+        .eq('weekend_identifier', activeTeamIdentifier)
+        .eq('org_id', orgId);
+      
+      if (error) throw error;
+      
+      setActiveTeamRoster(data || []);
+      console.log(`✅ Auto-loaded ${data?.length || 0} roster members`);
+    } catch (error) {
+      console.error('Error loading roster:', error);
+      window.showMainStatus(`Error loading roster: ${error.message}`, true);
       return;
     }
-    console.log('Setting roleSelectorOpen to true');
-    setRoleSelectorOpen(true);
   }
+  
+  console.log('Setting roleSelectorOpen to true');
+  setRoleSelectorOpen(true);
+}
 
   function closeRoleSelector() {
     setRoleSelectorOpen(false);
