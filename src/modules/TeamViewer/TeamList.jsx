@@ -493,12 +493,17 @@ useEffect(() => {
 
         if (historyError) throw historyError;
 
-        if (weekendHistoryData && weekendHistoryData.length > 0) {
-          // Found a weekend in history - use it (even though there's no team yet)
-          console.log('✅ Found weekend in history:', weekendHistoryData[0].weekend_identifier);
-          setWeekendIdentifier(weekendHistoryData[0].weekend_identifier);
-          setTeamRoster([]); // Empty roster
-        } else {
+       if (weekendHistoryData && weekendHistoryData.length > 0) {
+  // Found a weekend in history - use it (even though there's no team yet)
+  console.log('✅ Found weekend in history:', weekendHistoryData[0].weekend_identifier);
+  setWeekendIdentifier(weekendHistoryData[0].weekend_identifier);
+  setTeamRoster([]); // Empty roster
+  
+  // ✅ SAVE TO CONTEXT even when roster is empty
+  setActiveTeamIdentifier(weekendHistoryData[0].weekend_identifier);
+  setActiveTeamRoster([]);
+  console.log('✅ Saved empty roster to context:', weekendHistoryData[0].weekend_identifier);
+} else {
           // No weekend exists at all
           console.log('⚠️ No weekend found in roster or history');
           setWeekendIdentifier('');
