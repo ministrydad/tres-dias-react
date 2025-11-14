@@ -1103,23 +1103,9 @@ export default function TeamList() {
 
     return (
       <div className="card pad" style={{ marginBottom: '20px' }}>
-        {/* Weekend Information Header with Active Weekend Inline */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '16px',
-          paddingBottom: '12px',
-          borderBottom: '2px solid var(--border)'
-        }}>
-          <div className="small-card-header" style={{ margin: 0 }}>Weekend Information</div>
-          <div style={{ 
-            fontSize: '1.1rem', 
-            fontWeight: 700,
-            color: 'var(--accentB)'
-          }}>
-            {weekendIdentifier}
-          </div>
+        {/* Weekend Information Header with Active Weekend */}
+        <div className="small-card-header">
+          Weekend Information - <span style={{ color: 'var(--accentB)' }}>{weekendIdentifier}</span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', alignItems: 'start' }}>
