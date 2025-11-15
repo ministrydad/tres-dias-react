@@ -2484,21 +2484,21 @@ function ProfileView({
 }
 
 function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIdentifier }) {
-  const teamRowsNeeded = Math.ceil(ROLE_CONFIG.team.length / 4);
-  const profRowsNeeded = Math.ceil(ROLE_CONFIG.professor.length / 4);
+  const teamRowsNeeded = Math.ceil(ROLE_CONFIG.team.length / 3);
+  const profRowsNeeded = Math.ceil(ROLE_CONFIG.professor.length / 3);
 
   return (
     <div>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: '16px',
         paddingBottom: '12px',
         borderBottom: '1px solid var(--border)'
       }}>
         <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Assign Role</h3>
-        <button 
+        <button
           onClick={onClose}
           style={{
             background: 'none',
@@ -2517,9 +2517,9 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
       </div>
 
       {activeTeamIdentifier && (
-        <div style={{ 
-          fontSize: '0.85rem', 
-          color: 'var(--muted)', 
+        <div style={{
+          fontSize: '0.85rem',
+          color: 'var(--muted)',
           marginBottom: '16px',
           padding: '8px',
           background: 'var(--surface)',
@@ -2530,18 +2530,18 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
       )}
 
       <div style={{ marginBottom: '24px' }}>
-        <h4 style={{ 
-          margin: '0 0 12px 0', 
-          fontSize: '0.9rem', 
+        <h4 style={{
+          margin: '0 0 12px 0',
+          fontSize: '0.9rem',
           fontWeight: '600',
           color: 'var(--ink)'
         }}>
           Team Roles
         </h4>
-        <div 
+        <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gridTemplateRows: `repeat(${teamRowsNeeded}, auto)`,
             gridAutoFlow: 'column',
             gap: '8px'
@@ -2600,18 +2600,18 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
       </div>
 
       <div>
-        <h4 style={{ 
-          margin: '0 0 12px 0', 
-          fontSize: '0.9rem', 
+        <h4 style={{
+          margin: '0 0 12px 0',
+          fontSize: '0.9rem',
           fontWeight: '600',
           color: 'var(--ink)'
         }}>
           Professor Roles
         </h4>
-        <div 
+        <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gridTemplateRows: `repeat(${profRowsNeeded}, auto)`,
             gridAutoFlow: 'column',
             gap: '8px'
