@@ -21,6 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from '@react-pdf/renderer';
+import { ArrowLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 // Register Source Sans 3 font for PDF
 Font.register({
@@ -1603,7 +1604,7 @@ useEffect(() => {
           <div className="card pad">
               <div className="directory-header">
                 <h2 className="directory-title" id="directoryTitle">
-                  {activeTeamIdentifier ? `Directory - ${activeTeamIdentifier}` : 'Directory'}
+                  'Directory'
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <span className="directory-count">
@@ -2549,7 +2550,7 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
         <div 
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gridTemplateRows: `repeat(${teamRowsNeeded}, auto)`,
             gridAutoFlow: 'column',
             gap: '8px'
@@ -2619,7 +2620,7 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
         <div 
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gridTemplateRows: `repeat(${profRowsNeeded}, auto)`,
             gridAutoFlow: 'column',
             gap: '8px'
