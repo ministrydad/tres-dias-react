@@ -2,14 +2,14 @@
 // ============================================================
 // PHASE 2D COMPLETE: Role Editing in Profile View
 // ============================================================
-// ✅ Phase 2a: Name field editing (First, Preferred, Last)
-// ✅ Phase 2b: Contact field editing (Address, City, State, Zip, Church, Email, Phone, Do Not Call, Deceased)
-// ✅ Phase 2c: Save functionality with change detection and database updates
-// ✅ Phase 2d: Role editing (Status badges clickable, Last/Qty fields editable)
+// âœ… Phase 2a: Name field editing (First, Preferred, Last)
+// âœ… Phase 2b: Contact field editing (Address, City, State, Zip, Church, Email, Phone, Do Not Call, Deceased)
+// âœ… Phase 2c: Save functionality with change detection and database updates
+// âœ… Phase 2d: Role editing (Status badges clickable, Last/Qty fields editable)
 //
 // Changes in Phase 2d:
 // 1. TeamRolesCard & ProfessorRolesCard now accept isEditMode and onFieldChange props
-// 2. Role status badges are clickable in edit mode (cycle N → I → E)
+// 2. Role status badges are clickable in edit mode (cycle N â†’ I â†’ E)
 // 3. Last Service fields become text inputs in edit mode
 // 4. Quantity fields become number inputs in edit mode
 // 5. handleSaveChanges collects and saves all role field changes
@@ -198,10 +198,10 @@ const DirectoryPDFDocument = ({ people, options, communityName, filterLabel }) =
                 {(options.includeContactedCheckbox || options.includeAcceptedCheckbox) && (
                   <View style={pdfStyles.checkboxRow}>
                     {options.includeContactedCheckbox && (
-                      <Text style={pdfStyles.checkbox}>☐ Contacted</Text>
+                      <Text style={pdfStyles.checkbox}>â˜ Contacted</Text>
                     )}
                     {options.includeAcceptedCheckbox && (
-                      <Text style={pdfStyles.checkbox}>☐ Accepted</Text>
+                      <Text style={pdfStyles.checkbox}>â˜ Accepted</Text>
                     )}
                   </View>
                 )}
@@ -237,10 +237,10 @@ const DirectoryPDFDocument = ({ people, options, communityName, filterLabel }) =
                 {(options.includeContactedCheckbox || options.includeAcceptedCheckbox) && (
                   <View style={pdfStyles.checkboxRow}>
                     {options.includeContactedCheckbox && (
-                      <Text style={pdfStyles.checkbox}>☐ Contacted</Text>
+                      <Text style={pdfStyles.checkbox}>â˜ Contacted</Text>
                     )}
                     {options.includeAcceptedCheckbox && (
-                      <Text style={pdfStyles.checkbox}>☐ Accepted</Text>
+                      <Text style={pdfStyles.checkbox}>â˜ Accepted</Text>
                     )}
                   </View>
                 )}
@@ -560,7 +560,7 @@ useEffect(() => {
   const loadLatestWeekend = async () => {
     if (!orgId || activeTeamIdentifier || loading) return; // Already have one, skip
     
-    console.log('🔄 Directory: No active weekend, loading latest...');
+    console.log('ðŸ”„ Directory: No active weekend, loading latest...');
     
     try {
       const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
@@ -586,7 +586,7 @@ useEffect(() => {
       });
 
       if (latest.identifier) {
-        console.log('✅ Directory auto-loaded:', latest.identifier);
+        console.log('âœ… Directory auto-loaded:', latest.identifier);
         setActiveTeamIdentifier(latest.identifier);
         // Don't load roster yet - let openRoleSelector do that on-demand
       } else {
@@ -602,7 +602,7 @@ useEffect(() => {
         if (historyError) throw historyError;
         
         if (historyData && historyData.length > 0) {
-          console.log('✅ Directory auto-loaded from history:', historyData[0].weekend_identifier);
+          console.log('âœ… Directory auto-loaded from history:', historyData[0].weekend_identifier);
           setActiveTeamIdentifier(historyData[0].weekend_identifier);
         }
       }
@@ -671,11 +671,11 @@ useEffect(() => {
   
   // If viewing women AND spiritual director filter is selected, include men who are Spiritual Directors (Experienced only)
   if (currentGender === 'women' && primaryFilter === 'spiritual-director-qualified') {
-    console.log('🔍 Checking for male Spiritual Directors...');
+    console.log('ðŸ” Checking for male Spiritual Directors...');
     console.log('Total men in database:', allPescadores['men']?.length || 0);
     
     if (!allPescadores['men'] || allPescadores['men'].length === 0) {
-      console.warn('⚠️ Men data not loaded yet!');
+      console.warn('âš ï¸ Men data not loaded yet!');
     } else {
       const menSpiritualDirectors = allPescadores['men'].filter(person => {
         const sdStatus = (person['Spiritual Director'] || 'N').toUpperCase();
@@ -684,13 +684,13 @@ useEffect(() => {
         const isQualified = sdStatus === 'E' || hsdStatus === 'E';
         
         if (isQualified) {
-          console.log(`✅ Found: ${person.First} ${person.Last} - SD: ${sdStatus}, HSD: ${hsdStatus}`);
+          console.log(`âœ… Found: ${person.First} ${person.Last} - SD: ${sdStatus}, HSD: ${hsdStatus}`);
         }
         
         return isQualified;
       });
       
-      console.log(`📊 Found ${menSpiritualDirectors.length} qualified male Spiritual Directors`);
+      console.log(`ðŸ“Š Found ${menSpiritualDirectors.length} qualified male Spiritual Directors`);
       
       // Add them to the data array
       data = [...data, ...menSpiritualDirectors];
@@ -992,8 +992,12 @@ useEffect(() => {
 
     if (!currentProfile) return;
 
+    // Check if this is a professor role and needs Prof_ prefix for database
+    const isProfessorRole = ROLE_CONFIG.professor.some(r => r.name === roleName);
+    const dbRoleName = isProfessorRole ? `Prof_${roleName}` : roleName;
+
     const existing = activeTeamRoster.find(
-      m => m.pescadore_key === currentProfile.PescadoreKey && m.role === roleName
+      m => m.pescadore_key === currentProfile.PescadoreKey && m.role === dbRoleName
     );
     
     if (existing) {
@@ -1011,7 +1015,7 @@ useEffect(() => {
         .from(rosterTable)
         .insert({
           weekend_identifier: activeTeamIdentifier,
-          role: roleName,
+          role: dbRoleName,
           pescadore_key: currentProfile.PescadoreKey,
           org_id: orgId
         })
@@ -1032,7 +1036,11 @@ useEffect(() => {
   }
 
   function getRoleCount(roleName) {
-    return activeTeamRoster.filter(m => m.role === roleName).length;
+    // Check if this is a professor role and needs Prof_ prefix for database lookup
+    const isProfessorRole = ROLE_CONFIG.professor.some(r => r.name === roleName);
+    const dbRoleName = isProfessorRole ? `Prof_${roleName}` : roleName;
+    
+    return activeTeamRoster.filter(m => m.role === dbRoleName).length;
   }
 
   function handleSearch() {
@@ -1089,7 +1097,7 @@ useEffect(() => {
       if (error) throw error;
       
       setActiveTeamRoster(data || []);
-      console.log(`✅ Auto-loaded ${data?.length || 0} roster members`);
+      console.log(`âœ… Auto-loaded ${data?.length || 0} roster members`);
     } catch (error) {
       console.error('Error loading roster:', error);
       window.showMainStatus(`Error loading roster: ${error.message}`, true);
@@ -1407,11 +1415,11 @@ useEffect(() => {
                       className="print-button" 
                       style={{ flex: '1 1 140px' }}
                       onClick={() => {
-                        // Weekend search (number) → Show preview immediately
+                        // Weekend search (number) â†’ Show preview immediately
                         if (/^\d+$/.test(searchTerm.trim())) {
                           setShowPdfPreview(true);
                         } else {
-                          // Filter search or no search → Show print options
+                          // Filter search or no search â†’ Show print options
                           setShowPrintOptions(true);
                         }
                       }}
@@ -1453,7 +1461,7 @@ useEffect(() => {
                     onClick={() => setShowPrintOptions(false)}
                     style={{ padding: '4px 12px', fontSize: '0.9rem' }}
                   >
-                    Close ✕
+                    Close âœ•
                   </button>
                 </div>
 
@@ -1595,7 +1603,7 @@ useEffect(() => {
           <div className="card pad">
               <div className="directory-header">
                 <h2 className="directory-title" id="directoryTitle">
-                Directory
+                  {activeTeamIdentifier ? `Directory - ${activeTeamIdentifier}` : 'Directory'}
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <span className="directory-count">
@@ -1704,7 +1712,7 @@ useEffect(() => {
                   onClick={() => setShowPdfPreview(false)}
                   style={{ padding: '6px 12px' }}
                 >
-                  Close ✕
+                  Close âœ•
                 </button>
               </div>
 
@@ -1801,8 +1809,8 @@ function ProfileView({
   onCloseRoleSelector,
   onAssignRole,
   getRoleCount,
-  currentGender,      // ← ADDED: Need this for save
-  onProfileUpdate     // ← ADDED: Callback after save
+  currentGender,      // â† ADDED: Need this for save
+  onProfileUpdate     // â† ADDED: Callback after save
 }) {
   const { orgId } = useAuth();
   const { refreshData } = usePescadores();
@@ -1867,7 +1875,7 @@ function ProfileView({
     // Build the update object with only changed fields
     const updateData = {};
     
-    // Field mapping: editedProfile field → database field
+    // Field mapping: editedProfile field â†’ database field
     const fieldsToCheck = {
       'First': 'First',
       'Preferred': 'Preferred',
@@ -2022,7 +2030,7 @@ function ProfileView({
     paddingBottom: '40px'
   }}>
       <div className="navigation" style={{ marginTop: 0, marginBottom: '16px' }}>
-        <button className="back-button" onClick={onBack}>← Back to Directory</button>
+        <button className="back-button" onClick={onBack}>â† Back to Directory</button>
         <div className="nav-controls">
           <button 
             id="prevButton" 
@@ -2512,7 +2520,7 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
             height: '24px'
           }}
         >
-          ×
+          Ã—
         </button>
       </div>
 
@@ -2828,8 +2836,8 @@ function TeamRolesCard({ profile, isEditMode, onFieldChange }) {
   
   // Special handling for Spiritual Director abbreviation
   const quantityField = role.key === 'Spiritual Director'
-    ? 'Spiritual_Dir_Service_Qty'  // ← Special case
-    : `${role.key.replace(/ /g, '_')}_Service_Qty`;  // ← All others
+    ? 'Spiritual_Dir_Service_Qty'  // â† Special case
+    : `${role.key.replace(/ /g, '_')}_Service_Qty`;  // â† All others
     
   const serviceNumber = profile[serviceField] || '';
   const quantityNumber = profile[quantityField] || '';
