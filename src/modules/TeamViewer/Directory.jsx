@@ -2497,8 +2497,8 @@ function ProfileView({
 }
 
 function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIdentifier }) {
-  const teamRowsNeeded = Math.ceil(ROLE_CONFIG.team.length / 4);
-  const profRowsNeeded = Math.ceil(ROLE_CONFIG.professor.length / 4);
+  const teamRowsNeeded = Math.ceil(ROLE_CONFIG.team.length / 3);
+  const profRowsNeeded = Math.ceil(ROLE_CONFIG.professor.length / 3);
 
   return (
     <div>
@@ -2525,8 +2525,7 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
             height: '24px'
           }}
         >
-          Ã—
-        </button>
+          <IoMdClose /></button>
       </div>
 
       {activeTeamIdentifier && (
