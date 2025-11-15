@@ -2075,7 +2075,7 @@ function ProfileView({
       }}>
         <div 
           style={{ 
-            width: roleSelectorOpen ? '70%' : '100%',
+            width: roleSelectorOpen ? '65%' : '100%',
             transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             minWidth: 0
           }}
@@ -2399,7 +2399,7 @@ function ProfileView({
           <div 
             className="card pad role-selector-slide-in"
             style={{
-              width: '30%',
+              width: '35%',
               minWidth: 0,
               height: 'fit-content',
               position: 'sticky',
@@ -2554,7 +2554,6 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
-            gridTemplateRows: `repeat(${teamRowsNeeded}, auto)`,
             gridAutoFlow: 'column',
             gap: '8px'
           }}
@@ -2624,7 +2623,6 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
-            gridTemplateRows: `repeat(${profRowsNeeded}, auto)`,
             gridAutoFlow: 'column',
             gap: '8px'
           }}
