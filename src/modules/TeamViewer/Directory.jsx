@@ -2401,9 +2401,11 @@ function ProfileView({
             style={{
               width: '35%',
               minWidth: 0,
-              height: 'fit-content',
+              height: '100%',
               position: 'sticky',
-              top: '16px'
+              top: '16px',
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
             <RoleSelectorPanel 
@@ -2506,11 +2508,20 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
-        marginBottom: '16px',
-        paddingBottom: '12px',
-        borderBottom: '1px solid var(--border)'
+        marginBottom: '15px',
+        paddingBottom: '10px',
+        borderBottom: '2px solid #007bff'
       }}>
-        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Assign Role</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#333' }}>
+            Assign Role
+          </h3>
+          {activeTeamIdentifier && (
+            <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+              - Adding to <strong>{activeTeamIdentifier}</strong>
+            </span>
+          )}
+        </div>
         <button 
           onClick={onClose}
           style={{
@@ -2527,19 +2538,6 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
         >
           <IoMdClose /></button>
       </div>
-
-      {activeTeamIdentifier && (
-        <div style={{ 
-          fontSize: '0.85rem', 
-          color: 'var(--muted)', 
-          marginBottom: '16px',
-          padding: '8px',
-          background: 'var(--surface)',
-          borderRadius: '6px'
-        }}>
-          Adding to: <strong>{activeTeamIdentifier}</strong>
-        </div>
-      )}
 
       <div style={{ marginBottom: '24px' }}>
         <h4 style={{ 
