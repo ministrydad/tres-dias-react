@@ -21,7 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from '@react-pdf/renderer';
-import { IoArrowBack } from 'react-icons/io5';
+import { IoArrowBack, IoChevronBack, IoChevronForward, IoPrint, IoPersonAdd } from 'react-icons/io5';
 import { IoMdClose } from 'react-icons/io';
 
 // Register Source Sans 3 font for PDF
@@ -2043,6 +2043,7 @@ function ProfileView({
             onClick={() => onNavigate(-1)}
             disabled={index === 0}
           >
+            <IoChevronBack style={{ fontSize: '14px', display: 'inline-block', marginRight: '4px', verticalAlign: 'middle' }} />
             Previous
           </button>
           <span id="profileCounter" className="profile-counter">
@@ -2055,14 +2056,19 @@ function ProfileView({
             disabled={index === total - 1}
           >
             Next
+            <IoChevronForward style={{ fontSize: '14px', display: 'inline-block', marginLeft: '4px', verticalAlign: 'middle' }} />
           </button>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="print-button" onClick={() => window.print()}>Print Profile</button>
+          <button className="print-button" onClick={() => window.print()}>
+            <IoPrint style={{ fontSize: '16px', display: 'inline-block', marginRight: '6px', verticalAlign: 'middle' }} />
+            Print Profile
+          </button>
           <button 
             className="view-team-button" 
             onClick={onOpenRoleSelector}
           >
+            <IoPersonAdd style={{ fontSize: '16px', display: 'inline-block', marginRight: '6px', verticalAlign: 'middle' }} />
             Add to Team
           </button>
         </div>
