@@ -1605,7 +1605,7 @@ useEffect(() => {
           <div className="card pad">
               <div className="directory-header">
                 <h2 className="directory-title" id="directoryTitle">
-                  'Directory'
+                  Directory
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <span className="directory-count">
@@ -2032,7 +2032,10 @@ function ProfileView({
     paddingBottom: '40px'
   }}>
       <div className="navigation" style={{ marginTop: 0, marginBottom: '16px' }}>
-        <button className="back-button" onClick={onBack}>â† Back to Directory</button>
+        <button className="back-button" onClick={onBack}>
+          <IoArrowBack style={{ fontSize: '16px', display: 'inline-block', marginRight: '6px', verticalAlign: 'middle' }} />
+          Back to Directory
+        </button>
         <div className="nav-controls">
           <button 
             id="prevButton" 
