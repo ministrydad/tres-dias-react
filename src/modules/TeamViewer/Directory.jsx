@@ -1595,7 +1595,7 @@ useEffect(() => {
           <div className="card pad">
               <div className="directory-header">
                 <h2 className="directory-title" id="directoryTitle">
-                  {activeTeamIdentifier ? `Directory - ${activeTeamIdentifier}` : 'Directory'}
+                Directory
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <span className="directory-count">
