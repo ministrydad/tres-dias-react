@@ -23,6 +23,7 @@ import SkeletonLoader from '../../components/common/SkeletonLoader';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from '@react-pdf/renderer';
 import { IoArrowBack, IoChevronBack, IoChevronForward, IoPrint, IoPersonAdd, IoPencil } from 'react-icons/io5';
 import { IoMdClose } from 'react-icons/io';
+import { MdEdit } from 'react-icons/md';
 
 // Register Source Sans 3 font for PDF
 Font.register({
@@ -892,6 +893,30 @@ useEffect(() => {
         );
         break;
         
+      case 'secretariat-qualified-general':
+        // Count E (Experienced) status across all team and professor roles (need 3+ total)
+        data = data.filter(p => {
+          const allRoles = [
+            ...ROLE_CONFIG.team.map(r => r.key),
+            ...ROLE_CONFIG.professor.map(r => r.key)
+          ];
+          
+          const count = allRoles.filter(role => {
+            const status = (p[role] || 'N').toUpperCase();
+            return status === 'E';
+          }).length;
+          
+          return count >= 3;
+        });
+        break;
+        
+      case 'secretariat-qualified-leaders':
+        // Show anyone with Experienced (E) status in Rector OR BUR
+        data = data.filter(p => 
+          p['Rector'] === 'E' || p['BUR'] === 'E'
+        );
+        break;
+        
       case 'role-rector-e':
         data = data.filter(p => p['Rector'] === 'E');
         break;
@@ -1206,6 +1231,8 @@ useEffect(() => {
       'floater-supply-qualified': 'Head Floater Supply Qualified',
       'media-qualified': 'Head Media Qualified',
       'spiritual-director-qualified': 'Spiritual Director Qualified',
+      'secretariat-qualified-general': 'Secretariat Qualified (General)',
+      'secretariat-qualified-leaders': 'Secretariat Qualified - Leaders',
       'role-rector-e': 'Experienced Rector'
     };
     return labels[primaryFilter] || 'Select Primary Filter...';
@@ -1329,6 +1356,8 @@ useEffect(() => {
                               <a href="#" className={primaryFilter === 'media-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('media-qualified'); }}>Head Media Qualified</a>
                               <div className="dropdown-divider"></div>
                               <a href="#" className={primaryFilter === 'spiritual-director-qualified' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('spiritual-director-qualified'); }}>Spiritual Director Qualified</a>
+                              <a href="#" className={primaryFilter === 'secretariat-qualified-general' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('secretariat-qualified-general'); }}>Secretariat Qualified (General)</a>
+                              <a href="#" className={primaryFilter === 'secretariat-qualified-leaders' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('secretariat-qualified-leaders'); }}>Secretariat Qualified - Leaders</a>
                               <div className="dropdown-divider"></div>
                               <a href="#" className={primaryFilter === 'role-rector-e' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectPrimaryFilter('role-rector-e'); }}>Experienced Rector</a>
                             </div>
@@ -2090,7 +2119,7 @@ function ProfileView({
                 gap: '6px'
               }}
             >
-              <IoPencil style={{ fontSize: '16px' }} />
+              <MdEdit style={{ fontSize: '16px' }} />
               Edit Profile
             </button>
           )}
