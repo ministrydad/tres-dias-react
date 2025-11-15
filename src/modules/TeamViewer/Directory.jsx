@@ -21,7 +21,8 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from '@react-pdf/renderer';
-import { ArrowLeftIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { IoArrowBack } from 'react-icons/io5';
+import { IoMdClose } from 'react-icons/io';
 
 // Register Source Sans 3 font for PDF
 Font.register({
