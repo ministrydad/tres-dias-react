@@ -1296,7 +1296,7 @@ useEffect(() => {
               }}
             >
               <div className="controls-main-grid">
-                <div className="controls-left-panel">
+                <div>
                   {/* Row 1: Search and Primary Filter side-by-side */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '10px' }}>
                     <div className="field" style={{ margin: 0 }}>
