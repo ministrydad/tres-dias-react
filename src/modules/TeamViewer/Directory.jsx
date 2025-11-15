@@ -1216,11 +1216,11 @@ useEffect(() => {
     <section id="team-viewer-app" className="app-panel" style={{ 
   display: 'block',
   height: '100%',
-  overflow: 'hidden'
+  overflow: 'visible'
 }}>
   <div className="container" style={{
     height: '100%',
-    overflow: 'hidden',
+    overflow: 'visible',
     display: 'flex',
     flexDirection: 'column',
     padding: '24px'
