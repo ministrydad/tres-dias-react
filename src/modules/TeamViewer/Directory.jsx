@@ -2554,6 +2554,7 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateRows: `repeat(${teamRowsNeeded}, auto)`,
             gridAutoFlow: 'column',
             gap: '8px'
           }}
@@ -2623,6 +2624,7 @@ function RoleSelectorPanel({ onClose, onAssignRole, getRoleCount, activeTeamIden
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateRows: `repeat(${profRowsNeeded}, auto)`,
             gridAutoFlow: 'column',
             gap: '8px'
           }}
