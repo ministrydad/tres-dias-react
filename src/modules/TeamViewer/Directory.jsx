@@ -21,7 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePescadores } from '../../context/PescadoresContext';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
 import { Document, Page, Text, View, StyleSheet, PDFViewer, Font } from '@react-pdf/renderer';
-import { IoArrowBack, IoChevronBack, IoChevronForward, IoPrint, IoPersonAdd } from 'react-icons/io5';
+import { IoArrowBack, IoChevronBack, IoChevronForward, IoPrint, IoPersonAdd, IoPencil } from 'react-icons/io5';
 import { IoMdClose } from 'react-icons/io';
 
 // Register Source Sans 3 font for PDF
@@ -2071,6 +2071,29 @@ function ProfileView({
             <IoPersonAdd style={{ fontSize: '16px', display: 'inline-block', marginRight: '6px', verticalAlign: 'middle' }} />
             Add to Team
           </button>
+          {!isEditMode && (
+            <button 
+              id="editButton" 
+              className="edit-button"
+              onClick={handleRequestEdit}
+              style={{
+                backgroundColor: 'var(--accentA)',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <IoPencil style={{ fontSize: '16px' }} />
+              Edit Profile
+            </button>
+          )}
         </div>
       </div>
 
@@ -2365,18 +2388,6 @@ function ProfileView({
               onFieldChange={handleFieldChange}
             />
           </div>
-
-          {!isEditMode && (
-  <div style={{ marginTop: '16px', textAlign: 'center' }}>
-    <button 
-      id="editButton" 
-      className="edit-button"
-      onClick={handleRequestEdit}
-    >
-      Edit Profile
-    </button>
-  </div>
-)}
 
 {isEditMode && (
   <div className="save-cancel-buttons" style={{ 
