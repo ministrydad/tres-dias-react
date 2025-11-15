@@ -1297,26 +1297,26 @@ useEffect(() => {
             >
               <div className="controls-main-grid">
                 <div className="controls-left-panel">
-                  <div className="search-group">
-                    <label className="label">Search By</label>
-                    <div className="search-input-group">
-                      <input
-                        type="text"
-                        id="nameSearch"
-                        className="search-input"
-                        placeholder="First, Last or Weekend Number"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                      />
-                      <button className="search-button" onClick={handleSearch}>Search</button>
+                  {/* Row 1: Search and Primary Filter side-by-side */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '10px' }}>
+                    <div className="field" style={{ margin: 0 }}>
+                      <label className="label">Search By</label>
+                      <div className="search-input-group">
+                        <input
+                          type="text"
+                          id="nameSearch"
+                          className="search-input"
+                          placeholder="First, Last or Weekend Number"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        />
+                        <button className="search-button" onClick={handleSearch}>Search</button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="search-group">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <div className="field" style={{ margin: 0, flex: '1', minWidth: '0' }}>
-                          <label className="label">Primary Filter</label>
+                    
+                    <div className="field" style={{ margin: 0 }}>
+                      <label className="label">Primary Filter</label>
                           <div 
                             ref={primaryDropdownRef}
                             id="primaryFilterDropdown"
@@ -1363,26 +1363,13 @@ useEffect(() => {
                             </div>
                           </div>
                         </div>
-                        <div className="field" style={{ margin: 0, flex: '0 0 auto', width: '180px', marginTop: '20px' }}>
-                          <label className="label">Prior Head(s)</label>
-                          <div className="toggle-inset-container">
-                            <div 
-                              className={`toggle-inset-option ${!excludePriorHeads ? 'active' : ''}`}
-                              onClick={() => setExcludePriorHeads(false)}
-                            >
-                              Include
-                            </div>
-                            <div 
-                              className={`toggle-inset-option ${excludePriorHeads ? 'active' : ''}`}
-                              onClick={() => setExcludePriorHeads(true)}
-                            >
-                              Exclude
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="field" style={{ margin: 0 }}>
-                        <label className="label">Secondary Sort</label>
+                    </div>
+                  </div>
+                  
+                  {/* Row 2: Secondary Sort and Prior Heads toggle */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 180px', gap: '12px' }}>
+                    <div className="field" style={{ margin: 0 }}>
+                      <label className="label">Secondary Sort</label>
                         <div 
                           ref={secondaryDropdownRef}
                           id="secondarySortDropdown"
@@ -1404,6 +1391,23 @@ useEffect(() => {
                             <a href="#" className={secondarySort === 'weekend-desc' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectSecondarySort('weekend-desc'); }}>Weekend # (High-Low)</a>
                             <a href="#" className={secondarySort === 'weekend-asc' ? 'selected' : ''} onClick={(e) => { e.preventDefault(); selectSecondarySort('weekend-asc'); }}>Weekend # (Low-High)</a>
                           </div>
+                        </div>
+                      </div>
+                    
+                    <div className="field" style={{ margin: 0 }}>
+                      <label className="label">Prior Head(s)</label>
+                      <div className="toggle-inset-container">
+                        <div 
+                          className={`toggle-inset-option ${!excludePriorHeads ? 'active' : ''}`}
+                          onClick={() => setExcludePriorHeads(false)}
+                        >
+                          Include
+                        </div>
+                        <div 
+                          className={`toggle-inset-option ${excludePriorHeads ? 'active' : ''}`}
+                          onClick={() => setExcludePriorHeads(true)}
+                        >
+                          Exclude
                         </div>
                       </div>
                     </div>
