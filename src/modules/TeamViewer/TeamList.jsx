@@ -1,5 +1,5 @@
 // src/modules/TeamViewer/TeamList.jsx
-// UPDATED: Card-based PDF preview (no modal), removed guided tour, ADDED ROVER TO LEADERSHIP SECTION
+// UPDATED: Simplified loadLatestTeam using is_active, updated handleCreateNextWeekend to manage active status
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -247,15 +247,15 @@ export default function TeamList() {
   setActiveTeamRoster 
 } = usePescadores();
 
-// 🔍 DEBUG - CHECK CONTEXT
-console.log('🔍 TEAMLIST MOUNTED - Context has:', {
+// ðŸ” DEBUG - CHECK CONTEXT
+console.log('ðŸ” TEAMLIST MOUNTED - Context has:', {
   activeTeamIdentifier,
   rosterLength: activeTeamRoster?.length || 0
 });
 
 // Also log when it changes
 useEffect(() => {
-  console.log('🔍 TEAMLIST - Context updated:', {
+  console.log('ðŸ” TEAMLIST - Context updated:', {
     activeTeamIdentifier,
     rosterLength: activeTeamRoster?.length || 0
   });
@@ -427,7 +427,7 @@ useEffect(() => {
   }, [showSetupNextWeekend, weekendIdentifier, weekendInfo]);
 
   const loadWeekendInfo = async () => {
-    console.log('🔍 loadWeekendInfo called with:', { weekendIdentifier, orgId, currentGender });
+    console.log('ðŸ” loadWeekendInfo called with:', { weekendIdentifier, orgId, currentGender });
     setLoadingWeekendInfo(true);
     try {
       const { data, error } = await supabase
@@ -438,81 +438,53 @@ useEffect(() => {
         .eq('gender', currentGender)
         .single();
 
-      console.log('📊 Weekend history query result:', { data, error });
+      console.log('ðŸ“Š Weekend history query result:', { data, error });
 
       if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
       setWeekendInfo(data);
-      console.log('✅ Weekend info set to:', data);
+      console.log('âœ… Weekend info set to:', data);
     } catch (error) {
-      console.error('❌ Error loading weekend info:', error);
+      console.error('âŒ Error loading weekend info:', error);
       setWeekendInfo(null);
     } finally {
       setLoadingWeekendInfo(false);
     }
   };
 
+  // ✅ UPDATED: Simplified loadLatestTeam using is_active
   const loadLatestTeam = async () => {
-    const rosterTable = currentGender === 'men' ? 'men_team_rosters' : 'women_team_rosters';
     setLoadingTeam(true);
     
     try {
-      const { data: teams, error } = await supabase
-        .from(rosterTable)
+      // NEW SIMPLIFIED LOGIC: Just query for the active weekend
+      const { data: activeWeekend, error: weekendError } = await supabase
+        .from('weekend_history')
         .select('weekend_identifier')
-        .eq('org_id', orgId);
-      
-      if (error) throw error;
+        .eq('org_id', orgId)
+        .eq('gender', currentGender)
+        .eq('is_active', true)
+        .maybeSingle();
 
-      const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
-      let latest = { number: 0, identifier: null };
+      if (weekendError && weekendError.code !== 'PGRST116') {
+        throw weekendError;
+      }
 
-      (teams || []).forEach(team => {
-        const idStr = (team.weekend_identifier || '').trim();
-        if (idStr.startsWith(prefix)) {
-          const num = parseInt(idStr.match(/\d+/)?.[0] || '0', 10);
-          if (num > latest.number) {
-            latest = { number: num, identifier: idStr };
-          }
-        }
-      });
-
-      if (latest.identifier) {
-        // Found a team roster - use it
-        setWeekendIdentifier(latest.identifier);
-        await loadTeamRoster(latest.identifier);
+      if (activeWeekend && activeWeekend.weekend_identifier) {
+        // Found active weekend - load its roster
+        console.log('✅ Found active weekend:', activeWeekend.weekend_identifier);
+        setWeekendIdentifier(activeWeekend.weekend_identifier);
+        await loadTeamRoster(activeWeekend.weekend_identifier);
       } else {
-        // No team roster found - check weekend_history table instead
-        console.log('📋 No team roster found, checking weekend_history...');
-        const { data: weekendHistoryData, error: historyError } = await supabase
-          .from('weekend_history')
-          .select('weekend_identifier, weekend_number')
-          .eq('org_id', orgId)
-          .eq('gender', currentGender)
-          .order('weekend_number', { ascending: false })
-          .limit(1);
-
-        if (historyError) throw historyError;
-
-       if (weekendHistoryData && weekendHistoryData.length > 0) {
-  // Found a weekend in history - use it (even though there's no team yet)
-  console.log('✅ Found weekend in history:', weekendHistoryData[0].weekend_identifier);
-  setWeekendIdentifier(weekendHistoryData[0].weekend_identifier);
-  setTeamRoster([]); // Empty roster
-  
-  // ✅ SAVE TO CONTEXT even when roster is empty
-  setActiveTeamIdentifier(weekendHistoryData[0].weekend_identifier);
-  setActiveTeamRoster([]);
-  console.log('✅ Saved empty roster to context:', weekendHistoryData[0].weekend_identifier);
-} else {
-          // No weekend exists at all
-          console.log('⚠️ No weekend found in roster or history');
-          setWeekendIdentifier('');
-          setTeamRoster([]);
-        }
+        // No active weekend found - show "Create First Weekend"
+        console.log('⚠️ No active weekend found');
+        setWeekendIdentifier('');
+        setTeamRoster([]);
+        setActiveTeamIdentifier('');
+        setActiveTeamRoster([]);
         setLoadingTeam(false);
       }
     } catch (error) {
-      console.error('Error loading latest team:', error);
+      console.error('Error loading active weekend:', error);
       setTeamRoster([]);
       setLoadingTeam(false);
     }
@@ -553,10 +525,10 @@ useEffect(() => {
 
       setTeamRoster(newRoster);
       
-      // ✅ SAVE TO CONTEXT for Directory to access
+      // âœ… SAVE TO CONTEXT for Directory to access
       setActiveTeamIdentifier(identifier);
       setActiveTeamRoster(newRoster);
-      console.log('✅ Saved to context:', identifier, newRoster.length, 'members');
+      console.log('âœ… Saved to context:', identifier, newRoster.length, 'members');
       
     } catch (error) {
       console.error('Error loading team roster:', error);
@@ -662,7 +634,7 @@ useEffect(() => {
     if (existingMembers.length > 0 && LEADERSHIP_ROLES.includes(newRole)) {
       const names = existingMembers.map(m => m.name).join(', ');
       window.showConfirm({
-        title: '⚠️ Role Conflict Warning',
+        title: 'âš ï¸ Role Conflict Warning',
         message: `${newRole} already has ${existingMembers.length} person(s) assigned: ${names}.\n\nMoving ${changingMember.name} to ${newRole} will result in multiple people in this role.\n\nThis is allowed, but you may want to remove the other person(s) afterwards if this role should only have 1 person.`,
         confirmText: 'Continue Anyway',
         cancelText: 'Cancel',
@@ -760,9 +732,9 @@ useEffect(() => {
         previewChanges.push({
           name: member.name,
           role,
-          statusChange: `${currentStatus} → ${newStatus}`,
-          lastChange: `${currentLast} → ${weekendIdentifier}`,
-          qtyChange: `${currentQty} → ${newQty}`,
+          statusChange: `${currentStatus} â†’ ${newStatus}`,
+          lastChange: `${currentLast} â†’ ${weekendIdentifier}`,
+          qtyChange: `${currentQty} â†’ ${newQty}`,
           statusField,
           lastField,
           qtyField,
@@ -788,7 +760,7 @@ useEffect(() => {
       }
       
       if (testMode) {
-        console.log('🧪 TEST MODE - No actual database changes made');
+        console.log('ðŸ§ª TEST MODE - No actual database changes made');
         console.table(previewChanges);
         window.showMainStatus?.(
           `TEST MODE: Would update ${successCount} team member${successCount > 1 ? 's' : ''} (check console for details)`,
@@ -1022,6 +994,18 @@ useEffect(() => {
     setIsCreatingNextWeekend(true);
 
     try {
+      // ✅ NEW: Deactivate all other weekends for this gender/org FIRST
+      const { error: deactivateError } = await supabase
+        .from('weekend_history')
+        .update({ is_active: false })
+        .eq('org_id', orgId)
+        .eq('gender', currentGender);
+
+      if (deactivateError) {
+        console.error('Error deactivating old weekends:', deactivateError);
+        // Continue anyway - not critical
+      }
+
       let imageUrl = weekendInfo?.image || ''; // Keep existing image URL if no new upload
 
       // Step 1: Upload image to Supabase Storage (if new image provided)
@@ -1060,7 +1044,8 @@ useEffect(() => {
             verse: nextWeekendVerse.trim(),
             start_date: nextWeekendStartDate || null,
             end_date: nextWeekendEndDate || null,
-            image: imageUrl
+            image: imageUrl,
+            is_active: true  // ✅ ADDED
           })
           .eq('weekend_identifier', weekendIdentifier)
           .eq('org_id', orgId)
@@ -1071,7 +1056,7 @@ useEffect(() => {
           throw new Error(`Failed to update weekend history: ${historyError.message}`);
         }
 
-        window.showMainStatus?.(`✅ ${weekendIdentifier} updated successfully!`, false);
+        window.showMainStatus?.(`âœ… ${weekendIdentifier} updated successfully!`, false);
       } else {
         // INSERT new record
         const { error: historyError } = await supabase
@@ -1086,7 +1071,8 @@ useEffect(() => {
             verse: nextWeekendVerse.trim(),
             start_date: nextWeekendStartDate || null,
             end_date: nextWeekendEndDate || null,
-            image: imageUrl
+            image: imageUrl,
+            is_active: true  // ✅ ADDED
           });
 
         if (historyError) {
@@ -1096,7 +1082,7 @@ useEffect(() => {
 
         // Step 3: If creating first weekend (no roster yet)
         window.showMainStatus?.(
-          `✅ ${nextWeekendId} created! You can now build your team.`,
+          `âœ… ${nextWeekendId} created! You can now build your team.`,
           false
         );
       }
@@ -1124,7 +1110,7 @@ useEffect(() => {
   };
 
   const renderWeekendInfoCard = () => {
-    console.log('🎨 renderWeekendInfoCard called:', { 
+    console.log('ðŸŽ¨ renderWeekendInfoCard called:', { 
       weekendIdentifier, 
       loadingWeekendInfo, 
       hasWeekendInfo: !!weekendInfo,
@@ -1225,7 +1211,7 @@ useEffect(() => {
                       onClick={() => toggleRowExpansion(rector.id)}
                       style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                     >
-                      <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                      <span style={{ fontSize: '12px' }}>{isExpanded ? 'â–¼' : 'â–¶'}</span>
                       {rector.name}
                     </span>
                     <button 
@@ -1311,7 +1297,7 @@ useEffect(() => {
                   onClick={() => toggleRowExpansion(person.id)}
                   style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
-                  <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                  <span style={{ fontSize: '12px' }}>{isExpanded ? 'â–¼' : 'â–¶'}</span>
                   {person.name}
                   {role === 'Head Spiritual Director' && (
                     <span style={{ 
@@ -1452,7 +1438,7 @@ useEffect(() => {
                   onClick={() => toggleRowExpansion(person.id)}
                   style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
-                  <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                  <span style={{ fontSize: '12px' }}>{isExpanded ? 'â–¼' : 'â–¶'}</span>
                   {person.name}
                 </span>
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -1565,7 +1551,7 @@ useEffect(() => {
                   onClick={() => toggleRowExpansion(person.id)}
                   style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
-                  <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                  <span style={{ fontSize: '12px' }}>{isExpanded ? 'â–¼' : 'â–¶'}</span>
                   {person.name}
                   {roleLabel && (
                     <span style={{ 
@@ -1797,7 +1783,7 @@ useEffect(() => {
                 onClick={() => setShowPdfPreview(false)}
                 style={{ padding: '6px 12px', fontSize: '0.85rem' }}
               >
-                Close Preview ✕
+                Close Preview âœ•
               </button>
             </div>
             <div style={{ 
@@ -1867,7 +1853,7 @@ useEffect(() => {
                 onClick={() => setShowSetupNextWeekend(false)}
                 style={{ padding: '6px 12px', fontSize: '0.85rem' }}
               >
-                Close ✕
+                Close âœ•
               </button>
             </div>
 
@@ -2013,17 +1999,17 @@ useEffect(() => {
                     />
                     {!nextWeekendImage && !weekendInfo?.image ? (
                       <>
-                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📷</div>
+                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>ðŸ“·</div>
                         <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '4px', color: 'var(--ink)' }}>
                           Click to upload image
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                          JPG, PNG, or WebP • Max 5MB
+                          JPG, PNG, or WebP â€¢ Max 5MB
                         </div>
                       </>
                     ) : nextWeekendImage ? (
                       <>
-                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✓</div>
+                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>âœ“</div>
                         <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--accentA)' }}>
                           {nextWeekendImage.name}
                         </div>
@@ -2165,7 +2151,7 @@ useEffect(() => {
               borderBottom: '2px solid var(--accentB)'
             }}>
               <h3 style={{ margin: 0, color: 'var(--accentB)', fontSize: '1.1rem' }}>Export Badge CSV</h3>
-              <button className="btn btn-small" onClick={handleCloseBadgePanel} style={{ padding: '4px 12px', fontSize: '0.9rem' }}>Close ✕</button>
+              <button className="btn btn-small" onClick={handleCloseBadgePanel} style={{ padding: '4px 12px', fontSize: '0.9rem' }}>Close âœ•</button>
             </div>
 
             <div className="field">
@@ -2459,12 +2445,12 @@ useEffect(() => {
             <ul style={{ marginBottom: '25px', paddingLeft: '20px', color: '#666' }}>
               <li><strong>Last Service:</strong> Set to "{weekendIdentifier}"</li>
               <li><strong>Quantity:</strong> Increment by 1</li>
-              <li><strong>Status:</strong> Upgrade N→I or I→E (if applicable)</li>
+              <li><strong>Status:</strong> Upgrade Nâ†’I or Iâ†’E (if applicable)</li>
             </ul>
             <p style={{ marginBottom: '25px', fontSize: '14px', color: testMode ? '#856404' : '#dc3545', fontWeight: 500 }}>
               {testMode 
-                ? '💡 Test mode: Results will be shown in browser console. No database changes will be made.' 
-                : '⚠️ This action cannot be undone. Only the specific roles assigned on this team will be updated.'}
+                ? 'ðŸ’¡ Test mode: Results will be shown in browser console. No database changes will be made.' 
+                : 'âš ï¸ This action cannot be undone. Only the specific roles assigned on this team will be updated.'}
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
@@ -2498,7 +2484,7 @@ useEffect(() => {
                   opacity: isUpdating ? 0.6 : 1
                 }}
               >
-                {isUpdating ? 'Processing...' : testMode ? '🧪 Run Test' : '⚡ Confirm Update'}
+                {isUpdating ? 'Processing...' : testMode ? 'ðŸ§ª Run Test' : 'âš¡ Confirm Update'}
               </button>
             </div>
           </div>

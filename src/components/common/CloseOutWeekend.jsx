@@ -554,7 +554,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         }
 
         case 7: {
-          // Step 7: Prepare Next Weekend - Promote Rovers to Rectors
+          // Step 7: Prepare Next Weekend - Promote Rovers to Rectors AND Create Weekend History
           
           const nextWeekendNumber = weekendNumber + 1;
           let promotedCount = 0;
@@ -563,6 +563,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
           if (savedRoverInfo.men && savedRoverInfo.men.pescadore_key) {
             const newWeekendIdentifier = `Men's Weekend ${nextWeekendNumber}`;
 
+            // 1. Insert new Rector into roster
             const { error: insertError } = await supabase
               .from('men_team_rosters')
               .insert({
@@ -575,7 +576,30 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             if (insertError) {
               console.error('Failed to insert men\'s Rector:', insertError);
             } else {
-              promotedCount++;
+              // 2. Create blank weekend_history record
+              const { error: historyError } = await supabase
+                .from('weekend_history')
+                .insert({
+                  org_id: orgId,
+                  weekend_identifier: newWeekendIdentifier,
+                  weekend_number: nextWeekendNumber,
+                  gender: 'men',
+                  team_member_count: 0,
+                  candidate_count: 0,
+                  rector_pescadore_key: String(savedRoverInfo.men.pescadore_key),
+                  theme: null,
+                  verse: null,
+                  image: null,
+                  start_date: null,
+                  end_date: null,
+                  theme_song: null
+                });
+
+              if (historyError) {
+                console.error('Failed to create men\'s weekend history:', historyError);
+              } else {
+                promotedCount++;
+              }
             }
           }
 
@@ -583,6 +607,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
           if (savedRoverInfo.women && savedRoverInfo.women.pescadore_key) {
             const newWeekendIdentifier = `Women's Weekend ${nextWeekendNumber}`;
 
+            // 1. Insert new Rector into roster
             const { error: insertError } = await supabase
               .from('women_team_rosters')
               .insert({
@@ -595,7 +620,30 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             if (insertError) {
               console.error('Failed to insert women\'s Rector:', insertError);
             } else {
-              promotedCount++;
+              // 2. Create blank weekend_history record
+              const { error: historyError } = await supabase
+                .from('weekend_history')
+                .insert({
+                  org_id: orgId,
+                  weekend_identifier: newWeekendIdentifier,
+                  weekend_number: nextWeekendNumber,
+                  gender: 'women',
+                  team_member_count: 0,
+                  candidate_count: 0,
+                  rector_pescadore_key: String(savedRoverInfo.women.pescadore_key),
+                  theme: null,
+                  verse: null,
+                  image: null,
+                  start_date: null,
+                  end_date: null,
+                  theme_song: null
+                });
+
+              if (historyError) {
+                console.error('Failed to create women\'s weekend history:', historyError);
+              } else {
+                promotedCount++;
+              }
             }
           }
 
@@ -605,8 +653,8 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
           } else {
             result.count = promotedCount;
             result.message = promotedCount === 2
-              ? `Prepared Weekend #${nextWeekendNumber} with new Rectors for both teams`
-              : `Prepared Weekend #${nextWeekendNumber} with new Rector for ${promotedCount} team(s)`;
+              ? `Prepared Weekend #${nextWeekendNumber} with new Rectors and weekend records for both teams`
+              : `Prepared Weekend #${nextWeekendNumber} with new Rector and weekend record for ${promotedCount} team(s)`;
           }
           break;
         }
