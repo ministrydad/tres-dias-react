@@ -1,5 +1,5 @@
 // src/modules/TeamViewer/TeamList.jsx
-// UPDATED: Simplified loadLatestTeam using is_active, updated handleCreateNextWeekend to manage active status
+// UPDATED: Smart weekend management - tracks history, auto-increments next weekend, prevents duplicates
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -296,6 +296,11 @@ useEffect(() => {
   const [nextWeekendNumber, setNextWeekendNumber] = useState('1'); // For first weekend override
   const [isCreatingNextWeekend, setIsCreatingNextWeekend] = useState(false);
   
+  // Weekend history tracking state
+  const [hasWeekends, setHasWeekends] = useState(false); // Does org have any weekends?
+  const [highestWeekendNumber, setHighestWeekendNumber] = useState(0); // Highest weekend number
+  const [hasActiveWeekend, setHasActiveWeekend] = useState(false); // Is there an active weekend?
+  
   // Weekend Info display state
   const [weekendInfo, setWeekendInfo] = useState(null);
   const [loadingWeekendInfo, setLoadingWeekendInfo] = useState(false);
@@ -451,31 +456,44 @@ useEffect(() => {
     }
   };
 
-  // ✅ UPDATED: Simplified loadLatestTeam using is_active
+  // ✅ UPDATED: Load active weekend AND track weekend history for button logic
   const loadLatestTeam = async () => {
     setLoadingTeam(true);
     
     try {
-      // NEW SIMPLIFIED LOGIC: Just query for the active weekend
-      const { data: activeWeekend, error: weekendError } = await supabase
+      // Step 1: Get ALL weekends for this org/gender to determine state
+      const { data: allWeekends, error: allWeekendsError } = await supabase
         .from('weekend_history')
-        .select('weekend_identifier')
+        .select('weekend_identifier, weekend_number, is_active')
         .eq('org_id', orgId)
         .eq('gender', currentGender)
-        .eq('is_active', true)
-        .maybeSingle();
+        .order('weekend_number', { ascending: false });
 
-      if (weekendError && weekendError.code !== 'PGRST116') {
-        throw weekendError;
-      }
+      if (allWeekendsError) throw allWeekendsError;
 
-      if (activeWeekend && activeWeekend.weekend_identifier) {
-        // Found active weekend - load its roster
+      // Determine weekend history status
+      const weekendsExist = allWeekends && allWeekends.length > 0;
+      const highestNumber = weekendsExist ? allWeekends[0].weekend_number : 0;
+      const activeWeekend = allWeekends?.find(w => w.is_active === true);
+
+      // Update state for button logic
+      setHasWeekends(weekendsExist);
+      setHighestWeekendNumber(highestNumber);
+      setHasActiveWeekend(!!activeWeekend);
+
+      console.log('📊 Weekend Status:', { 
+        weekendsExist, 
+        highestNumber, 
+        hasActive: !!activeWeekend 
+      });
+
+      // Step 2: Load the active weekend's roster (if exists)
+      if (activeWeekend) {
         console.log('✅ Found active weekend:', activeWeekend.weekend_identifier);
         setWeekendIdentifier(activeWeekend.weekend_identifier);
         await loadTeamRoster(activeWeekend.weekend_identifier);
       } else {
-        // No active weekend found - show "Create First Weekend"
+        // No active weekend
         console.log('⚠️ No active weekend found');
         setWeekendIdentifier('');
         setTeamRoster([]);
@@ -484,7 +502,7 @@ useEffect(() => {
         setLoadingTeam(false);
       }
     } catch (error) {
-      console.error('Error loading active weekend:', error);
+      console.error('Error loading weekend data:', error);
       setTeamRoster([]);
       setLoadingTeam(false);
     }
@@ -968,42 +986,69 @@ useEffect(() => {
   };
 
   const handleCreateNextWeekend = async () => {
-    const isEditMode = weekendIdentifier && weekendInfo; // Editing existing weekend
-    const isFirstWeekend = !weekendIdentifier; // Creating first weekend from scratch
+    const isEditMode = hasActiveWeekend; // Editing existing active weekend
+    const isCreatingNext = !hasActiveWeekend && hasWeekends; // Creating next weekend
+    const isFirstWeekend = !hasActiveWeekend && !hasWeekends; // Creating first weekend
     
     // Calculate weekend details
     let nextWeekendNum, nextWeekendId, roverToPromote;
+    const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
     
     if (isEditMode) {
       // Edit mode - use existing weekend identifier
       nextWeekendId = weekendIdentifier;
       nextWeekendNum = parseInt(weekendIdentifier.match(/\d+/)?.[0] || '0', 10);
       roverToPromote = null; // No roster changes when editing
-    } else if (isFirstWeekend) {
-      // Creating first weekend - use custom number or default to 1
-      nextWeekendNum = parseInt(nextWeekendNumber, 10) || 1;
-      const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
-      nextWeekendId = `${prefix}${nextWeekendNum}`;
-      roverToPromote = null; // No rover to promote on first weekend
     } else {
-      // This shouldn't happen, but keep for safety
-      window.showMainStatus?.('Unable to determine weekend mode', true);
-      return;
+      // Creating new weekend (first or next)
+      nextWeekendNum = parseInt(nextWeekendNumber, 10) || (isCreatingNext ? highestWeekendNumber + 1 : 1);
+      nextWeekendId = `${prefix}${nextWeekendNum}`;
+      roverToPromote = null; // No rover promotion for now
+      
+      // ✅ DUPLICATE PREVENTION: Check if this weekend number already exists
+      const { data: existingWeekend, error: checkError } = await supabase
+        .from('weekend_history')
+        .select('weekend_identifier')
+        .eq('org_id', orgId)
+        .eq('gender', currentGender)
+        .eq('weekend_number', nextWeekendNum)
+        .maybeSingle();
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking for duplicates:', checkError);
+        window.showMainStatus?.('Error checking weekend number', true);
+        return;
+      }
+      
+      if (existingWeekend) {
+        window.showMainStatus?.(
+          `⚠️ ${nextWeekendId} already exists! Please choose a different number.`,
+          true
+        );
+        return;
+      }
+      
+      // ✅ WARN if user changed the auto-filled number
+      if (isCreatingNext && nextWeekendNum !== (highestWeekendNumber + 1)) {
+        console.log(`⚠️ User manually changed weekend number from ${highestWeekendNumber + 1} to ${nextWeekendNum}`);
+      }
     }
 
     setIsCreatingNextWeekend(true);
 
     try {
-      // ✅ NEW: Deactivate all other weekends for this gender/org FIRST
-      const { error: deactivateError } = await supabase
-        .from('weekend_history')
-        .update({ is_active: false })
-        .eq('org_id', orgId)
-        .eq('gender', currentGender);
+      // ✅ Deactivate all other weekends for this gender/org FIRST (only when creating new)
+      if (!isEditMode) {
+        const { error: deactivateError } = await supabase
+          .from('weekend_history')
+          .update({ is_active: false })
+          .eq('org_id', orgId)
+          .eq('gender', currentGender);
 
-      if (deactivateError) {
-        console.error('Error deactivating old weekends:', deactivateError);
-        // Continue anyway - not critical
+        if (deactivateError) {
+          console.error('Error deactivating old weekends:', deactivateError);
+          // Continue anyway - not critical
+        }
       }
 
       let imageUrl = weekendInfo?.image || ''; // Keep existing image URL if no new upload
@@ -1737,11 +1782,30 @@ useEffect(() => {
             </button>
             <button 
               className="btn btn-primary" 
-              onClick={() => setShowSetupNextWeekend(!showSetupNextWeekend)}
-              title={weekendIdentifier ? 'Edit weekend theme, verse, dates, and image' : 'Setup theme, verse, and image for first weekend'}
+              onClick={() => {
+                // Auto-fill weekend number when creating next weekend
+                if (!hasActiveWeekend && hasWeekends) {
+                  setNextWeekendNumber(String(highestWeekendNumber + 1));
+                }
+                setShowSetupNextWeekend(!showSetupNextWeekend);
+              }}
+              title={
+                hasActiveWeekend 
+                  ? 'Edit current active weekend theme, verse, dates, and image' 
+                  : hasWeekends
+                    ? 'Create next weekend with auto-incremented number'
+                    : 'Setup theme, verse, and image for first weekend'
+              }
             >
               <HiCalendarDays size={16} style={{ marginRight: '6px' }} />
-              {showSetupNextWeekend ? 'Hide Setup' : (weekendIdentifier ? 'Edit Weekend Data' : 'Create First Weekend')}
+              {showSetupNextWeekend 
+                ? 'Hide Setup' 
+                : hasActiveWeekend 
+                  ? 'Edit Current Weekend'
+                  : hasWeekends
+                    ? 'Create Next Weekend'
+                    : 'Create First Weekend'
+              }
             </button>
             <button 
               className="btn btn-primary" 
@@ -1825,10 +1889,37 @@ useEffect(() => {
                   color: 'var(--ink)',
                   marginBottom: '8px'
                 }}>
-                  {weekendIdentifier ? `Edit Weekend Data` : `Setup First Weekend`}
+                  {hasActiveWeekend 
+                    ? `Edit Current Weekend` 
+                    : hasWeekends
+                      ? `Setup Next Weekend`
+                      : `Setup First Weekend`
+                  }
                 </div>
                 {(() => {
-                  if (!weekendIdentifier) {
+                  if (hasActiveWeekend) {
+                    // Edit mode - show which weekend is being edited
+                    return (
+                      <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+                        Editing: <strong>{weekendIdentifier}</strong>
+                      </div>
+                    );
+                  } else if (hasWeekends) {
+                    // Create next weekend - show preview with auto-incremented number
+                    const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
+                    const previewNum = parseInt(nextWeekendNumber, 10) || (highestWeekendNumber + 1);
+                    const nextWeekendId = `${prefix}${previewNum}`;
+                    return (
+                      <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
+                        Creating: <strong>{nextWeekendId}</strong>
+                        {previewNum !== (highestWeekendNumber + 1) && (
+                          <span style={{ color: 'var(--warning)', marginLeft: '8px' }}>
+                            (Default: {highestWeekendNumber + 1})
+                          </span>
+                        )}
+                      </div>
+                    );
+                  } else {
                     // First weekend creation - show preview with custom number
                     const prefix = currentGender.charAt(0).toUpperCase() + currentGender.slice(1) + "'s ";
                     const previewNum = parseInt(nextWeekendNumber, 10) || 1;
@@ -1836,13 +1927,6 @@ useEffect(() => {
                     return (
                       <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
                         Creating: <strong>{firstWeekendId}</strong>
-                      </div>
-                    );
-                  } else {
-                    // Edit mode - show which weekend is being edited
-                    return (
-                      <div style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>
-                        Editing: <strong>{weekendIdentifier}</strong>
                       </div>
                     );
                   }
