@@ -8,8 +8,8 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
   const [stepStatuses, setStepStatuses] = useState({});
   const [isComplete, setIsComplete] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-  const [showWarning, setShowWarning] = useState(false); // NEW: Warning confirmation step
-  const [deletionCounts, setDeletionCounts] = useState({ // NEW: Counts for warning
+  const [showWarning, setShowWarning] = useState(false);
+  const [deletionCounts, setDeletionCounts] = useState({
     meetings: 0,
     applications: 0,
     emailLists: 0,
@@ -19,10 +19,17 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
     teamMembersUpdated: 0,
     pescadoresAdded: 0,
     meetingsCleared: 0,
-    applicationsCleared: 0
+    applicationsCleared: 0,
+    rectorsPromoted: 0
+  });
+  
+  // NEW: Store Rover info before rosters get cleared
+  const [savedRoverInfo, setSavedRoverInfo] = useState({
+    men: null,
+    women: null
   });
 
-  // Define all steps
+  // Define all steps (now 7 steps!)
   const steps = [
     {
       id: 1,
@@ -53,6 +60,11 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
       id: 6,
       title: 'Clear Team Roster Data',
       description: 'Removing team assignment records for this weekend'
+    },
+    {
+      id: 7,
+      title: 'Prepare Next Weekend',
+      description: 'Promoting Rovers to Rectors for the next weekend'
     }
   ];
 
@@ -63,14 +75,55 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
       setStepStatuses({});
       setIsComplete(false);
       setHasStarted(false);
+      setSavedRoverInfo({ men: null, women: null });
       setStats({
         teamMembersUpdated: 0,
         pescadoresAdded: 0,
         meetingsCleared: 0,
-        applicationsCleared: 0
+        applicationsCleared: 0,
+        rectorsPromoted: 0
       });
     }
   }, [isOpen]);
+
+  // NEW: Function to save Rover info before starting
+  async function saveRoverInfoBeforeStart() {
+    try {
+      // Get men's Rover
+      const { data: menRover, error: menError } = await supabase
+        .from('men_team_rosters')
+        .select('pescadore_key, weekend_identifier')
+        .eq('org_id', orgId)
+        .eq('role', 'Rover')
+        .maybeSingle();
+
+      if (menError && menError.code !== 'PGRST116') {
+        console.error('Error fetching men\'s Rover:', menError);
+      }
+
+      // Get women's Rover
+      const { data: womenRover, error: womenError } = await supabase
+        .from('women_team_rosters')
+        .select('pescadore_key, weekend_identifier')
+        .eq('org_id', orgId)
+        .eq('role', 'Rover')
+        .maybeSingle();
+
+      if (womenError && womenError.code !== 'PGRST116') {
+        console.error('Error fetching women\'s Rover:', womenError);
+      }
+
+      setSavedRoverInfo({
+        men: menRover,
+        women: womenRover
+      });
+
+      console.log('Saved Rover info:', { men: menRover, women: womenRover });
+
+    } catch (error) {
+      console.error('Error saving Rover info:', error);
+    }
+  }
 
   // Validate and execute each step with real database queries
   async function executeStepWithValidation(stepId, weekendNumber) {
@@ -124,9 +177,9 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             const role = entry.role;
 
             // Calculate column names
-            const statusCol = role; // Keep spaces (e.g., "Head Dorm")
-            const serviceCol = `${role} Service`; // Keep spaces (e.g., "Head Dorm Service")
-            const qtyCol = `${role.replace(/ /g, '_')}_Service_Qty`; // Replace spaces (e.g., "Head_Dorm_Service_Qty")
+            const statusCol = role;
+            const serviceCol = `${role} Service`;
+            const qtyCol = `${role.replace(/ /g, '_')}_Service_Qty`;
 
             // Fetch current record
             const { data: person, error: fetchError } = await supabase
@@ -146,9 +199,9 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             let newStatus;
             if (currentStatus === 'N') newStatus = 'I';
             else if (currentStatus === 'I') newStatus = 'E';
-            else newStatus = 'E'; // E stays E
+            else newStatus = 'E';
 
-            // Calculate new qty (increment by 1, or set to "1" if null)
+            // Calculate new qty
             const currentQty = person[qtyCol];
             const newQty = currentQty ? String(parseInt(currentQty) + 1) : '1';
 
@@ -180,7 +233,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         case 2: {
           // Step 2: Convert Pescadores to Team Members
           
-          // 1. Get community code for current weekend identifier
+          // 1. Get community code
           const { data: settings, error: settingsError } = await supabase
             .from('app_settings')
             .select('community_code')
@@ -207,7 +260,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             break;
           }
 
-          // 3. Get current max PescadoreKey from both tables
+          // 3. Get current max PescadoreKey
           const { data: menMax } = await supabase
             .from('men_raw')
             .select('PescadoreKey')
@@ -227,13 +280,12 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             womenMax?.PescadoreKey || 0
           ) + 1;
 
-          // 4. Insert each candidate into men_raw or women_raw
+          // 4. Insert each candidate
           let addedCount = 0;
           for (const app of applications) {
             const tableName = app.gender === 'men' ? 'men_raw' : 'women_raw';
             const isMale = app.gender === 'men';
 
-            // Build the new pescadore record
             const newPescadore = {
               PescadoreKey: nextKey,
               LastServiceKey: '0',
@@ -251,7 +303,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               'Candidate Weekend': currentWeekendCode,
               'Last weekend worked': null,
               
-              // All team roles = 'N'
+              // All roles = 'N'
               Rector: 'N',
               BUR: 'N',
               Rover: 'N',
@@ -282,8 +334,6 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               Worship: 'N',
               Media: 'N',
               'Head Media': 'N',
-              
-              // All professor roles = 'N'
               Prof_Silent: 'N',
               Prof_Ideals: 'N',
               Prof_Church: 'N',
@@ -295,11 +345,9 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               Prof_CCIA: 'N',
               Prof_Reunion: 'N',
               
-              // All service/qty columns = null (Supabase will handle defaults)
               org_id: orgId
             };
 
-            // Insert into appropriate table
             const { error: insertError } = await supabase
               .from(tableName)
               .insert(newPescadore);
@@ -308,7 +356,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               console.error(`Failed to add pescadore ${app.c_lastname}:`, insertError);
             } else {
               addedCount++;
-              nextKey++; // Increment for next pescadore
+              nextKey++;
             }
           }
 
@@ -318,7 +366,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         }
 
         case 3: {
-          // Step 3: Archive Weekend Data to weekend_history
+          // Step 3: Archive Weekend Data
           
           const genders = ['men', 'women'];
           let archivedCount = 0;
@@ -329,7 +377,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               ? `Men's Weekend ${weekendNumber}` 
               : `Women's Weekend ${weekendNumber}`;
 
-            // 1. Count team members from roster
+            // Count team members
             const { data: rosterData, error: rosterError } = await supabase
               .from(rosterTable)
               .select('pescadore_key, role', { count: 'exact' })
@@ -339,7 +387,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
 
             const teamMemberCount = rosterData?.length || 0;
 
-            // 2. Count candidates with attendance='yes' for this gender
+            // Count candidates
             const { count: candidateCount, error: candidateError } = await supabase
               .from('cra_applications')
               .select('*', { count: 'exact', head: true })
@@ -349,11 +397,11 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
 
             if (candidateError) throw new Error(`Unable to count ${gender} candidates`);
 
-            // 3. Find the Rector
+            // Find Rector
             const rector = rosterData?.find(r => r.role === 'Rector');
             const rectorKey = rector ? String(rector.pescadore_key) : null;
 
-            // 4. Check if record already exists
+            // Check if record exists
             const { data: existing, error: existingError } = await supabase
               .from('weekend_history')
               .select('id')
@@ -365,7 +413,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
             if (existingError) throw new Error(`Unable to check ${gender} weekend history`);
 
             if (existing) {
-              // UPDATE existing record
+              // UPDATE
               const { error: updateError } = await supabase
                 .from('weekend_history')
                 .update({
@@ -381,7 +429,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                 archivedCount++;
               }
             } else {
-              // INSERT new record
+              // INSERT
               const { error: insertError } = await supabase
                 .from('weekend_history')
                 .insert({
@@ -440,7 +488,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         case 5: {
           // Step 5: Clear Candidate Applications AND Email Lists
           
-          // Delete candidate applications
+          // Delete applications
           const { data: deletedApps, error: appError } = await supabase
             .from('cra_applications')
             .delete()
@@ -473,7 +521,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         }
 
         case 6: {
-          // Step 6: Clear Team Rosters (men AND women)
+          // Step 6: Clear Team Rosters
           
           // Delete men's roster
           const { data: deletedMen, error: menError } = await supabase
@@ -501,6 +549,64 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
           } else {
             result.count = totalCount;
             result.message = `Cleared ${totalCount} team roster records`;
+          }
+          break;
+        }
+
+        case 7: {
+          // Step 7: Prepare Next Weekend - Promote Rovers to Rectors
+          
+          const nextWeekendNumber = weekendNumber + 1;
+          let promotedCount = 0;
+
+          // Process Men's Team
+          if (savedRoverInfo.men && savedRoverInfo.men.pescadore_key) {
+            const newWeekendIdentifier = `Men's Weekend ${nextWeekendNumber}`;
+
+            const { error: insertError } = await supabase
+              .from('men_team_rosters')
+              .insert({
+                org_id: orgId,
+                weekend_identifier: newWeekendIdentifier,
+                pescadore_key: savedRoverInfo.men.pescadore_key,
+                role: 'Rector'
+              });
+
+            if (insertError) {
+              console.error('Failed to insert men\'s Rector:', insertError);
+            } else {
+              promotedCount++;
+            }
+          }
+
+          // Process Women's Team
+          if (savedRoverInfo.women && savedRoverInfo.women.pescadore_key) {
+            const newWeekendIdentifier = `Women's Weekend ${nextWeekendNumber}`;
+
+            const { error: insertError } = await supabase
+              .from('women_team_rosters')
+              .insert({
+                org_id: orgId,
+                weekend_identifier: newWeekendIdentifier,
+                pescadore_key: savedRoverInfo.women.pescadore_key,
+                role: 'Rector'
+              });
+
+            if (insertError) {
+              console.error('Failed to insert women\'s Rector:', insertError);
+            } else {
+              promotedCount++;
+            }
+          }
+
+          if (promotedCount === 0) {
+            result.skipped = true;
+            result.message = 'No Rovers found - skipping next weekend setup';
+          } else {
+            result.count = promotedCount;
+            result.message = promotedCount === 2
+              ? `Prepared Weekend #${nextWeekendNumber} with new Rectors for both teams`
+              : `Prepared Weekend #${nextWeekendNumber} with new Rector for ${promotedCount} team(s)`;
           }
           break;
         }
@@ -538,7 +644,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         .select('*', { count: 'exact', head: true })
         .eq('org_id', orgId);
 
-      // Count roster records (men + women)
+      // Count roster records
       const { count: menCount } = await supabase
         .from('men_team_rosters')
         .select('*', { count: 'exact', head: true })
@@ -556,6 +662,9 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         rosterRecords: (menCount || 0) + (womenCount || 0)
       });
 
+      // SAVE ROVER INFO BEFORE SHOWING WARNING
+      await saveRoverInfoBeforeStart();
+
       setShowWarning(true);
     } catch (error) {
       console.error('Error fetching deletion counts:', error);
@@ -567,7 +676,6 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
   async function executeSteps() {
     setHasStarted(true);
 
-    // Use the weekend number passed from parent
     if (!weekendNumber) {
       window.showMainStatus?.('No weekend number provided', true);
       return;
@@ -580,10 +688,10 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
       // Mark as processing
       setStepStatuses(prev => ({ ...prev, [step.id]: 'processing' }));
 
-      // Add delay so user can see the processing state (1-2 seconds)
+      // Delay
       await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
 
-      // Execute with real validation
+      // Execute
       const result = await executeStepWithValidation(step.id, weekendNumber);
 
       // Update stats
@@ -596,16 +704,17 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
           setStats(prev => ({ ...prev, meetingsCleared: result.count }));
         } else if (step.id === 5) {
           setStats(prev => ({ ...prev, applicationsCleared: result.count }));
+        } else if (step.id === 7) {
+          setStats(prev => ({ ...prev, rectorsPromoted: result.count }));
         }
       }
 
-      // Mark as complete, skipped, or error
+      // Mark as complete/skipped/error
       if (!result.success) {
         setStepStatuses(prev => ({ 
           ...prev, 
           [step.id]: { status: 'error', error: result.error }
         }));
-        // Stop on error
         return;
       } else if (result.skipped) {
         setStepStatuses(prev => ({ 
@@ -619,11 +728,10 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         }));
       }
 
-      // Small delay before next step (0.5 seconds)
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    // All steps complete!
+    // All done!
     setIsComplete(true);
     triggerConfetti();
   }
@@ -667,7 +775,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
     return null;
   }
 
-  // Calculate progress percentage
+  // Calculate progress
   const completedSteps = Object.keys(stepStatuses).filter(key => {
     const status = stepStatuses[key];
     if (typeof status === 'string') {
@@ -708,7 +816,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
         {/* Body */}
         <div className="closeout-modal-body">
           {showWarning ? (
-            // Warning Screen - Completely replaces body content
+            // Warning Screen
             <div style={{
               display: 'flex',
               flexDirection: 'column',
@@ -780,7 +888,8 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                 <div style={{ paddingLeft: '28px', color: '#155724', fontSize: '0.85rem', lineHeight: '1.5' }}>
                   • Update service records for team<br/>
                   • Convert pescadores to members<br/>
-                  • Save statistics to history
+                  • Save statistics to history<br/>
+                  • Prepare next weekend with new Rectors
                 </div>
               </div>
 
@@ -883,7 +992,7 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
               <h3 className="closeout-success-title">Weekend #{weekendNumber} Successfully Closed!</h3>
               <p className="closeout-success-details">
                 All data has been archived and tables have been cleared.<br />
-                You're ready to set up the next weekend.
+                Weekend #{weekendNumber + 1} is ready to go with new Rectors!
               </p>
               
               <div className="closeout-success-stats">
@@ -894,6 +1003,10 @@ export default function CloseOutWeekend({ isOpen, onClose, weekendNumber, orgId 
                 <div className="closeout-stat">
                   <div className="closeout-stat-value">{stats.pescadoresAdded}</div>
                   <div className="closeout-stat-label">Pescadores Added</div>
+                </div>
+                <div className="closeout-stat">
+                  <div className="closeout-stat-value">{stats.rectorsPromoted}</div>
+                  <div className="closeout-stat-label">Rectors Promoted</div>
                 </div>
                 <div className="closeout-stat">
                   <div className="closeout-stat-value">{stats.meetingsCleared}</div>
